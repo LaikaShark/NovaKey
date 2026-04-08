@@ -18,40 +18,74 @@
  * Any questions about the program or source may be directed to <strellastudios@gmail.com>
  */
 
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+}
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion '28.0.1'
+    // Must match the manifest's old package= attribute and the package the
+    // generated R class is rooted at.
+    namespace 'viviano.cantu.novakey'
 
+    compileSdk 35
 
     defaultConfig {
         applicationId "viviano.cantu.novakey"
-        minSdkVersion 14
-        targetSdkVersion 28
-        multiDexEnabled = true
+        minSdk 21
+        targetSdk 35
 
+        // 2026 modernization pass: bumped from 24 / 0.3.9. The version is
+        // read from gradle.properties so that :core/build.gradle can inject
+        // the same value into BuildConfig.VERSION_CODE for Settings.java's
+        // first-install detection. Bump it in gradle.properties only.
+        //
+        // Use `=` assignment so the RHS is fully evaluated before the setter
+        // is called. The bare-method form `versionCode (...) as int` is parsed
+        // by Groovy as `versionCode(...) as int` — the cast applies to the
+        // setter's return value, not the argument, so a String reaches AGP and
+        // gets stored as null, surfacing later as "Value is null".
+        versionCode = Integer.parseInt(project.findProperty('novakeyVersionCode') ?: '1')
+        versionName = project.findProperty('novakeyVersionName') ?: '0.0.0'
+
+        // multiDex is enabled by default for minSdk >= 21, so the explicit
+        // multiDexEnabled flag from the old build script is gone.
     }
 
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
-        targetCompatibility JavaVersion.VERSION_1_8
-        sourceCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
+
+    // The legacy app/proguard-rules.txt file never existed in the repo, so
+    // there is nothing to migrate. A blank proguard-rules.pro is created
+    // alongside this file by the modernization pass.
 }
 
 dependencies {
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation 'com.android.support:design:28.0.0'
-    implementation 'com.android.support:support-v4:28.0.0'
-    implementation 'com.rengwuxian.materialedittext:library:2.1.4'
-    implementation 'com.pavelsikun:material-seekbar-preference:0.12.1+'
-    implementation 'com.android.support:support-emoji:28.0.0'
     implementation project(':core')
+
+    // AndroidX replacements for the old com.android.support:* artifacts.
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+    // Material Components hosts the new homes for TextInputLayout and
+    // FloatingActionButton, both of which the tutorial / settings screens use.
+    implementation 'com.google.android.material:material:1.12.0'
+
+    // androidx.preference replaces both the framework PreferenceFragment and
+    // the abandoned com.pavelsikun:material-seekbar-preference dep. Its
+    // built-in SeekBarPreference is good enough for our two settings.
+    implementation 'androidx.preference:preference:1.2.1'
+
+    // Dropped during the 2026 modernization pass:
+    //   - com.rengwuxian.materialedittext (no source/XML usage anywhere)
+    //   - com.android.support:support-emoji  (no EmojiCompat usage anywhere)
+    //   - com.android.support:support-v4     (folded into appcompat)
 }

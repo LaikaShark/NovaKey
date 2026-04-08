@@ -23,12 +23,14 @@ package viviano.cantu.novakey;
 import android.content.ClipboardManager;
 import android.content.SharedPreferences.Editor;
 import android.graphics.PixelFormat;
+import android.os.Build;
 import android.os.Vibrator;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.CursorAnchorInfo;
 import android.view.inputmethod.EditorInfo;
@@ -100,6 +102,18 @@ public class MainNovaKeyService extends NovaKeyService {
     public void onCreate() {
         getApplicationContext().setTheme(R.style.AppTheme);
         super.onCreate();
+
+        // Android 15 (target SDK 35) draws IME windows edge-to-edge by default,
+        // so the bottom of the keyboard ends up behind the gesture/3-button
+        // navigation bar. Opt back into the legacy "framework pads decor for
+        // system bars" behavior on the IME's underlying Window. This is the
+        // documented one-line opt-out for the new edge-to-edge default.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Window w = getWindow() != null ? getWindow().getWindow() : null;
+            if (w != null) {
+                w.setDecorFitsSystemWindows(true);
+            }
+        }
 
         //Phone Services
         clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
@@ -265,6 +279,7 @@ public class MainNovaKeyService extends NovaKeyService {
      */
     @Override
     public void onDestroy() {
+        super.onDestroy();
     }
 
 
@@ -355,7 +370,7 @@ public class MainNovaKeyService extends NovaKeyService {
 
 
     /**
-     * move the selection from it's current position
+     * move the selection from its current position
      *
      * @param deltaStart difference of start cursor
      * @param deltaEnd   difference of end cursor

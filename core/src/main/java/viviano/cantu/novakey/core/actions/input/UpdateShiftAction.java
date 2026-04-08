@@ -25,6 +25,7 @@ import viviano.cantu.novakey.core.actions.Action;
 import viviano.cantu.novakey.core.actions.SetShiftStateAction;
 import viviano.cantu.novakey.core.NovaKeyService;
 import viviano.cantu.novakey.core.model.Model;
+import viviano.cantu.novakey.core.model.Settings;
 import viviano.cantu.novakey.core.model.ShiftState;
 
 /**
@@ -44,7 +45,7 @@ public class UpdateShiftAction implements Action<Void> {
             switch (model.getShiftState()) {
                 case LOWERCASE:
                 case UPPERCASE:
-                    if (ime.getCurrentCapsMode() != 0)
+                    if (Settings.autoCapitalize && ime.getCurrentCapsMode() != 0)
                         control.fire(new SetShiftStateAction(ShiftState.UPPERCASE));
                     else
                         control.fire(new SetShiftStateAction(ShiftState.LOWERCASE));

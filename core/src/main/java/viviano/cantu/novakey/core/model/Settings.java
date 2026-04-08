@@ -59,12 +59,14 @@ public class Settings {
     //NovaKey 1.0
     pref_auto_color = "pref_auto_color",
             pref_theme = "pref_master_theme",
-            pref_subreddit = "pref_subreddit";//INTENT
+            pref_subreddit = "pref_subreddit",//INTENT
+            pref_auto_capitalize = "pref_auto_capitalize";
 
     //Global Settings
     public static String DEFAULT = "DEFAULT";
     public static boolean hideLetters, hidePassword, vibrate, quickInsert, autoCorrect, quickClose;
     public static boolean hasSpaceBar;
+    public static boolean autoCapitalize;
 
     public static int startVersion, longPressTime, vibrateLevel;
 
@@ -99,6 +101,11 @@ public class Settings {
         quickClose = prefs.getBoolean(pref_quick_close, false);
 
         hasSpaceBar = prefs.getBoolean(pref_space_bar, false);
+
+        // Default true so existing installs keep the previous auto-cap behavior
+        // (UpdateShiftAction unconditionally honored EditorInfo's caps mode before
+        // this preference existed).
+        autoCapitalize = prefs.getBoolean(pref_auto_capitalize, true);
 
         autoColor = prefs.getBoolean(pref_auto_color, false);
 
