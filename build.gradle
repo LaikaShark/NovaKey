@@ -18,20 +18,11 @@
  * Any questions about the program or source may be directed to <strellastudios@gmail.com>
  */
 
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-buildscript {
-    repositories {
-        jcenter()
-        google()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.0'
-    }
-}
-
-allprojects {
-    repositories {
-        jcenter()
-        google()
-    }
+// Top-level build file. Under AGP 8.x the modern pattern is to declare the
+// Android plugins here with `apply false` so that each subproject can simply
+// `apply` them without redeclaring versions. Repositories live in
+// settings.gradle's dependencyResolutionManagement block.
+plugins {
+    id 'com.android.application' version '8.13.2' apply false
+    id 'com.android.library' version '8.13.2' apply false
 }

@@ -18,4 +18,32 @@
  * Any questions about the program or source may be directed to <strellastudios@gmail.com>
  */
 
+// AGP 8.x prefers plugin and dependency repositories to be declared here in
+// settings.gradle rather than in each module's build.gradle. The
+// FAIL_ON_PROJECT_REPOS mode below makes that the only legal place.
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        // jcenter() was removed entirely. The two jcenter-only artifacts the
+        // project used (com.rengwuxian.materialedittext and
+        // com.pavelsikun:material-seekbar-preference) have been dropped or
+        // replaced with androidx equivalents.
+    }
+}
+
+rootProject.name = 'NovaKey'
+
+// :wear was deleted in the 2026 modernization pass. The module had no real
+// content beyond a Hello-World activity, and migrating it to current Wear OS
+// libraries would have meant a Compose rewrite that nobody asked for.
 include ':app', ':core'

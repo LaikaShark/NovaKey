@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!--
   ~ NovaKey - An alternative touchscreen input method
   ~ Copyright (C) 2019  Viviano Cantu
@@ -18,5 +19,8 @@
   ~ Any questions about the program or source may be directed to <strellastudios@gmail.com>
   -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="viviano.cantu.novakey.core" />
+<!--
+  AGP 8 forbids the package= attribute on <manifest>; the namespace lives in
+  build.gradle's android { namespace ... } block instead.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" />
