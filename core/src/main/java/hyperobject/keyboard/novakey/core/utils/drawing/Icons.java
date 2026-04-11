@@ -57,7 +57,7 @@ import hyperobject.keyboard.novakey.core.utils.drawing.drawables.FontIcon;
  */
 public class Icons {
 
-    public static BMPDrawable cursors, cursorLeft, cursorRight;//TODO: add to list
+    public static BMPDrawable cursors, cursorLeft, cursorRight;
     private static ArrayList<Drawable> icons;
 
 
