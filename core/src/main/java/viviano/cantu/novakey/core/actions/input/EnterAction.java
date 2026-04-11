@@ -20,6 +20,10 @@
 
 package viviano.cantu.novakey.core.actions.input;
 
+import android.text.InputType;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
+
 import viviano.cantu.novakey.core.controller.Controller;
 import viviano.cantu.novakey.core.actions.Action;
 import viviano.cantu.novakey.core.NovaKeyService;
@@ -38,17 +42,23 @@ public class EnterAction implements Action<Void> {
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {
-//        InputConnection ic = ime.getCurrentInputConnection();
-//        InputState state = model.getInputState();
-//        EditorInfo ei = state.getEditorInfo();
-//        int imeAction = ei.imeOptions & EditorInfo.IME_MASK_ACTION;
-//
-//        if (imeAction == EditorInfo.IME_ACTION_NONE ||
-//                imeAction == EditorInfo.IME_ACTION_UNSPECIFIED)
-//            model.getInputState().inputText("\n", 1);
-//        else
-//            ic.performEditorAction(imeAction);
-        ime.sendDefaultEditorAction(true);
+        // Multi-line text fields (e.g. Discord's message composer) expect
+        // Enter to insert a newline, not to perform whatever imeAction they
+        // declared for the keyboard's action button. sendDefaultEditorAction
+        // would unconditionally fire that action — send the message, run the
+        // search, etc. — so detect multi-line input and commit "\n" directly.
+        EditorInfo ei = ime.getCurrentInputEditorInfo();
+        InputConnection ic = ime.getCurrentInputConnection();
+
+        boolean multiLine = ei != null && (ei.inputType
+                & (InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                        | InputType.TYPE_TEXT_FLAG_IME_MULTI_LINE)) != 0;
+
+        if (multiLine && ic != null) {
+            ic.commitText("\n", 1);
+        } else {
+            ime.sendDefaultEditorAction(true);
+        }
 
         control.fire(new UpdateShiftAction());
         return null;
