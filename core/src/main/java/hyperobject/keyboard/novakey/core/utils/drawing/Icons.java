@@ -22,8 +22,6 @@ package hyperobject.keyboard.novakey.core.utils.drawing;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -44,10 +42,8 @@ import hyperobject.keyboard.novakey.core.utils.drawing.drawables.FontIcon;
  * <ul>
  *   <li>Direct static fields — {@code cursors}, {@code cursorLeft},
  *       {@code cursorRight} (cursor overlays drawn as
- *       {@link BMPDrawable}s) and {@code cancel}/{@code accept}/
- *       {@code refresh} raw {@link Bitmap}s used by the edit view.
- *       These were never added to the searchable list and are
- *       accessed via the field name directly.</li>
+ *       {@link BMPDrawable}s). These were never added to the
+ *       searchable list and are accessed via the field name directly.</li>
  *   <li>A flat {@link ArrayList} of {@link FontIcon}s populated from
  *       two codepoints files: {@code res/raw/codepoints} (Material
  *       Icons) and {@code res/raw/codepoints_custom} (the project's
@@ -62,15 +58,14 @@ import hyperobject.keyboard.novakey.core.utils.drawing.drawables.FontIcon;
 public class Icons {
 
     public static BMPDrawable cursors, cursorLeft, cursorRight;//TODO: add to list
-    public static Bitmap cancel, accept, refresh;
     private static ArrayList<Drawable> icons;
 
 
     /**
-     * One-shot loader: populates the cursor {@link BMPDrawable}s, the
-     * edit-view {@link Bitmap}s, and walks both codepoints files to
-     * register every Material and custom font icon. Must be called
-     * before any {@link #get(String)} lookup.
+     * One-shot loader: populates the cursor {@link BMPDrawable}s and
+     * walks both codepoints files to register every Material and
+     * custom font icon. Must be called before any {@link #get(String)}
+     * lookup.
      */
     public static void load(Context context) {
         Resources res = context.getResources();
@@ -79,10 +74,6 @@ public class Icons {
         cursors = new BMPDrawable(res, R.drawable.ic_cursors);
         cursorLeft = new BMPDrawable(res, R.drawable.ic_cursor_left);
         cursorRight = new BMPDrawable(res, R.drawable.ic_cursor_right);
-
-        cancel = BitmapFactory.decodeResource(res, R.drawable.ic_action_cancel);
-        accept = BitmapFactory.decodeResource(res, R.drawable.ic_action_accept);
-        refresh = BitmapFactory.decodeResource(res, R.drawable.ic_action_refresh);
 
         setMaterialIcons(res);
         setCustomIcons(res);
