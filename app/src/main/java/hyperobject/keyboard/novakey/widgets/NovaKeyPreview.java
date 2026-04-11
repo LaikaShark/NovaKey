@@ -27,20 +27,43 @@ import hyperobject.keyboard.novakey.core.model.MainDimensions;
 import hyperobject.keyboard.novakey.core.view.NovaKeyView;
 
 /**
- * Created by vcantu on 10/2/16.
+ * {@link NovaKeyView} subclass used as an embeddable, non-IME preview
+ * of the keyboard — specifically by
+ * {@link hyperobject.keyboard.novakey.settings.StylePreferenceActivity}
+ * to show the live effect of a theme/color change.
+ * <p>
+ * Overrides the normal {@link NovaKeyView} sizing path with a simpler
+ * one that fits the wheel into the measured bounds and writes the
+ * derived geometry straight into the attached model's
+ * {@link MainDimensions}.
  */
 public class NovaKeyPreview extends NovaKeyView {
 
+    /** Programmatic constructor. */
     public NovaKeyPreview(Context context) {
         super(context);
     }
 
 
+    /** XML-inflation constructor. */
     public NovaKeyPreview(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
 
+    /**
+     * Measure pass: delegates to the superclass for parent-reported
+     * sizing, then recomputes and writes the wheel geometry back into
+     * {@link MainDimensions} so the preview's theme drawing uses the
+     * same coordinates the real IME would.
+     * <p>
+     * How: picks the wheel radius as half of the smaller of the
+     * available width or height (after padding), centers the wheel
+     * horizontally, pins it to the top padding, and derives the inner
+     * small-radius as {@code r/3}. All five dimensions are written to
+     * the model in one shot so
+     * {@link NovaKeyView#onDraw} can pick them up on the next frame.
+     */
     @Override
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);

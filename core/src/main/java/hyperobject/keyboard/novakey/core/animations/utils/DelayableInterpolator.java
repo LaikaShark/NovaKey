@@ -23,9 +23,16 @@ package hyperobject.keyboard.novakey.core.animations.utils;
 import android.animation.TimeInterpolator;
 
 /**
- * Copies the given interpolator but adds a delay
+ * {@link TimeInterpolator} decorator that lets a child interpolator
+ * play for only a sub-window of a larger animation. Used by
+ * {@link MultiValueAnimator} so each target in a group can have its
+ * own delay and duration while the underlying {@code ValueAnimator}
+ * still runs a single 0 to 1 pass over the whole total duration.
  * <p>
- * Created by Viviano on 1/21/2016.
+ * Before the sub-window starts, {@link #getInterpolation} reports 0;
+ * after the sub-window ends it reports 1; inside the window it
+ * rescales the input fraction into {@code [0, 1]} and hands it to the
+ * wrapped interpolator.
  */
 public class DelayableInterpolator implements TimeInterpolator {
 
@@ -34,13 +41,18 @@ public class DelayableInterpolator implements TimeInterpolator {
 
 
     /**
-     * Constructor for Delayable Interpolator
-     *
-     * @param delay            delay in milliseconds the interpolator will be waiting for
-     * @param duration         total duration of the process, to be cross referenced with delay
-     * @param baseInterpolator interpolator to use when calculating value
-     * @throws IllegalArgumentException if delay or duration are negative.
-     *                                  Or if delay is longer than duration. Or if duration is longer than totalDuration
+     * @param delay            how long this sub-animation should stay
+     *                         at 0 before starting, in milliseconds
+     * @param duration         how long this sub-animation actually
+     *                         animates for, in milliseconds
+     * @param totalDuration    total length of the parent animation so
+     *                         delay/duration can be converted into
+     *                         fractions of the parent timeline
+     * @param baseInterpolator underlying curve applied inside the
+     *                         active window
+     * @throws IllegalArgumentException if any of delay/duration are
+     *                                  negative, or if delay+duration
+     *                                  exceeds totalDuration
      */
     public DelayableInterpolator(long delay, long duration, long totalDuration,
                                  TimeInterpolator baseInterpolator) {
@@ -58,20 +70,15 @@ public class DelayableInterpolator implements TimeInterpolator {
 
 
     /**
-     * Maps a value representing the elapsed fraction of an animation to a value that represents
-     * the interpolated fraction. This interpolated value is then multiplied by the change in
-     * value of an animation to derive the animated value at the current elapsed animation time.
+     * Rescales the parent-animation input fraction into this
+     * sub-animation's local fraction. Returns {@code 0} while the
+     * parent has not yet reached the local start, {@code 1} after the
+     * local window has ended, and otherwise forwards a rescaled value
+     * into the wrapped base interpolator.
      *
-     * @param input A value between 0 and 1.0 indicating our current point
-     *              in the animation where 0 represents the start and 1.0 represents
-     *              the end
-     * @return The interpolation value. This value can be more than 1.0 for
-     * interpolators which overshoot their targets, or less than 0 for
-     * interpolators that undershoot their targets.
-     * <p>
-     * If the specified is > 0 delay, the value will be 0 until the delay is reached.
-     * If a specified delay + duration < totalDuration the value will be 1 until the totalDuration
-     * is reached
+     * @param input parent-animation fraction in {@code [0, 1]}
+     * @return interpolated fraction (may overshoot {@code [0, 1]}
+     * if the wrapped interpolator does)
      */
     @Override
     public float getInterpolation(float input) {

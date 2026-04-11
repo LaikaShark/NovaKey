@@ -25,18 +25,15 @@ import hyperobject.keyboard.novakey.core.NovaKeyService;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Does nothing, used as a filler for classes that require
- * non-null actions but no action is wanted
- * <p>
- * Created by Viviano on 6/16/2016.
+ * Null-object {@link Action} — does nothing when fired. Exists so that
+ * Elements and menu entries that require a non-null action slot have a
+ * safe placeholder to point at, without special-casing {@code null} at
+ * every fire site. Produces no user-visible effect and touches no state.
  */
 public class NoAction implements Action<Void> {
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * No-op. Returns {@code null} so callers using {@code Action<Void>}
+     * can treat it uniformly with any other void action.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

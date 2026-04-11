@@ -37,7 +37,27 @@ import hyperobject.keyboard.novakey.core.utils.drawing.drawables.Drawable;
 import hyperobject.keyboard.novakey.core.utils.drawing.drawables.FontIcon;
 
 /**
- * Created by Viviano on 6/8/2015.
+ * Process-wide icon registry and factory. Loaded once at IME startup
+ * by {@link #load(Context)} and then consumed via {@link #get(String)}.
+ * <p>
+ * Holds two kinds of icons:
+ * <ul>
+ *   <li>Direct static fields — {@code cursors}, {@code cursorLeft},
+ *       {@code cursorRight} (cursor overlays drawn as
+ *       {@link BMPDrawable}s) and {@code cancel}/{@code accept}/
+ *       {@code refresh} raw {@link Bitmap}s used by the edit view.
+ *       These were never added to the searchable list and are
+ *       accessed via the field name directly.</li>
+ *   <li>A flat {@link ArrayList} of {@link FontIcon}s populated from
+ *       two codepoints files: {@code res/raw/codepoints} (Material
+ *       Icons) and {@code res/raw/codepoints_custom} (the project's
+ *       custom icon font). {@link #get(String)} does a linear scan
+ *       with String-compared equality — see
+ *       {@link FontIcon#equals(Object)}.</li>
+ * </ul>
+ * The registry pattern means elements never need to plumb
+ * {@link Resources} around; they just ask for an icon by name at
+ * draw time.
  */
 public class Icons {
 
@@ -46,6 +66,12 @@ public class Icons {
     private static ArrayList<Drawable> icons;
 
 
+    /**
+     * One-shot loader: populates the cursor {@link BMPDrawable}s, the
+     * edit-view {@link Bitmap}s, and walks both codepoints files to
+     * register every Material and custom font icon. Must be called
+     * before any {@link #get(String)} lookup.
+     */
     public static void load(Context context) {
         Resources res = context.getResources();
         icons = new ArrayList<>();
@@ -54,7 +80,6 @@ public class Icons {
         cursorLeft = new BMPDrawable(res, R.drawable.ic_cursor_left);
         cursorRight = new BMPDrawable(res, R.drawable.ic_cursor_right);
 
-        //Edit View
         cancel = BitmapFactory.decodeResource(res, R.drawable.ic_action_cancel);
         accept = BitmapFactory.decodeResource(res, R.drawable.ic_action_accept);
         refresh = BitmapFactory.decodeResource(res, R.drawable.ic_action_refresh);
@@ -65,9 +90,16 @@ public class Icons {
 
 
     /**
-     * gets the material icons from the material icons font and the codepoints.txt
+     * Parses {@code res/raw/codepoints} and registers one
+     * {@link FontIcon} per line against {@link Font#MATERIAL_ICONS}.
+     * <p>
+     * How: each line is {@code "name hex_codepoint"}. The hex is parsed
+     * to an int and turned into a glyph string via
+     * {@link StringBuilder#appendCodePoint}. I/O errors are rethrown as
+     * {@link RuntimeException} — load failure here means the keyboard
+     * can't render its icons, so crashing loudly is the right call.
      *
-     * @param res resources used to load icons
+     * @param res resources used to open the raw file
      */
     private static void setMaterialIcons(Resources res) {
         InputStream is = res.openRawResource(R.raw.codepoints);
@@ -94,9 +126,13 @@ public class Icons {
 
 
     /**
-     * Gets the custom icons from the custom icon font and the codepoints_custom txt
+     * Same as {@link #setMaterialIcons} but for the project-owned
+     * {@code res/raw/codepoints_custom} file and
+     * {@link Font#CUSTOM_ICONS}. Kept as a separate method so the two
+     * fonts can diverge independently (different file, different
+     * typeface) without a flag parameter.
      *
-     * @param res resources used to load icons
+     * @param res resources used to open the raw file
      */
     private static void setCustomIcons(Resources res) {
         InputStream is = res.openRawResource(R.raw.codepoints_custom);
@@ -123,10 +159,16 @@ public class Icons {
 
 
     /**
-     * gets an icon from the global list of icons
+     * Looks up a registered icon by name.
+     * <p>
+     * How: linear scan of the icon list, relying on
+     * {@link FontIcon#equals(Object)}'s String-compared semantics so
+     * either the name or the glyph string can be used as the key.
+     * Returns {@code null} if no icon matches — callers that draw the
+     * result are responsible for their own null check.
      *
-     * @param name name of the icon
-     * @return the drawable
+     * @param name lookup key (icon name or glyph string)
+     * @return the matching drawable, or {@code null} if none registered
      */
     public static Drawable get(String name) {
         for (Drawable d : icons) {

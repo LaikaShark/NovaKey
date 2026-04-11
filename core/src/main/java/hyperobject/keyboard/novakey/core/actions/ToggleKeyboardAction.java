@@ -26,16 +26,25 @@ import hyperobject.keyboard.novakey.core.elements.keyboards.Keyboards;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Created by Viviano on 6/21/2016.
+ * Flips between the alphabet layout and the punctuation/symbols layout
+ * depending on which one is currently active. Dispatches the actual
+ * switch through {@link SetKeyboardAction} so layout changes always
+ * take the same code path.
+ * <p>
+ * Rules:
+ * <ul>
+ *   <li>DEFAULT (alphabet) → PUNCTUATION</li>
+ *   <li>PUNCTUATION or SYMBOLS → DEFAULT</li>
+ *   <li>Anything else → DEFAULT (the {@code default} branch acts as a
+ *       safe fallback to the alphabet)</li>
+ * </ul>
  */
 public class ToggleKeyboardAction implements Action<Void> {
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Reads the current keyboard code, picks the paired code by the
+     * rules in the class doc, and fires a {@link SetKeyboardAction} to
+     * actually perform the switch.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

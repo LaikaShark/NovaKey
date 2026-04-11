@@ -24,8 +24,6 @@ import android.app.Activity;
 import android.content.res.Configuration;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
-// TextInputLayout moved from the support-design library to the
-// Material Components for Android library during the AndroidX migration.
 import com.google.android.material.textfield.TextInputLayout;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -41,6 +39,23 @@ import hyperobject.keyboard.novakey.R;
 import hyperobject.keyboard.novakey.core.IconView;
 import hyperobject.keyboard.novakey.core.utils.drawing.Icons;
 
+/**
+ * Host activity for the interactive tutorial. Inflates
+ * {@code R.layout.tutorial_layout} which contains:
+ * <ul>
+ *   <li>A {@link TaskView} for the scrolling task panel.</li>
+ *   <li>An {@link EditText} the user types into.</li>
+ *   <li>A {@link TextInputLayout} hint wrapper and two
+ *       {@link IconView}s (help, clear).</li>
+ * </ul>
+ * The activity force-opens the soft keyboard on start, populates a
+ * sequence of {@link Task}s via {@link #setInstructions()}, and wires
+ * the index-change, text-change, and help/clear icon listeners that
+ * tie them together.
+ * <p>
+ * Post-modernization {@link TextInputLayout} comes from the Material
+ * Components artifact instead of the old support-design library.
+ */
 public class TutorialActivity extends Activity {
 
     private EditText mEditText;
@@ -49,6 +64,27 @@ public class TutorialActivity extends Activity {
     private TaskView mTaskView;
     private ArrayList<Task> mTasks;
 
+    /**
+     * Activity create hook: strips the title bar, installs the
+     * tutorial layout, force-opens the soft keyboard, wires up every
+     * child view, and finally calls {@link #setInstructions()} to
+     * build the task list.
+     * <p>
+     * Highlights of the wiring:
+     * <ul>
+     *   <li>{@link TaskView.OnIndexChangeListener} updates the hint,
+     *       toggles the help icon's visibility, triggers
+     *       {@link Task#onEnd()} and {@link Task#onStart(EditText)},
+     *       and re-disables Next on a forward move.</li>
+     *   <li>{@link TaskView.OnFinishListener} just calls
+     *       {@link #finish()}.</li>
+     *   <li>The clear icon hides when the field is empty.</li>
+     *   <li>A {@link TextWatcher} polls {@link TaskView#isComplete} on
+     *       every change and enables Next when the goal is met.</li>
+     *   <li>The help icon fires {@link Task#onTeach()} on the active
+     *       task.</li>
+     * </ul>
+     */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -63,14 +99,11 @@ public class TutorialActivity extends Activity {
             @Override
             public void onNewIndex(int index, int prev) {
                 if (mTasks != null) {
-                    //update task
                     mTaskText.setHint(mTasks.get(index).hintText());
 
-                    //update hint icon
                     mHintIC.setVisibility(mTasks.get(index).hasHint()
                             ? View.VISIBLE : View.INVISIBLE);
 
-                    //start depending on task
                     mTasks.get(prev).onEnd();
                     mEditText.setText("");
                     mTasks.get(index).onStart(mEditText);
@@ -101,7 +134,6 @@ public class TutorialActivity extends Activity {
         mClearIC.setClickListener(new IconView.OnClickListener() {
             @Override
             public void onClick() {
-//                Controller.cancelAnimators();
                 mEditText.getText().clear();
             }
         });
@@ -131,7 +163,6 @@ public class TutorialActivity extends Activity {
         mHintIC.setClickListener(new IconView.OnClickListener() {
             @Override
             public void onClick() {
-//                Controller.cancelAnimators();
                 if (mTasks != null)
                     mTasks.get(mTaskView.getIndex()).onTeach();
             }
@@ -139,11 +170,15 @@ public class TutorialActivity extends Activity {
         setInstructions();
 	}
 
-    // from the link above
+    /**
+     * Config-change hook that surfaces a toast whenever a hardware
+     * keyboard is (un)plugged. Left over from the original
+     * documentation link the author followed; has no functional
+     * effect on the tutorial flow.
+     */
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        // Checks whether a hardware keyboard is available
         if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
             Toast.makeText(this, "keyboard visible", Toast.LENGTH_SHORT).show();
         } else if (newConfig.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES) {
@@ -151,6 +186,22 @@ public class TutorialActivity extends Activity {
         }
     }
 
+    /**
+     * Builds the list of {@link Task}s driving the tutorial and
+     * installs them on {@link #mTaskView}. Each task is an anonymous
+     * subclass defined inline; the task sequence walks the user
+     * through tap, swipe, space, delete, shift/caps, and enter
+     * gestures before landing on a terminal "done" task.
+     * <p>
+     * All of the teach animation callbacks are commented out today —
+     * they still reference the dropped {@code Controller.animate}
+     * calls that haven't been rebuilt against the refactored
+     * controller.
+     * <p>
+     * The tail of this method contains an unused {@code tasks}
+     * String[] left over from the original hard-coded copy and a
+     * commented-out task block for cursor rotation.
+     */
     private void setInstructions() {
         mTasks = new ArrayList<>();
         mTasks.add(new Task("Press Next to begin!", "") {
@@ -357,6 +408,11 @@ public class TutorialActivity extends Activity {
                 "Congratulations! You finished!\nKeep typing,\npractice makes perfect" };
     }
 
+    /**
+     * Plain (x, y) pair used to address keyboard slots in the
+     * commented-out focus animations. Kept for symmetry with the
+     * dropped animation wiring.
+     */
     public static class Location {
         final int x, y;
 

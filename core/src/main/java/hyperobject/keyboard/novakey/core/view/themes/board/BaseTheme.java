@@ -28,7 +28,15 @@ import hyperobject.keyboard.novakey.core.utils.drawing.drawables.Drawable;
 import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 
 /**
- * Created by Viviano on 6/9/2015.
+ * Shared base class for every board-theme variant. Produces the plainest
+ * wheel NovaKey can draw: no filled back (subclasses opt in via
+ * {@link #drawBoardBack}), a thin inner circle, and five dividing lines
+ * in the accent color. Most concrete variants extend this class and
+ * override one or both of {@code drawBoardBack} / {@code drawLines} to
+ * change only the pieces they care about.
+ * <p>
+ * Holds two reusable {@link Paint} instances: {@code pB} for the board
+ * back and lines, {@code pT} for top-of-board item rendering.
  */
 public class BaseTheme implements BoardTheme {
 
@@ -36,6 +44,10 @@ public class BaseTheme implements BoardTheme {
     protected MasterTheme mParent;
 
 
+    /**
+     * Initializes the shared board and text paints with anti-aliasing
+     * flipped on.
+     */
     public BaseTheme() {
         pB = new Paint();
         pT = new Paint();
@@ -46,13 +58,9 @@ public class BaseTheme implements BoardTheme {
 
 
     /**
-     * Draw the center of the board
-     *
-     * @param x      center X position
-     * @param y      center Y position
-     * @param r      radius of keyboard
-     * @param sr
-     * @param canvas canvas to draw on
+     * Entry point that the main element calls every frame. Paints the
+     * board back (subclasses supply the shape) followed by the divider
+     * lines.
      */
     @Override
     public void drawBoard(float x, float y, float r, float sr, Canvas canvas) {
@@ -61,18 +69,34 @@ public class BaseTheme implements BoardTheme {
     }
 
 
-    //Override to change drawing
+    /**
+     * Subclass hook: paints the filled "base" of the wheel (solid disc,
+     * donut, half-and-half, etc.). The base class leaves this empty so
+     * a subclass can opt in only if it wants a back.
+     */
     protected void drawBoardBack(float x, float y, float r, float sr, Canvas canvas) {
         //Does nothing
     }
 
 
+    /**
+     * Convenience overload that draws the divider lines with a default
+     * stroke width of {@code 1/72} of the board radius.
+     */
     private void drawLines(float x, float y, float r, float sr, Canvas canvas) {
         drawLines(x, y, r, sr, 1 / 72f, canvas);
     }
 
 
-    //override to change drawing
+    /**
+     * Paints the wheel's inner circle and the five sector divider
+     * lines in the accent color. When 3D mode is on, lays down a soft
+     * drop shadow first by drawing shaded lines offset downward and
+     * then stamping a shadow layer on the circle before drawing it
+     * properly. Subclasses override this to change the divider style.
+     *
+     * @param w stroke width as a fraction of {@code r}
+     */
     protected void drawLines(float x, float y, float r, float sr, float w, Canvas canvas) {
         if (mParent.is3D()) {
             Draw.shadedLines(x, y + r / 72f, r, sr, 0x80000000, pB, canvas);
@@ -91,14 +115,10 @@ public class BaseTheme implements BoardTheme {
 
 
     /**
-     * Draws an object, ensuring contrast, on top of the board.
-     * Use this to draw thngs like letters, text, icons bmps and such
-     *
-     * @param drawable drawable object to draw
-     * @param x        x position to draw
-     * @param y        y position to draw
-     * @param size     size of object to draw
-     * @param canvas   canvas to draw on
+     * Paints a foreground item (letter, icon) in the parent theme's
+     * contrast color, optionally with a drop shadow when 3D is on. The
+     * actual rasterization is delegated to {@link Drawable#draw}, which
+     * handles whether the drawable is a glyph, path, or bitmap.
      */
     @Override
     public void drawItem(Drawable drawable, float x, float y, float size, Canvas canvas) {
@@ -111,11 +131,7 @@ public class BaseTheme implements BoardTheme {
     }
 
 
-    /**
-     * Sets this child's master theme for reference
-     *
-     * @param masterTheme this theme's parent
-     */
+    /** Stores the back-reference to the master theme. */
     @Override
     public void setParent(MasterTheme masterTheme) {
         mParent = masterTheme;
@@ -123,15 +139,14 @@ public class BaseTheme implements BoardTheme {
 
 
     /**
-     * Draw method for the picker item
-     *
-     * @param x        center x position
-     * @param y        center y position
-     * @param dimen    dimension equivalent to the maximum height
-     * @param selected whether it is selected
-     * @param index    sub index of picker item
-     * @param p        paint used
-     * @param canvas   canvas to draw on
+     * Renders a thumbnail of this board variant for the theme picker.
+     * <p>
+     * How: fits the wheel inside {@code dimen}, swaps the parent
+     * theme's colors to a neutral gray-on-light palette so the preview
+     * is legible regardless of the current live theme, then draws the
+     * back and divider lines via the same helpers used at runtime. If
+     * {@code selected} is true, stamps a blue outline around the
+     * preview.
      */
     @Override
     public void drawPickerItem(float x, float y, float dimen, boolean selected,

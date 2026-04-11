@@ -23,20 +23,41 @@ package hyperobject.keyboard.novakey.core.view.posns;
 import hyperobject.keyboard.novakey.core.model.MainDimensions;
 
 /**
- * Created by Viviano on 6/10/2016.
+ * Abstract positional descriptor that resolves to absolute screen
+ * coordinates given a {@link MainDimensions}.
+ * <p>
+ * Elements store one of these instead of a literal (x, y) so their
+ * geometry can be described once relative to the wheel's center/radii
+ * and then recomputed correctly whenever the user resizes the keyboard
+ * or switches orientation. Subtypes cover the common cases:
+ * <ul>
+ *     <li>{@link DeltaPosn} — absolute pixel offset from the center.</li>
+ *     <li>{@link RadiusPosn} — polar (angle, fraction-of-outer-radius).</li>
+ *     <li>{@link SmallRadiusPosn} — polar vs the inner radius.</li>
+ *     <li>{@link RadiiPosn} — polar, interpolated between inner and outer.</li>
+ *     <li>{@link DeltaRadiusPosn} — polar, outer-radius + pixel offset.</li>
+ * </ul>
+ * Callers typically consume this via {@code posn.getX(d)} / {@code posn.getY(d)}
+ * inside a draw pass.
  */
 public abstract class RelativePosn {
 
     /**
-     * @param model model to base posn off
-     * @return x coordinate based on the model dimensions
+     * Resolves this descriptor's X coordinate against the given wheel
+     * dimensions.
+     *
+     * @param model the current main dimensions (wheel center + radii)
+     * @return absolute X in view pixels
      */
     public abstract float getX(MainDimensions model);
 
 
     /**
-     * @param model model to base posn off
-     * @return y coordinate based on the model dimensions
+     * Resolves this descriptor's Y coordinate against the given wheel
+     * dimensions.
+     *
+     * @param model the current main dimensions (wheel center + radii)
+     * @return absolute Y in view pixels
      */
     public abstract float getY(MainDimensions model);
 }

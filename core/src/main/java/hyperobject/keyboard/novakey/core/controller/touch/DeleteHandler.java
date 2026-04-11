@@ -30,7 +30,22 @@ import hyperobject.keyboard.novakey.core.actions.input.DeleteAction;
 import hyperobject.keyboard.novakey.core.actions.input.InputAction;
 
 /**
- * Created by Viviano on 6/15/2016.
+ * Rotation-driven delete/undo handler. Activated when the typing
+ * handler detects a swipe-left delete gesture; after that the user can
+ * keep rotating their finger around the wheel to delete more characters
+ * or back off to re-insert what they just deleted.
+ * <p>
+ * State machine: starts in "backspacing" mode. Each counter-clockwise
+ * sector crossing fires a backspace and pushes the deleted string onto
+ * an undo stack; each clockwise crossing pops from the stack and
+ * re-inserts the string. If the user pops everything back, the handler
+ * flips into "forward-delete" mode — now clockwise rotation deletes
+ * characters to the <em>right</em> of the cursor and counter-clockwise
+ * restores them. Popping the forward-delete stack empty flips back to
+ * backspacing.
+ * <p>
+ * The overlay is restored to the current keyboard on finger-up so the
+ * user sees keys again.
  */
 public class DeleteHandler extends RotatingHandler {
 
@@ -41,6 +56,11 @@ public class DeleteHandler extends RotatingHandler {
     private boolean mGoingFast = false;
 
 
+    /**
+     * Pre-allocates the four delete-action variants (slow/fast ×
+     * backspace/forward-delete) and the undo stack so the rotate tick
+     * path is allocation-free.
+     */
     public DeleteHandler() {
         mDelete = new DeleteAction(true);
         mBackspace = new DeleteAction();
@@ -52,28 +72,14 @@ public class DeleteHandler extends RotatingHandler {
     }
 
 
-    /**
-     * Called when the user enters or exits the inner circle.
-     * Call unrelated to onMove()
-     *
-     * @param entered    true if event was triggered by entering the
-     *                   inner circle, false if was triggered by exit
-     * @param controller
-     */
+    /** No-op — this handler doesn't care about inner-circle transitions. */
     @Override
     protected boolean onCenterCross(boolean entered, Controller controller) {
         return true;
     }
 
 
-    /**
-     * Called for every move event so that the handler can update
-     * display properly. Called before onRotate()
-     *
-     * @param x          current finger x position
-     * @param y          current finger y position
-     * @param controller
-     */
+    /** No-op — deletion is driven entirely by {@link #onRotate}. */
     @Override
     protected boolean onMove(float x, float y, Controller controller) {
         return true;
@@ -81,12 +87,21 @@ public class DeleteHandler extends RotatingHandler {
 
 
     /**
-     * Called when the touch listener detects that there
-     * has been a cross, either in sector or range
-     *
-     * @param clockwise  true if rotation is clockwise, false otherwise
-     * @param inCenter   if finger position is currently in the center
-     * @param controller
+     * One tick per sector crossing. Dispatches on the current mode:
+     * <ul>
+     *   <li><b>Backspacing</b> (default): counter-clockwise fires a
+     *       backspace and pushes the deleted chunk; clockwise pops the
+     *       last deleted chunk and re-inputs it. Emptying the stack
+     *       flips into forward-delete mode.</li>
+     *   <li><b>Forward-delete</b>: clockwise fires a forward delete
+     *       (delete-to-right-of-cursor) and pushes the deleted chunk;
+     *       counter-clockwise pops and re-inputs it with the
+     *       "right-of-cursor" flag so the cursor position is preserved.
+     *       Emptying the stack flips back into backspacing mode.</li>
+     * </ul>
+     * The {@code inCenter} hint is ignored — deletion fires on every
+     * sector crossing regardless of whether the finger is inside the
+     * inner circle.
      */
     @Override
     protected boolean onRotate(boolean clockwise, boolean inCenter, Controller controller) {
@@ -120,11 +135,8 @@ public class DeleteHandler extends RotatingHandler {
 
 
     /**
-     * Called when the user lifts finger, typically this
-     * method expects a finalized action to be triggered
-     * like typing a character
-     *
-     * @param controller
+     * On finger-up, swaps the overlay back to the current keyboard and
+     * releases the handler.
      */
     @Override
     protected boolean onUp(Controller controller) {

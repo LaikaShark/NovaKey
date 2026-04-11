@@ -29,7 +29,11 @@ import hyperobject.keyboard.novakey.core.NovaKeyService;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Created by vcantu on 9/18/16.
+ * Shows a short Android {@link Toast} from inside an Action. Exists as
+ * an Action (rather than a direct call) so feedback messages like
+ * "Text Copied" flow through the same {@link Controller#fire} pipeline
+ * as every other state change, and so other actions can composite a
+ * toast without holding a Context reference themselves.
  */
 public class ShowToastAction implements Action<Void> {
 
@@ -37,6 +41,11 @@ public class ShowToastAction implements Action<Void> {
     private final int mLength;
 
 
+    /**
+     * @param message the text to display in the toast
+     * @param length  one of {@link Toast#LENGTH_SHORT} or
+     *                {@link Toast#LENGTH_LONG}
+     */
     public ShowToastAction(String message, int length) {
         mMessage = message;
         mLength = length;
@@ -44,11 +53,9 @@ public class ShowToastAction implements Action<Void> {
 
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Posts the {@code Toast.show()} call onto the IME's main looper,
+     * so this action can be fired safely from any thread — the toast
+     * API itself must run on the UI thread.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

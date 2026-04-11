@@ -27,7 +27,15 @@ import android.graphics.Typeface;
 import hyperobject.keyboard.novakey.core.utils.drawing.Draw;
 
 /**
- * Created by Viviano on 12/26/2015.
+ * A {@link Drawable} that paints a single glyph from an icon font such
+ * as Material Icons or NovaKey's custom icon font. Each {@code FontIcon}
+ * binds a human-readable {@code name} (e.g. "check", "shift") to the
+ * unicode codepoint that the font maps to that icon, plus the
+ * {@link Typeface} to draw with.
+ * <p>
+ * Populated by {@link hyperobject.keyboard.novakey.core.utils.drawing.Icons#load},
+ * which parses the codepoints text files shipped alongside the font
+ * assets and registers one {@code FontIcon} per line.
  */
 public class FontIcon implements Drawable {
 
@@ -35,6 +43,14 @@ public class FontIcon implements Drawable {
     private Typeface font;
 
 
+    /**
+     * Binds an icon name to a glyph string and its source typeface.
+     *
+     * @param name lookup key used by {@link #equals(Object)}
+     * @param code the glyph string (typically one codepoint produced
+     *             from the codepoints file via {@code appendCodePoint})
+     * @param font the icon font to render {@code code} against
+     */
     public FontIcon(String name, String code, Typeface font) {
         this.name = name;
         this.code = code;
@@ -42,6 +58,14 @@ public class FontIcon implements Drawable {
     }
 
 
+    /**
+     * Draws the icon glyph centered at (x, y) sized to {@code size}.
+     * <p>
+     * How: saves the paint's current typeface and text size, installs
+     * this icon's font + the requested size, delegates to
+     * {@link Draw#text}, then restores the previous paint state so the
+     * caller's paint is left untouched.
+     */
     @Override
     public void draw(float x, float y, float size, Paint p, Canvas canvas) {
         Typeface tempTTF = p.getTypeface();
@@ -56,6 +80,14 @@ public class FontIcon implements Drawable {
     }
 
 
+    /**
+     * Equality-by-name: matches against either the registered {@code name}
+     * or the glyph {@code code} when compared to a {@link String}. Lets
+     * {@link hyperobject.keyboard.novakey.core.utils.drawing.Icons#get(String)}
+     * iterate the registry and {@code equals} each entry against the
+     * requested name without a separate map. Falls back to identity
+     * equality for non-String comparisons.
+     */
     @Override
     public boolean equals(Object o) {
         if (o instanceof String) {

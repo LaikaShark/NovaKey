@@ -41,6 +41,18 @@ import hyperobject.keyboard.novakey.core.model.Model;
 import hyperobject.keyboard.novakey.core.model.Settings;
 import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 
+/**
+ * One concrete keyboard layout (English, Symbols, Punctuation, …). Owns
+ * a 2D array of {@link Key}s addressed by {@code [group][loc]}, draws
+ * them into the wheel, and decodes touch gestures into either a key
+ * press or a shortcut gesture (space/delete/enter/shift).
+ * <p>
+ * Also doubles as its own {@link Iterator} over all keys (group-major,
+ * then loc) so callers can {@code for (Key k : keyboard)} without an
+ * intermediate collection. The iterator state is stored on the keyboard
+ * itself, so concurrent iteration is <em>not</em> supported — fine
+ * because the draw pass is single-threaded.
+ */
 public class Keyboard implements OverlayElement, Iterator<Key>, Iterable<Key> {
 
     private final TouchHandler mHandler;
@@ -50,6 +62,13 @@ public class Keyboard implements OverlayElement, Iterator<Key>, Iterable<Key> {
     private int currG = 0, currL = 0;
 
 
+    /**
+     * Builds the keyboard from a pre-filled {@code [group][loc]} grid
+     * and installs a {@link TypingHandler} as the touch strategy.
+     *
+     * @param name human-readable name ("English", "Symbols", …)
+     * @param keys the group/loc grid of keys
+     */
     public Keyboard(String name, Key[][] keys) {
         this.keys = keys;
         this.name = name;
@@ -57,6 +76,11 @@ public class Keyboard implements OverlayElement, Iterator<Key>, Iterable<Key> {
     }
 
 
+    /**
+     * Resets the iterator cursor and returns {@code this}. Since the
+     * cursor lives on the keyboard, calling {@code iterator()} again
+     * mid-iteration will silently restart from the beginning.
+     */
     @Override
     public Iterator<Key> iterator() {
         currG = 0;
@@ -65,12 +89,18 @@ public class Keyboard implements OverlayElement, Iterator<Key>, Iterable<Key> {
     }
 
 
+    /** True while the cursor still points to a valid (group, loc) slot. */
     @Override
     public boolean hasNext() {
         return currG < keys.length && currL < keys[currG].length;
     }
 
 
+    /**
+     * Returns the next key and advances the cursor. When {@code loc}
+     * exhausts the current group it wraps to the next group at loc 0.
+     * Throws {@link NoSuchElementException} if called past the end.
+     */
     @Override
     public Key next() {
         if (currG >= keys.length || currL >= keys[currG].length)
@@ -85,12 +115,18 @@ public class Keyboard implements OverlayElement, Iterator<Key>, Iterable<Key> {
     }
 
 
+    /** Removal is not supported; the backing array is fixed at construction. */
     @Override
     public void remove() {
         throw new UnsupportedOperationException();
     }
 
 
+    /**
+     * Returns the key at {@code [group][loc]}, folding any out-of-range
+     * loc back to loc 0 so alt-layout groups (which have fewer slots)
+     * degrade gracefully instead of throwing.
+     */
     private Key getKey(int group, int loc) {
         if (loc > keys[group].length)//for alt layouts
             return keys[group][0];
@@ -99,13 +135,11 @@ public class Keyboard implements OverlayElement, Iterator<Key>, Iterable<Key> {
 
 
     /**
-     * Draws the element.
-     * Never call this method directly unless inside of a
-     * View's onDraw() method
-     *
-     * @param model
-     * @param theme  theme for drawing properties
-     * @param canvas canvas to draw on
+     * Draws every key in the keyboard, scaled to the current board
+     * radius, unless the model says letters should be hidden (user
+     * preference) or the field is a password and password-letter-hiding
+     * is on. Key size is scaled by {@code radius / (16/3)} so keys stay
+     * proportional to the board across resolutions.
      */
     @Override
     public void draw(Model model, MasterTheme theme, Canvas canvas) {
@@ -125,6 +159,11 @@ public class Keyboard implements OverlayElement, Iterator<Key>, Iterable<Key> {
     }
 
 
+    /**
+     * Forwards the touch event to the {@link TypingHandler} installed
+     * at construction, which collects the area-crossing list and
+     * eventually calls back into {@link #getKey(List)}.
+     */
     @Override
     public boolean handle(MotionEvent event, Controller control) {
         return mHandler.handle(event, control);
@@ -132,8 +171,12 @@ public class Keyboard implements OverlayElement, Iterator<Key>, Iterable<Key> {
 
 
     /**
-     * will return the keyCode for the actions done
-     * or Keyboard.KEYCODE_CANCEL if invalid
+     * Decodes a full list of wheel areas crossed by a typing gesture
+     * into the action to fire. Tries gesture shortcuts first (see
+     * {@link #getGesture}); if none match, maps the areas onto a
+     * {@code (group, loc)} address and returns the corresponding key.
+     * Returns {@code null} if the list is empty or the first area was
+     * off-wheel.
      */
     public Action getKey(List<Integer> areasCrossed) {
         if (areasCrossed.size() <= 0)
@@ -155,6 +198,23 @@ public class Keyboard implements OverlayElement, Iterator<Key>, Iterable<Key> {
     }
 
 
+    /**
+     * Maps an area-crossing list to a {@code (group, loc)} key address.
+     * <p>
+     * How: the first area is the gesture's starting sector. It checks
+     * the last area first, then the second area, so a user who briefly
+     * dipped through a neighboring sector still gets the intended key.
+     * <ul>
+     *   <li>First == 0 (center start): loc is the target sector.</li>
+     *   <li>Check == first: loc 0 (stayed in the sector).</li>
+     *   <li>Check == first+1 (with wrap): loc 1 (clockwise neighbor).</li>
+     *   <li>Check == 0: loc 2 (dipped into the center).</li>
+     *   <li>Check == first-1 (with wrap): loc 3 (counter-clockwise).</li>
+     *   <li>Check == -1 with exactly two areas: loc 4 (went off-wheel).</li>
+     * </ul>
+     * Returns {@code null} if the starting area was off-wheel or no
+     * rule matched.
+     */
     private Location getLoc(List<Integer> areasCrossed) {
         if (areasCrossed.size() <= 0)
             return null;
@@ -192,6 +252,7 @@ public class Keyboard implements OverlayElement, Iterator<Key>, Iterable<Key> {
     }
 
 
+    /** Plain (group, loc) pair used as the return type of {@link #getLoc}. */
     public static class Location {
         final int x, y;
 
@@ -204,10 +265,16 @@ public class Keyboard implements OverlayElement, Iterator<Key>, Iterable<Key> {
 
 
     /**
-     * Takes list of areas crossed and returns an action based on it
-     *
-     * @param areasCrossed list of areas crossed by the user
-     * @return gesture made as an action
+     * Recognizes the four wheel-wide gesture shortcuts that bypass the
+     * keyboard grid. All four require 3–5 areas crossed, passing through
+     * either the center (area 0) or the opposite sector (area 3):
+     * <ul>
+     *   <li>Sector 2 → 4/5 (swipe right through center/3) = space</li>
+     *   <li>Sector 4 → 2 (swipe left through center/3) = delete</li>
+     *   <li>Sector 1 or 5 → 3 (swipe down through center) = enter</li>
+     *   <li>Sector 3 → 1 or 5 (swipe up through center) = shift</li>
+     * </ul>
+     * Returns {@code null} if no gesture matches.
      */
     public static Action getGesture(List<Integer> areasCrossed) {
         int size = areasCrossed.size();

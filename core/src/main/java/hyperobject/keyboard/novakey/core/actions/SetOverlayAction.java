@@ -26,24 +26,30 @@ import hyperobject.keyboard.novakey.core.elements.keyboards.overlays.OverlayElem
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Created by Viviano on 6/16/2016.
+ * Swaps the active {@link OverlayElement} the {@code MainElement}
+ * delegates to — i.e. the keys/menus layer drawn on top of the wheel.
+ * Used to move between the typing overlay and the cursor/delete/popup
+ * overlays without tearing down the whole element tree.
+ * <p>
+ * User-visible effect: whatever was on top of the wheel disappears and
+ * the new overlay takes over both drawing and touch routing.
  */
 public class SetOverlayAction implements Action<Void> {
 
     private final OverlayElement mElement;
 
 
+    /**
+     * @param element the new overlay to install as the wheel's top layer
+     */
     public SetOverlayAction(OverlayElement element) {
         mElement = element;
     }
 
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Writes the new overlay into the model and invalidates the view
+     * so it redraws with the replacement overlay.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

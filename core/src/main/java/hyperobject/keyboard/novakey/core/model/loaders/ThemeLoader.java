@@ -29,13 +29,21 @@ import hyperobject.keyboard.novakey.core.model.factories.ThemeFactory;
 import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 
 /**
- * Created by Viviano on 8/14/2016.
+ * Loader that round-trips the active {@link MasterTheme} through the
+ * JSON blob stored under {@link Settings#pref_theme}. Serialization and
+ * deserialization are delegated to {@link ThemeFactory}; this class is
+ * the thin {@link Loader} adapter that owns the {@link SharedPreferences}
+ * handle and funnels reads/writes through the factory.
  */
 public class ThemeLoader implements Loader<MasterTheme> {
 
     private final SharedPreferences mSharedPref;
 
 
+    /**
+     * Captures the default {@link SharedPreferences} handle the loader
+     * will read from and write to.
+     */
     public ThemeLoader(Context context) {
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         ;
@@ -43,9 +51,9 @@ public class ThemeLoader implements Loader<MasterTheme> {
 
 
     /**
-     * Loads the element from where ever this interface saved it from
-     *
-     * @return a new loaded object
+     * Reads the stored theme blob and asks {@link ThemeFactory} to
+     * parse it. Prints the raw string to stdout for debugging —
+     * XXX pre-existing {@code System.out.println} calls, left intact.
      */
     @Override
     public MasterTheme load() {
@@ -58,9 +66,8 @@ public class ThemeLoader implements Loader<MasterTheme> {
 
 
     /**
-     * Saves the element to be loaded later
-     *
-     * @param theme object to be saved
+     * Serializes {@code theme} via {@link ThemeFactory#stringFromTheme}
+     * and commits the result to prefs synchronously.
      */
     @Override
     public void save(MasterTheme theme) {

@@ -28,10 +28,20 @@ import hyperobject.keyboard.novakey.core.utils.drawing.Draw;
 import hyperobject.keyboard.novakey.core.utils.drawing.drawables.Drawable;
 
 /**
- * Created by Viviano on 6/10/2015.
+ * Ring-shaped board variant: fills only the annulus between the inner
+ * and outer radius with the accent color, leaving the center visually
+ * punched out. Sector divider lines are short tick marks drawn in the
+ * primary color rather than full radii.
  */
 public class DonutTheme extends BaseTheme {
 
+    /**
+     * Paints the donut ring. Uses a stroked circle drawn at the
+     * midpoint radius {@code sr + (r - sr) / 2} with a stroke width of
+     * {@code r - sr}, which gives a filled annulus with a single
+     * {@code drawCircle} call. Adds a drop shadow under the ring when
+     * 3D mode is on.
+     */
     @Override
     public void drawBoardBack(float x, float y, float r, float sr, Canvas canvas) {
         if (mParent.is3D())
@@ -47,6 +57,11 @@ public class DonutTheme extends BaseTheme {
     }
 
 
+    /**
+     * Draws short divider ticks in the primary color, 1/10 of the ring
+     * width long, placed along the ring's radial midline. No inner
+     * circle is drawn — the donut's hole is already visible.
+     */
     @Override
     public void drawLines(float x, float y, float r, float sr, float w, Canvas canvas) {
         //draw lines and circle
@@ -58,28 +73,24 @@ public class DonutTheme extends BaseTheme {
     }
 
 
+    /**
+     * Currently falls through to the base implementation. The legacy
+     * commented-out code (intentionally left in place by the original
+     * author) sketches how a future multi-color variant could clip
+     * the item inside the inner circle and redraw it in a second color;
+     * see the {@code TODO: multi color for donut themes} note.
+     */
     @Override
     public void drawItem(Drawable drawable, float x, float y, float size, Canvas canvas) {
-        //        menu.draw(view, this, canvas);
-//        if (outerColor() != textColors()[0]) {
-//            try {
-//                canvas.save();
-//                Path p = new Path();
-//                p.addCircle(x, y, sr + 2, Path.Direction.CW);
-//                canvas.clipPath(p);
-//
-//                pT.setColor(textColors()[0]);
-//                menu.draw(view, this, canvas);
-//                canvas.restore();
-//            } catch (IllegalStateException e) {
-//                e.printStackTrace();
-//            }
-//        }
         //TODO: multi color for donut themes
         super.drawItem(drawable, x, y, size, canvas);
     }
 
 
+    /**
+     * Picks the best-contrasting color for items drawn over the ring
+     * (which is painted with the accent color).
+     */
     protected int outerColor() {
         return Util.bestColor(
                 mParent.getPrimaryColor(),
@@ -88,6 +99,11 @@ public class DonutTheme extends BaseTheme {
     }
 
 
+    /**
+     * Picks the best-contrasting color for items drawn over the center
+     * hole (which shows whatever color is behind the donut — usually
+     * the primary color).
+     */
     protected int centerColor() {
         return Util.bestColor(
                 mParent.getContrastColor(),

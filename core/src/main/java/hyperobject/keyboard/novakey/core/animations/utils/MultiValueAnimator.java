@@ -28,14 +28,30 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by Viviano on 1/22/2016.
+ * {@link ValueAnimator} extension that animates many keyed values in
+ * parallel over a single {@code [0, 1]} pass, each with its own
+ * delay/duration sub-window and interpolator. Targets register via
+ * {@link #addInterpolator}; when {@link #start} is called the
+ * animator totals up the longest {@code delay + duration} to pick an
+ * overall length, wraps every registered interpolator in a
+ * {@link DelayableInterpolator} over that total, then ticks a single
+ * Android {@code ValueAnimator} from 0 to 1. Per-tick, the registered
+ * {@link MultiUpdateListener} is fired once per target (with that
+ * target's locally-rescaled fraction) and then once globally.
+ * <p>
+ * Concrete callers must always build instances via {@link #create()}
+ * so the base {@code ValueAnimator} is configured with the required
+ * {@code ofFloat(0, 1)} value range.
+ *
+ * @param <K> type used to key each sub-value (usually
+ *            {@link hyperobject.keyboard.novakey.core.elements.keyboards.Key})
  */
 public class MultiValueAnimator<K> extends ValueAnimator {
 
     /**
-     * Static method which MUST be used to start a MultiValueAnimator
-     *
-     * @return A the equivalent of ValueAnimator.ofFloat(0, 1)
+     * Factory that builds a new animator pre-configured with the
+     * {@code ofFloat(0, 1)} value range — required so the
+     * {@code DelayableInterpolator}s see fractions in the right range.
      */
     public static <K> MultiValueAnimator<K> create() {
         MultiValueAnimator<K> anim = new MultiValueAnimator<>();
@@ -51,8 +67,10 @@ public class MultiValueAnimator<K> extends ValueAnimator {
 
 
     /**
-     * Constructor initializes data and adds an update listener which calls the
-     * MultiUpdateListener methods onValueUpdate() & onAllUpdate()
+     * Allocates the builder map and installs the per-frame update
+     * listener that fans each tick out to the
+     * {@link MultiUpdateListener}. Do not call directly — use
+     * {@link #create()} so the value range is set up correctly.
      */
     public MultiValueAnimator() {
         super();
@@ -76,8 +94,11 @@ public class MultiValueAnimator<K> extends ValueAnimator {
 
 
     /**
-     * Determines total duration of animation & sets DelayInterpolators
-     * Then starts the animation
+     * Figures out the longest {@code delay + duration} across every
+     * registered target, sets that as the overall animator duration,
+     * then rebuilds the per-target map with {@link DelayableInterpolator}s
+     * stretched against that total. Finally kicks off the underlying
+     * {@link ValueAnimator}.
      */
     @Override
     public void start() {
@@ -104,24 +125,36 @@ public class MultiValueAnimator<K> extends ValueAnimator {
 
 
     /**
-     * Adds a new interpolator which will be used to create its corresponding DelayInterpolator
+     * Registers a target's sub-interpolator. Must be called before
+     * {@link #start()}; the triple {@code (interpolator, delay,
+     * duration)} is stashed until start time and then wrapped in a
+     * {@link DelayableInterpolator}.
      *
-     * @param key              key corresponding to this interpolator
-     * @param timeInterpolator interpolator for DelayInterpolator
-     * @param delay            delay of specific value animation
-     * @param duration         duration of specific value animation
+     * @param key              target identifier
+     * @param timeInterpolator curve applied inside this target's
+     *                         active window
+     * @param delay            offset from t=0 before this target
+     *                         begins animating, in milliseconds
+     * @param duration         how long this target animates for, in
+     *                         milliseconds
      */
     public void addInterpolator(K key, TimeInterpolator timeInterpolator, long delay, long duration) {
         mInterpolatorData.put(key, new InterpolatorData(timeInterpolator, delay, duration));
     }
 
 
-    // holds interpolator data until start
+    /**
+     * Struct holding a target's interpolator plus its delay and
+     * duration between {@link #addInterpolator} and {@link #start()}.
+     */
     private class InterpolatorData {
         TimeInterpolator interpolator;
         long delay, duration;
 
 
+        /**
+         * Stores the three registration fields.
+         */
         public InterpolatorData(TimeInterpolator interpolator, long delay, long duration) {
             this.interpolator = interpolator;
             this.delay = delay;
@@ -131,7 +164,9 @@ public class MultiValueAnimator<K> extends ValueAnimator {
 
 
     /**
-     * @return all the objects being acted on
+     * Returns the set of registered target keys after {@link #start()}
+     * has built the final interpolator map. Calling before start will
+     * throw {@link NullPointerException}.
      */
     public Set<K> getKeys() {
         return mInterpolators.keySet();
@@ -139,9 +174,8 @@ public class MultiValueAnimator<K> extends ValueAnimator {
 
 
     /**
-     * Sets update multi update listener
-     *
-     * @param updateListener listener to set
+     * Installs the per-tick listener that will receive both the
+     * per-target and end-of-frame callbacks.
      */
     public void setMultiUpdateListener(MultiUpdateListener updateListener) {
         mUpdateListener = updateListener;
@@ -149,28 +183,31 @@ public class MultiValueAnimator<K> extends ValueAnimator {
 
 
     /**
-     * Update Listener that contains callback methods which users of MultiValueAnimator
-     * will use to specify values
+     * Per-frame callback contract for {@link MultiValueAnimator}.
+     * Implementations receive one {@link #onValueUpdate} call per
+     * registered target per frame, followed by a single
+     * {@link #onAllUpdate} call marking the end of the frame.
      */
     public interface MultiUpdateListener<K> {
         /**
-         * Callback method that will be called for each different value which is being animated.
+         * Fired once per registered target on every frame, with that
+         * target's locally-interpolated fraction.
          *
-         * @param animator this animator
-         * @param value    If a specific value is given a delay, the value will be 0 until the delay
-         *                 is reached. If a specific value is done animating, the value will be 1
-         *                 until the whole animation is finished
-         * @param key      key of the specific value animatios
+         * @param animator driving animator
+         * @param value    sub-fraction for this target; 0 until the
+         *                 delay elapses, 1 once the sub-window ends
+         * @param key      target whose fraction this is
          */
         void onValueUpdate(ValueAnimator animator, float value, K key);
 
 
         /**
-         * Callback method that will be called at the end of each update.
-         * Will be called after all the onValueUpdate() methods are called
+         * Fired once per frame after all {@link #onValueUpdate}
+         * callbacks for the same frame have been delivered, carrying
+         * the raw parent fraction.
          *
-         * @param animator this animator
-         * @param value    current animated value from 0 - 1 depending on given interpolator
+         * @param animator driving animator
+         * @param value    the raw parent fraction in {@code [0, 1]}
          */
         void onAllUpdate(ValueAnimator animator, float value);
     }

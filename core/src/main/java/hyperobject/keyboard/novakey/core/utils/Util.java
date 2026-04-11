@@ -29,45 +29,84 @@ import android.graphics.RectF;
 import java.util.ArrayList;
 
 /**
- * Created by Viviano on 7/4/2015.
+ * Miscellaneous static helpers used all over the keyboard: trigonometry
+ * for the polar wheel layout, string munging for text entry, colour
+ * math for contrast/shade adjustments, and a couple of animation
+ * composition helpers.
+ * <p>
+ * Everything is stateless and side-effect free except where noted.
+ * Related drawing utilities live next door in
+ * {@link hyperobject.keyboard.novakey.core.utils.drawing} — this class
+ * is the junk drawer for logic that didn't fit anywhere else.
  */
 public class Util {
 
-    //----------------------------------------Trig Utils---------------------------------------
-    //returns distance between two points
+    /**
+     * Euclidean distance between two points, returned as a {@code float}
+     * because almost every caller is already working in screen pixels.
+     */
     public static float distance(float x1, float y1, float x2, float y2) {
         return (float) Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
     }
 
 
+    /**
+     * Convenience for building a square {@link RectF} of half-edge
+     * {@code r} centred on {@code (x, y)} — the shape most wheel
+     * drawables want when asked to render into a bounding box.
+     */
     public static RectF square(float x, float y, float r) {
         return new RectF(x - r, y - r, x + r, y + r);
     }
 
 
+    /**
+     * Angle of the vector from centre {@code (cx, cy)} to point
+     * {@code (x, y)} in standard screen coordinates (y grows downward).
+     * Returns a value in {@code (-π, π]}; use {@link #getAngle} if you
+     * want the {@code [0, 2π)} normalised version instead.
+     */
     public static double angle(float cx, float cy, float x, float y) {
         return Math.atan2(y - cy, x - cx);
     }
 
 
-    //Gets angle from 0, 0
+    /**
+     * Angle of {@code (x, y)} relative to the origin, normalised into
+     * {@code [0, 2π)} by wrapping the negative half of {@code atan2}
+     * around.
+     */
     public static float getAngle(float x, float y) {
         double angle = Math.atan2(y, x);
         return (float) (angle < 0 ? Math.PI * 2 + angle : angle);
     }
 
 
+    /**
+     * Polar-to-cartesian x: walks {@code r} units along angle {@code a}
+     * from centre x {@code cx}.
+     */
     public static float xFromAngle(float cx, float r, double a) {
         return cx + (float) (Math.cos(a) * r);
     }
 
 
+    /**
+     * Polar-to-cartesian y: walks {@code r} units along angle {@code a}
+     * from centre y {@code cy}, flipping the sign so "up" (positive
+     * angle) moves visually upward in Android's y-grows-down coords.
+     */
     public static float yFromAngle(float cy, float r, double a) {
         return cy - (float) (Math.sin(a) * r);
     }
 
 
-    //----------------------------String utils---------------------------------------
+    /**
+     * Capitalises the first character of {@code text}, leaving the rest
+     * untouched. Returns the original string unchanged on empty input
+     * and falls back to just the capitalised first character if the
+     * substring call blows up.
+     */
     public static String capsFirst(String text) {
         if (text.length() < 0)
             return text;
@@ -81,6 +120,12 @@ public class Util {
     }
 
 
+    /**
+     * Title-cases every word in {@code text} — the first character and
+     * every character that immediately follows a space is upper-cased.
+     * Uses naive string concatenation; fine for the short strings the
+     * keyboard handles.
+     */
     public static String uppercaseFirst(String text) {
         String res = "";
         for (int i = 0; i < text.length(); i++) {
@@ -93,6 +138,13 @@ public class Util {
     }
 
 
+    /**
+     * Returns the index of the n-th occurrence of {@code c} in
+     * {@code s}, 1-indexed. Implemented recursively: for {@code n <= 1}
+     * falls through to {@link String#indexOf}; otherwise strips off
+     * everything up to the first match and recurses on the remainder,
+     * adding the stripped length back in to restore an absolute index.
+     */
     public static int nthIndexOf(String s, int n, char c) {
         if (n <= 1)
             return s.indexOf(c);
@@ -103,6 +155,16 @@ public class Util {
     }
 
 
+    /**
+     * Inserts newlines into {@code str} so that no rendered line
+     * exceeds {@code max} pixels wide when measured with {@code p}.
+     * <p>
+     * How: scans character by character, remembering the most recent
+     * space. When the measured width hits {@code max} it breaks at the
+     * last space; if there was no space since the current line started
+     * it hard-breaks mid-word and rewinds the scan so the next measured
+     * line starts fresh.
+     */
     public static String toMultiline(String str, Paint p, float max) {
         if (max > 0) {
             int s = 0;
@@ -127,9 +189,15 @@ public class Util {
     }
 
 
+    /**
+     * Returns {@code str} with a newline inserted after position
+     * {@code index}, consuming one space if the next character is one
+     * (so the break point doesn't leave an orphan space at the start of
+     * the new line). Returns {@code str} unchanged if {@code index} is
+     * at or past the final character.
+     */
     public static String newLineAt(String str, int index) {
         if (index < str.length() - 1) {
-//            "01234 6789";
             String prev = str.substring(0, index + 1),
                     next = str.substring(index + 1);
             if (next.length() > 0 && next.charAt(0) == ' ')
@@ -140,6 +208,13 @@ public class Util {
     }
 
 
+    /**
+     * Character-count based multiline wrap: breaks {@code s} so each
+     * line has at most {@code lineMax} characters. Splits on spaces
+     * first and then chops any single word longer than {@code lineMax}
+     * into hard-wrapped chunks. Note that this overload does not share
+     * any code with the Paint-based one above.
+     */
     public static String toMultiline(String s, int lineMax) {
         String[] S = s.split(" ");
         String res = "";
@@ -162,12 +237,23 @@ public class Util {
     }
 
 
+    /**
+     * Parses a web-style hex colour string (e.g. {@code "#aabbcc"} or
+     * {@code "aabbcc"}) into an opaque ARGB int by reading the last six
+     * characters and OR-ing in full alpha.
+     */
     public static int webToColor(String webColor) {
         String s = webColor.substring(webColor.length() - 6, webColor.length());
         return Integer.valueOf(s, 16) + 0xFF000000;
     }
 
 
+    /**
+     * Number of non-overlapping occurrences of {@code match} inside
+     * {@code str}, counted by sliding a fixed-width window across the
+     * haystack. Special-cases an exact equality so identical strings
+     * report at least one match.
+     */
     public static int countMatches(String str, String match) {
         int count = 0;
         if (match.length() < str.length()) {
@@ -182,6 +268,14 @@ public class Util {
     }
 
 
+    /**
+     * Dead code — intended to split a string into a sequence of
+     * grapheme-ish runs around emoji code points, but the loop body
+     * never populates its accumulator list and {@link #isEmoji} is a
+     * stub that always returns {@code false}, so this currently returns
+     * an empty array cast from an empty list. Left in place; a later
+     * dead-code sweep will remove it.
+     */
     public static String[] splitEmoji(String str) {
         ArrayList<String> list = new ArrayList<>();
         int s = 0;
@@ -196,21 +290,29 @@ public class Util {
         return (String[]) list.toArray();
     }
 
-    //-------------------------------------Character Utils---------------------------------------
 
-
+    /** True if {@code keyCode} is an ASCII digit 0–9. */
     public static boolean isNumber(int keyCode) {
         return keyCode >= '0' && keyCode <= '9';
     }
 
 
+    /**
+     * Stub emoji check — always returns {@code false}. Companion to
+     * {@link #splitEmoji} which was never finished.
+     */
     public static boolean isEmoji(int codePoint) {
         return false;
     }
 
-    //--------------------------------------Color Utils-------------------------------------------
 
-
+    /**
+     * Brightens or darkens a colour by {@code f} shade steps (one step
+     * is 7.5%). Pure black is bumped to {@code 0xFF202020} first so
+     * that multiplication actually has an effect, and the result is
+     * clamped through {@link #redestributeRGB} to preserve hue when
+     * any channel would otherwise overflow.
+     */
     public static int colorShade(int c, int f) {
         if (c == Color.BLACK)
             c = 0xFF202020;
@@ -220,11 +322,19 @@ public class Util {
     }
 
 
+    /** Clamps each of {@code r, g, b} to 255 before packing into ARGB. */
     private static int clampRGB(int r, int g, int b) {
         return Color.argb(255, Math.min(r, 255), Math.min(g, 255), Math.min(b, 255));
     }
 
 
+    /**
+     * Colour-safe brightness scaling: if {@code (r, g, b)} all fit in
+     * one byte returns them as-is, otherwise blends the over-range
+     * colour toward white by the overflow amount so the hue is
+     * preserved instead of one channel clipping to 255 alone. Result is
+     * always opaque ARGB.
+     */
     private static int redestributeRGB(int r, int g, int b) {
         int m = Math.max(r, Math.max(g, b));
         if (m <= 255)
@@ -238,6 +348,11 @@ public class Util {
     }
 
 
+    /**
+     * True if white text contrasts better than black on {@code color}.
+     * Uses the YIQ-weighted luminance heuristic (R*299 + G*587 + B*114)
+     * and picks white whenever that weighted value is below 128.
+     */
     private static boolean whiteDoesContrast(int color) {
         float yiq = relativeLuminance(color);
         return yiq < 128;
@@ -245,8 +360,9 @@ public class Util {
 
 
     /**
-     * @param color background color
-     * @return best contrast color either Black or White
+     * Returns {@link Color#WHITE} or {@link Color#BLACK}, whichever is
+     * easier to read against {@code color}, using the YIQ heuristic in
+     * {@link #whiteDoesContrast}.
      */
     public static int contrastColor(int color) {
         return whiteDoesContrast(color) ? Color.WHITE : Color.BLACK;
@@ -254,8 +370,9 @@ public class Util {
 
 
     /**
-     * @param color color to check
-     * @return the relative luminance of the given color
+     * Returns the YIQ-weighted relative luminance of an ARGB colour in
+     * the range {@code [0, 255]}. Used by the contrast helpers; not a
+     * true WCAG luminance (it skips the sRGB gamma step).
      */
     public static float relativeLuminance(int color) {
         return (299 * Color.red(color) + 587 * Color.green(color) + 114 * Color.blue(color)) / 1000;
@@ -263,9 +380,9 @@ public class Util {
 
 
     /**
-     * @param color1 first color
-     * @param color2 second color
-     * @return the contrast ratio between both of them
+     * Symmetric luminance-ratio between two colours — always {@code >= 1}
+     * regardless of argument order, so callers don't have to think
+     * about which colour is lighter.
      */
     public static float contrastRatio(int color1, int color2) {
         float l1 = relativeLuminance(color1),
@@ -275,12 +392,10 @@ public class Util {
 
 
     /**
-     * Get the best color to fit against a given background
-     *
-     * @param preferred  first choice of color
-     * @param secondary  second choice of color
-     * @param background background to check
-     * @return first choice it it has a good contrast otherwise it returns the one with the best contrast
+     * Picks the best foreground colour for a given background. Prefers
+     * {@code preferred} if its contrast ratio clears the 1.1 threshold;
+     * otherwise falls back to whichever of {@code preferred}/{@code secondary}
+     * has the higher ratio.
      */
     public static int bestColor(int preferred, int secondary, int background) {
         float r1 = contrastRatio(preferred, background);
@@ -293,12 +408,24 @@ public class Util {
     }
 
 
-    // -----------------------------------BaseAnimation Util----------------------------------------
+    /**
+     * Overload that sequences animators with a uniform delay between
+     * each. Equivalent to {@code sequence(anims, delay, null)}; see
+     * the three-arg version — note that a {@code null} skip list will
+     * NPE the 3-arg implementation.
+     */
     public static AnimatorSet sequence(Animator[] anims, long delay) {
         return sequence(anims, delay, null);
     }
 
 
+    /**
+     * Builds an {@link AnimatorSet} that plays {@code anims} back to
+     * back with {@code delay} ms between most steps. Indices listed in
+     * {@code skipDelayAt} have their delay suppressed so the next
+     * animator starts immediately after the previous one instead of
+     * waiting. If there's only one animator the set just plays it.
+     */
     public static AnimatorSet sequence(Animator[] anims, long delay, int[] skipDelayAt) {
         AnimatorSet set = new AnimatorSet();
         if (anims.length == 1) {
@@ -318,6 +445,11 @@ public class Util {
     }
 
 
+    /**
+     * Linear interpolation from {@code beg} to {@code end} by fraction
+     * {@code frac} in {@code [0, 1]}. Used pervasively by the animation
+     * helpers for time-parameterised tweens.
+     */
     public static float fromFrac(float beg, float end, float frac) {
         return beg + (end - beg) * frac;
     }

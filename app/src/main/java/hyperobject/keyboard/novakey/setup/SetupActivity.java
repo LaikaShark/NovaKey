@@ -28,8 +28,21 @@ import android.view.Window;
 
 import hyperobject.keyboard.novakey.MainNovaKeyService;
 
+/**
+ * First-run setup wizard host. Launched by {@link hyperobject.keyboard.novakey.settings.SettingsActivity}
+ * when {@code has_setup} is false in {@link MainNovaKeyService#MY_PREFERENCES}.
+ * The activity itself does nothing besides installing a {@link SetupView}
+ * which drives the three-step "activate / select / tutorial" flow on
+ * its own.
+ */
 public class SetupActivity extends Activity {
 
+    /**
+     * Activity create hook: strips the title bar, resets the
+     * {@code has_setup} flag so the wizard starts clean (the flag is
+     * re-flipped to true by {@link SetupView} once the user reaches
+     * step 3), and installs the setup view as the content root.
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

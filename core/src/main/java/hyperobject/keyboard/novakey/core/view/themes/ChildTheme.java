@@ -21,14 +21,20 @@
 package hyperobject.keyboard.novakey.core.view.themes;
 
 /**
- * Created by Viviano on 8/14/2016.
+ * Base interface implemented by the three sub-themes (background, board,
+ * button) owned by a {@link MasterTheme}. A child theme keeps a reference
+ * to its parent so it can pull shared colors (primary / accent / contrast)
+ * and the 3D flag out of the master when drawing.
  */
 public interface ChildTheme {
 
     /**
-     * Sets this child's master theme for reference
+     * Stores a back-reference to the master that owns this child theme.
+     * Called by {@link BaseMasterTheme#setBoardTheme} and its siblings
+     * immediately after assignment so the child can later read colors
+     * from its parent.
      *
-     * @param masterTheme this theme's parent
+     * @param masterTheme the master theme this child belongs to
      */
     void setParent(MasterTheme masterTheme);
 }

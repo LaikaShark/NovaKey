@@ -23,16 +23,25 @@ package hyperobject.keyboard.novakey.core.view.posns;
 import hyperobject.keyboard.novakey.core.model.MainDimensions;
 
 /**
- * RelativePosn that returns coordinates translated
- * based on a given deltaX and deltaY(in pixels)
+ * A {@link RelativePosn} expressed as an absolute pixel offset from the
+ * wheel center.
  * <p>
- * Created by Viviano on 6/10/2016.
+ * Math: {@code x = d.getX() + dx}, {@code y = d.getY() + dy}. Used for
+ * things whose position is best described in raw pixels rather than as a
+ * fraction of a radius — e.g. the dead-center key at {@code (0, 0)}.
  */
 public class DeltaPosn extends RelativePosn {
 
     private float dx, dy;
 
 
+    /**
+     * Builds a delta position with the given pixel offsets from the
+     * wheel center.
+     *
+     * @param deltaX horizontal offset in pixels (positive = right)
+     * @param deltaY vertical offset in pixels (positive = down)
+     */
     public DeltaPosn(float deltaX, float deltaY) {
         this.dx = deltaX;
         this.dy = deltaY;
@@ -40,8 +49,8 @@ public class DeltaPosn extends RelativePosn {
 
 
     /**
-     * @param model model to base posn off
-     * @return x coordinate based on the model dimensions
+     * Resolves X as {@code model.getX() + dx} — wheel center shifted by
+     * the stored horizontal pixel offset.
      */
     @Override
     public float getX(MainDimensions model) {
@@ -50,8 +59,8 @@ public class DeltaPosn extends RelativePosn {
 
 
     /**
-     * @param model model to base posn off
-     * @return y coordinate based on the model dimensions
+     * Resolves Y as {@code model.getY() + dy} — wheel center shifted by
+     * the stored vertical pixel offset.
      */
     @Override
     public float getY(MainDimensions model) {

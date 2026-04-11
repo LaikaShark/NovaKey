@@ -23,7 +23,6 @@ package hyperobject.keyboard.novakey;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-// AndroidX home for the v4 GestureDetectorCompat helper.
 import androidx.core.view.GestureDetectorCompat;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
@@ -33,7 +32,17 @@ import android.view.View;
 import hyperobject.keyboard.novakey.core.utils.drawing.drawables.Drawable;
 
 /**
- * Created by Viviano on 3/30/2016.
+ * Custom view that renders a 2D {@link Drawable} grid in a staggered
+ * "hex" layout (odd rows offset horizontally by half a cell) and lets
+ * the user pan across it with a one-finger scroll gesture.
+ * <p>
+ * Only a 9x9 window of the grid is drawn at a time, centered on the
+ * logical {@code (currX, currY)} cell. Scrolling accumulates sub-cell
+ * offsets in {@code offX}/{@code offY} and promotes them to whole-cell
+ * moves of {@code currX}/{@code currY} once they exceed one {@code dimen}.
+ * <p>
+ * Used by {@link EmojiSettingActivity} as a preview of the hex-packed
+ * emoji layout; not a user-facing widget.
  */
 public class HexGridView extends View implements GestureDetector.OnGestureListener {
 
@@ -46,16 +55,24 @@ public class HexGridView extends View implements GestureDetector.OnGestureListen
     private Paint p;
 
 
+    /** Single-arg code path; delegates to the (context, attrs) constructor. */
     public HexGridView(Context context) {
         this(context, null);
     }
 
 
+    /** XML-inflation entry point; delegates to the three-arg constructor. */
     public HexGridView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
 
+    /**
+     * Full constructor. Reads the per-cell dimension from resources,
+     * primes the anti-aliased paint and draws-to-bitmap cache, and
+     * installs a {@link GestureDetectorCompat} routed to this view's
+     * {@link GestureDetector.OnGestureListener} callbacks.
+     */
     public HexGridView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         dimen = getResources().getDimension(R.dimen.hex_grid_dimen);
@@ -69,15 +86,24 @@ public class HexGridView extends View implements GestureDetector.OnGestureListen
     }
 
 
+    /**
+     * Installs the drawable grid to render. Must be called before the
+     * first {@link #onDraw(Canvas)} or drawing will throw.
+     */
     public void setGrid(Drawable[][] grid) {
         this.mGrid = grid;
     }
 
 
     /**
-     * Implement this to do your drawing.
+     * Draws a 9x9 window into {@link #mGrid}, centered on
+     * {@code (currX, currY)}. Each cell is positioned at
+     * {@code (x * dimen + dimen/2 * (odd ? 2 : 1) - offX,
+     *        y * dimen + dimen/2 - offY)} where {@code odd} is the
+     * parity of the grid row — odd rows shift right by half a cell so
+     * neighbouring rows interlock.
      *
-     * @param canvas the canvas on which the background will be drawn
+     * @throws IllegalStateException if {@link #setGrid} was never called
      */
     @Override
     protected void onDraw(Canvas canvas) {
@@ -106,6 +132,12 @@ public class HexGridView extends View implements GestureDetector.OnGestureListen
     }
 
 
+    /**
+     * Accumulates a scroll delta and promotes any whole-cell movement
+     * into {@code currX}/{@code currY}. The while-loops handle the case
+     * where a single gesture crosses multiple cells, keeping the sub-cell
+     * remainder in {@code offX}/{@code offY}.
+     */
     private void addScrollDist(float deltaX, float deltaY) {
         offX += deltaX;
         while (offX >= dimen) {
@@ -130,21 +162,9 @@ public class HexGridView extends View implements GestureDetector.OnGestureListen
 
 
     /**
-     * Implement this method to handle touch screen motion events.
-     * <p/>
-     * If this method is used to detect click actions, it is recommended that
-     * the actions be performed by implementing and calling
-     * {@link #performClick()}. This will ensure consistent system behavior,
-     * including:
-     * <ul>
-     * <li>obeying click sound preferences
-     * <li>dispatching OnClickListener calls
-     * <li>handling  when
-     * accessibility features are enabled
-     * </ul>
-     *
-     * @param event The motion event.
-     * @return True if the event was handled, false otherwise.
+     * Forwards all raw touches to the gesture detector, which then calls
+     * back into {@link #onScroll(MotionEvent, MotionEvent, float, float)}
+     * for pan handling.
      */
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -152,40 +172,21 @@ public class HexGridView extends View implements GestureDetector.OnGestureListen
     }
 
 
-    /**
-     * Notified when a tap occurs with the down {@link MotionEvent}
-     * that triggered it. This will be triggered immediately for
-     * every down event. All other events should be preceded by this.
-     *
-     * @param e The down motion event.
-     */
+    /** Claims the initial DOWN event so the gesture detector can track it. */
     @Override
     public boolean onDown(MotionEvent e) {
         return true;
     }
 
 
-    /**
-     * The user has performed a down {@link MotionEvent} and not performed
-     * a move or up yet. This event is commonly used to provide visual
-     * feedback to the user to let them know that their action has been
-     * recognized i.e. highlight an element.
-     *
-     * @param e The down motion event
-     */
+    /** Unused — no visual "pressed" feedback for this debug view. */
     @Override
     public void onShowPress(MotionEvent e) {
 
     }
 
 
-    /**
-     * Notified when a tap occurs with the up {@link MotionEvent}
-     * that triggered it.
-     *
-     * @param e The up motion event that completed the first tap
-     * @return true if the event is consumed, else false
-     */
+    /** Taps do not consume anything; only scrolls matter. */
     @Override
     public boolean onSingleTapUp(MotionEvent e) {
         return false;
@@ -193,19 +194,8 @@ public class HexGridView extends View implements GestureDetector.OnGestureListen
 
 
     /**
-     * Notified when a scroll occurs with the initial on down {@link MotionEvent} and the
-     * current move {@link MotionEvent}. The distance in x and y is also supplied for
-     * convenience.
-     *
-     * @param e1        The first down motion event that started the scrolling.
-     * @param e2        The move motion event that triggered the current onScroll.
-     * @param distanceX The distance along the X axis that has been scrolled since the last
-     *                  call to onScroll. This is NOT the distance between {@code e1}
-     *                  and {@code e2}.
-     * @param distanceY The distance along the Y axis that has been scrolled since the last
-     *                  call to onScroll. This is NOT the distance between {@code e1}
-     *                  and {@code e2}.
-     * @return true if the event is consumed, else false
+     * Pan handler: forwards the scroll distance into
+     * {@link #addScrollDist(float, float)} and requests a redraw.
      */
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
@@ -215,31 +205,14 @@ public class HexGridView extends View implements GestureDetector.OnGestureListen
     }
 
 
-    /**
-     * Notified when a long press occurs with the initial on down {@link MotionEvent}
-     * that trigged it.
-     *
-     * @param e The initial on down motion event that started the longpress.
-     */
+    /** Unused — no long-press behaviour on this debug view. */
     @Override
     public void onLongPress(MotionEvent e) {
 
     }
 
 
-    /**
-     * Notified of a fling event when it occurs with the initial on down {@link MotionEvent}
-     * and the matching up {@link MotionEvent}. The calculated velocity is supplied along
-     * the x and y axis in pixels per second.
-     *
-     * @param e1        The first down motion event that started the fling.
-     * @param e2        The move motion event that triggered the current onFling.
-     * @param velocityX The velocity of this fling measured in pixels per second
-     *                  along the x axis.
-     * @param velocityY The velocity of this fling measured in pixels per second
-     *                  along the y axis.
-     * @return true if the event is consumed, else false
-     */
+    /** Flings are ignored; only incremental scrolls move the grid. */
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
         return false;

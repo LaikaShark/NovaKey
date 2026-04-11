@@ -25,7 +25,15 @@ import android.animation.ValueAnimator;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Created by Viviano on 9/28/2015.
+ * Skeleton {@link Animation} wired on top of a single Android
+ * {@link ValueAnimator}. Subclasses only need to build the actual
+ * {@code ValueAnimator} in {@link #animator(Model)}; this class handles
+ * the plumbing for start-delay, end/update callbacks, and cancellation.
+ * <p>
+ * If {@link #animator(Model)} returns {@code null} the animation is
+ * treated as a no-op and the on-end listener fires immediately, so
+ * subclasses can short-circuit trivial cases (e.g. nothing to animate
+ * this frame).
  */
 public abstract class BaseAnimation implements Animation {
 
@@ -36,11 +44,11 @@ public abstract class BaseAnimation implements Animation {
 
 
     /**
-     * Should start the animation
-     * <p>
-     * Initialize the necessary data here
-     *
-     * @param model
+     * Builds the backing {@link ValueAnimator} via
+     * {@link #animator(Model)}, stacks the configured delay on top of
+     * whatever the subclass set, and wires the end/update callbacks
+     * before kicking it off. A {@code null} animator is treated as a
+     * no-op and immediately fires the end listener.
      */
     @Override
     public void start(Model model) {
@@ -86,7 +94,8 @@ public abstract class BaseAnimation implements Animation {
 
 
     /**
-     * Will cancel the animation if it's running
+     * Cancels the backing {@link ValueAnimator} if it was ever built
+     * and is still running. Safe to call before {@link #start(Model)}.
      */
     @Override
     public void cancel() {
@@ -96,19 +105,16 @@ public abstract class BaseAnimation implements Animation {
 
 
     /**
-     * @param model given to reference. Also should call
-     *              model.update() to invalidate the view
-     * @return ValueAnimator which will be called
+     * Subclass hook: build the actual {@link ValueAnimator} to play.
+     * Implementations are free to also call {@code model.update()}
+     * inside their own listeners to invalidate the view on each frame.
+     *
+     * @return the animator to run, or {@code null} to skip this pass
      */
     protected abstract ValueAnimator animator(Model model);
 
 
-    /**
-     * Set the start delay of this animation
-     *
-     * @param delay start delay in milliseconds
-     * @return this animation
-     */
+    /** Stores the start delay applied inside {@link #start(Model)}. */
     @Override
     public Animation setDelay(long delay) {
         mDelay = delay;
@@ -116,9 +122,7 @@ public abstract class BaseAnimation implements Animation {
     }
 
 
-    /**
-     * @param listener set this animation's on end listener
-     */
+    /** Stores the end listener fired by the backing animator. */
     @Override
     public Animation setOnEndListener(OnEndListener listener) {
         mOnEnd = listener;
@@ -126,9 +130,7 @@ public abstract class BaseAnimation implements Animation {
     }
 
 
-    /**
-     * @param listener set this animation's on end listener
-     */
+    /** Stores the update listener fired on each frame of the animator. */
     @Override
     public Animation setOnUpdateListener(OnUpdateListener listener) {
         mOnUpdate = listener;

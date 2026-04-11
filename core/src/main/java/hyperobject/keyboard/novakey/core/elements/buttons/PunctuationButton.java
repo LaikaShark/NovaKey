@@ -27,19 +27,21 @@ import hyperobject.keyboard.novakey.core.elements.keyboards.overlays.menus.Infin
 import hyperobject.keyboard.novakey.core.utils.drawing.drawables.FlatTextDrawable;
 
 /**
- * Created by Viviano on 7/9/2015.
+ * The period button. Tap inserts a literal {@code '.'}; long-press opens
+ * an {@link InfiniteMenu} populated with the hidden punctuation marks
+ * associated with {@code '.'} (comma, question mark, etc.) so the user
+ * can pick one without switching keyboards.
  */
 public class PunctuationButton extends Button {
 
+    /** Wires up the fixed "." icon; the period never changes per state. */
     public PunctuationButton(ButtonData data) {
         super(data);
         setIcon(new FlatTextDrawable("."));
     }
 
 
-    /**
-     * @return action to fire, or null if no action is needed
-     */
+    /** Tap inserts the period character via a {@link KeyAction}. */
     @Override
     protected Action onClickAction() {
         return new KeyAction('.');
@@ -47,7 +49,9 @@ public class PunctuationButton extends Button {
 
 
     /**
-     * @return action to fire, or null if no action is needed
+     * Long-press swaps the active overlay for an {@link InfiniteMenu}
+     * of punctuation marks hidden under {@code '.'}. The user picks one
+     * by dragging and lifting; the menu then restores the previous overlay.
      */
     @Override
     protected Action onLongPressAction() {

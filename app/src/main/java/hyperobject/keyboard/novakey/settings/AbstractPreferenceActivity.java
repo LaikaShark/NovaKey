@@ -24,18 +24,38 @@ import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.View;
 
-// FAB moved to the Material Components library; AppCompatActivity moved
-// to androidx.appcompat. Both are simple package renames.
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import hyperobject.keyboard.novakey.R;
 
+/**
+ * Shared base for the preference-style screens that aren't hosted by the
+ * AndroidX preference fragment (currently just {@link StylePreferenceActivity}).
+ * <p>
+ * Installs a subclass-provided content layout and wires a standard
+ * {@link FloatingActionButton} at {@code R.id.fab} as the "done" button:
+ * clicking it fires {@link #onActivityClosed(boolean) onActivityClosed(true)}
+ * and finishes the activity. Any other exit path (back button, process
+ * death) runs {@code onActivityClosed(false)} from {@link #onDestroy()} so
+ * subclasses can distinguish a confirmed save from a cancel.
+ * <p>
+ * Note: {@code getResources().getColor(int)} is deprecated on API 23+ but
+ * left in place during the modernization pass (warning only, not fatal on
+ * API 35).
+ */
 public abstract class AbstractPreferenceActivity extends AppCompatActivity {
 
     private boolean mDone = false;
 
 
+    /**
+     * Inflates {@link #getLayoutId()}, tints the FAB with the NovaKey
+     * blue accent plus a white icon, and installs an OnClick listener
+     * that flips {@link #mDone} to {@code true}, calls
+     * {@link #onActivityClosed(boolean) onActivityClosed(true)}, and
+     * finishes the activity.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,21 +77,29 @@ public abstract class AbstractPreferenceActivity extends AppCompatActivity {
 
 
     /**
-     * @return must return the layout ID any activity inheriting from this will want
-     * to display
+     * Subclass hook: returns the layout resource to inflate in
+     * {@link #onCreate(Bundle)}. The inflated layout must include a
+     * {@link FloatingActionButton} with id {@code R.id.fab}.
      */
     abstract int getLayoutId();
 
 
     /**
-     * Will be called when the activity is closed
+     * Subclass hook fired when the activity is closed.
      *
-     * @param positiveResult true if the FAB is clicked to exit, false if activity was
-     *                       exited another way
+     * @param positiveResult {@code true} if the FAB was clicked to exit
+     *                       (save), {@code false} for any other exit
+     *                       path (cancel)
      */
     abstract void onActivityClosed(boolean positiveResult);
 
 
+    /**
+     * Catches "cancel" exits — if the FAB was never clicked,
+     * {@link #mDone} is still {@code false} and we synthesize a
+     * {@code onActivityClosed(false)} call on the way out so subclasses
+     * can roll back any in-progress state.
+     */
     @Override
     public void onDestroy() {
         super.onDestroy();

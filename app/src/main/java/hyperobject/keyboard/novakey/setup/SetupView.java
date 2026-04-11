@@ -38,6 +38,23 @@ import android.view.inputmethod.InputMethodManager;
 import hyperobject.keyboard.novakey.MainNovaKeyService;
 import hyperobject.keyboard.novakey.tutorial.TutorialActivity;
 
+/**
+ * Custom view driving the three-step first-run wizard:
+ * <ol>
+ *   <li>Enable NovaKey in the system input-method settings.</li>
+ *   <li>Select NovaKey as the active input method via the picker.</li>
+ *   <li>Launch the tutorial.</li>
+ * </ol>
+ * Progress is persisted under the {@code "progress"} key in
+ * {@link MainNovaKeyService#MY_PREFERENCES} so that if the user bounces
+ * out to another app between steps, the wizard resumes where they left
+ * off. Each DOWN touch advances one step and fires the corresponding
+ * system intent / input-method-picker / tutorial activity launch.
+ * <p>
+ * The drawing is hand-rolled: two radial-gradient lines bracketing the
+ * three step labels, with completed steps painted in {@code doneColor}
+ * and the current step in {@code lineColor}.
+ */
 public class SetupView extends View {
 
     private Paint p = new Paint();
@@ -48,6 +65,20 @@ public class SetupView extends View {
     private int progress;
 
 
+    /**
+     * Constructor: caches display metrics, reads the persisted
+     * progress out of {@link MainNovaKeyService#MY_PREFERENCES}, and
+     * installs a touch listener that advances {@link #progress} from
+     * 0 -> 1 -> 2 and finally marks {@code has_setup=true} before
+     * launching {@link TutorialActivity}.
+     * <p>
+     * Each step also kicks out to an external UI:
+     * <ul>
+     *   <li>Step 0 -> 1: opens {@code Settings.ACTION_INPUT_METHOD_SETTINGS}</li>
+     *   <li>Step 1 -> 2: calls {@code InputMethodManager.showInputMethodPicker()}</li>
+     *   <li>Step 2 -> done: launches the tutorial activity</li>
+     * </ul>
+     */
     public SetupView(Context context) {
         super(context);
         final Activity parent = (Activity) context;
@@ -93,6 +124,12 @@ public class SetupView extends View {
     }
 
 
+    /**
+     * Paints the wizard screen: solid background, two horizontal
+     * gradient separators bracketing the step list, a title, and the
+     * three numbered step labels. Steps are tinted by the current
+     * {@link #progress} value so completed ones fade into grey.
+     */
     @Override
     public void onDraw(Canvas canvas) {
         canvas.drawColor(backgroundColor);
@@ -126,6 +163,13 @@ public class SetupView extends View {
     }
 
 
+    /**
+     * Draws a line whose stroke fades out toward the endpoints via a
+     * radial gradient centered at its midpoint. Used by the two
+     * decorative separators; the angle parameter lets the caller
+     * rotate the line around its midpoint but is always passed 0
+     * today.
+     */
     private void drawShadedLine(float x, float y, float start, float end, double angle, Paint p, Canvas canvas) {
         p.setShader(new RadialGradient(x + (float) Math.cos(angle) * ((end - start) / 2 + start),
                 y - (float) Math.sin(angle) * ((end - start) / 2 + start),
@@ -138,7 +182,12 @@ public class SetupView extends View {
     }
 
 
-    //Draws text1 centered
+    /**
+     * Draws a string horizontally and vertically centered at
+     * {@code (x, y)}, offsetting by half the measured width and half
+     * the font metric span so the ascent/descent average lands on the
+     * target y.
+     */
     private void drawText(String s, float x, float y, Paint p, Canvas canvas) {
         canvas.drawText(s, x - p.measureText(s) / 2, y - (p.ascent() + p.descent()) / 2, p);
     }

@@ -21,24 +21,30 @@
 package hyperobject.keyboard.novakey.core.model.loaders;
 
 /**
- * Created by Viviano on 8/13/2016.
+ * Two-method save/load contract used by {@link hyperobject.keyboard.novakey.core.model.MainModel}
+ * to materialize each piece of structured state (dimensions, theme,
+ * keyboards, element list) from {@code SharedPreferences} and stash
+ * user edits back out.
  * <p>
- * Saves and loads data into shared preferences
+ * Production implementations are {@code ThemeLoader},
+ * {@code MainDimensionsLoader}, {@code KeyboardsLoader}, and
+ * {@code ElementsLoader} — MainModel constructs one of each in the
+ * order listed, then calls {@link #load()} via {@code syncWithPrefs}.
  */
 public interface Loader<T> {
 
     /**
-     * Loads the element from where ever this interface saved it from
-     *
-     * @return a new loaded object
+     * Reconstructs a fresh {@code T} from whatever backing store this
+     * loader reads from (usually {@code SharedPreferences}; element/
+     * keyboard loaders read code-defined layouts).
      */
     T load();
 
 
     /**
-     * Saves the element to be loaded later
-     *
-     * @param t object to be saved
+     * Persists {@code t} so a later {@link #load()} will see it.
+     * Implementations that have nothing to persist (code-defined
+     * layouts) may no-op.
      */
     void save(T t);
 }

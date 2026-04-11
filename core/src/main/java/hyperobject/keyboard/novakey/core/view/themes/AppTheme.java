@@ -46,7 +46,17 @@ import hyperobject.keyboard.novakey.core.R;
 import hyperobject.keyboard.novakey.core.utils.Util;
 
 /**
- * Created by Viviano on 8/18/2015.
+ * Named color triplet that lets the keyboard tint itself to match the
+ * foreground app. Each entry stores an Android package name alongside
+ * three brand colors (primary / accent / contrast) which
+ * {@link BaseMasterTheme#setPackage} copies into the master theme when
+ * the user switches apps.
+ * <p>
+ * The table is loaded from {@code app_colors.json} in the app's private
+ * storage and refreshed from a URL hosted in resources. The JSON schema
+ * is a flat array of objects with the keys {@code "App Name"},
+ * {@code "App Package"}, {@code "Primary"}, {@code "Accent"}, and
+ * {@code "Contrast"}.
  */
 public class AppTheme {
 
@@ -54,6 +64,11 @@ public class AppTheme {
     public final int color1, color2, color3;
 
 
+    /**
+     * Builds one app entry from a five-element parameter list in order
+     * {@code [name, package, primary, accent, contrast]}. The three
+     * color strings are parsed via {@link Util#webToColor}.
+     */
     public AppTheme(String... params) {
         name = params[0];
         pk = params[1];
@@ -68,10 +83,10 @@ public class AppTheme {
 
 
     /**
-     * Function that creates a theme from the given package name
+     * Finds the app entry for a given package name.
      *
-     * @param pk package name
-     * @return A BaseTheme colored according to the app
+     * @param pk Android package name to look up
+     * @return the matching entry, or {@code null} if not in the table
      */
     public static AppTheme fromPk(String pk) {
         for (AppTheme t : themes) {
@@ -83,10 +98,14 @@ public class AppTheme {
 
 
     /**
-     * Will load from csv file in raw
+     * Populates the static {@code themes} table. First reads the cached
+     * JSON file out of private storage (if present) so colors are
+     * available immediately, then kicks off an {@link AppColorTask} to
+     * refresh the table from the URL stored in
+     * {@code R.string.app_color_url}.
      *
-     * @param context context
-     * @param res     resources to load from
+     * @param context used to open the private cache file
+     * @param res     used to read the refresh URL
      */
     public static void load(Context context, Resources res) {
         themes = new ArrayList<>();
@@ -115,17 +134,33 @@ public class AppTheme {
     }
 
 
+    /**
+     * Async task that downloads the app-color JSON from a URL and,
+     * once the response comes back on the main thread, hands the body
+     * to {@link #loadFromJSON} and kicks off a {@link SaveColorsTask}
+     * to cache the payload on disk for next launch.
+     */
     private static class AppColorTask extends AsyncTask<String, Integer, String> {
 
         private String data = null;
         private final Context context;
 
 
+        /**
+         * @param context used to open the private cache file for writing
+         *                once the download completes
+         */
         AppColorTask(Context context) {
             this.context = context;
         }
 
 
+        /**
+         * Background thread entry point. Delegates to
+         * {@link #downloadUrl} and stashes the response for
+         * {@link #onPostExecute}. Errors are logged but not rethrown so
+         * a network outage never crashes the IME load path.
+         */
         @Override
         protected String doInBackground(String... params) {
             try {
@@ -138,6 +173,12 @@ public class AppTheme {
         }
 
 
+        /**
+         * Main thread callback. Parses the freshly downloaded JSON into
+         * the static {@code themes} list and then starts a
+         * {@link SaveColorsTask} to overwrite the on-disk cache so the
+         * next cold start has the updated data.
+         */
         @Override
         protected void onPostExecute(String str) {
             try {
@@ -151,17 +192,33 @@ public class AppTheme {
         }
     }
 
+    /**
+     * Async task that writes the already-downloaded JSON string to a
+     * caller-supplied {@link FileOutputStream} so the next launch can
+     * read it back before any network call completes.
+     */
     private static class SaveColorsTask extends AsyncTask<String, Integer, String> {
 
         private String data = null;
         private final FileOutputStream outputStream;
 
 
+        /**
+         * @param outputStream private-mode output stream to the cache
+         *                     file; owned by the caller but closed by
+         *                     this task when writing finishes
+         */
         SaveColorsTask(FileOutputStream outputStream) {
             this.outputStream = outputStream;
         }
 
 
+        /**
+         * Writes the first parameter string through an
+         * {@link OutputStreamWriter}, flushing and closing the stream
+         * when done. All IO exceptions are swallowed — the cache is
+         * best-effort.
+         */
         @Override
         protected String doInBackground(String... params) {
             data = params[0];
@@ -180,6 +237,15 @@ public class AppTheme {
     }
 
 
+    /**
+     * Blocking helper that opens an {@link HttpURLConnection} to the
+     * given URL and reads the full response body into a string.
+     * Exceptions are caught and logged, and the method returns whatever
+     * was read before the failure (possibly the empty string).
+     *
+     * @param strUrl URL of the JSON document to fetch
+     * @return the downloaded body, or empty on failure
+     */
     private static String downloadUrl(String strUrl) throws IOException {
         String data = "";
         InputStream iStream = null;
@@ -215,6 +281,13 @@ public class AppTheme {
     }
 
 
+    /**
+     * Parses a JSON array of app-color objects and installs it as the
+     * new static {@code themes} table. Builds the replacement list in
+     * a local variable first and only assigns to the field once parsing
+     * succeeds so a malformed payload cannot wipe out an already-loaded
+     * table. Logs and discards any parse failure.
+     */
     private static void loadFromJSON(String str) {
         try {
             JSONArray arr = new JSONArray(str);

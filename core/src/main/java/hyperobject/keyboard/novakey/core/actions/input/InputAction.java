@@ -26,11 +26,15 @@ import hyperobject.keyboard.novakey.core.NovaKeyService;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Universal input action
- * Can be given '\n', Keyboard.KEYCODE_SHIFT
- * or similar inputs and will perform the desired actions
+ * Commits an arbitrary string into the current editor through the
+ * input connection. The "universal insert" action used for paste,
+ * emoji insertion, auto-replacement of selected text, and anywhere
+ * else a block of text (as opposed to a single key press) needs to
+ * land in the field.
  * <p>
- * Created by Viviano on 6/14/2016.
+ * Before committing, this action calls {@code finishComposingText()}
+ * and clears the model's composing-text buffer so the new string
+ * replaces any half-finished word rather than being appended to it.
  */
 public class InputAction implements Action<Void> {
 
@@ -38,11 +42,24 @@ public class InputAction implements Action<Void> {
     private final int mCursorPos;
 
 
+    /**
+     * Commits {@code text} and leaves the cursor at the end of it
+     * (equivalent to {@code new InputAction(text, false)}).
+     */
     public InputAction(String text) {
         this(text, true);
     }
 
 
+    /**
+     * @param text         the literal string to insert
+     * @param beforeCursor {@code true} to leave the cursor <em>before</em>
+     *                     the inserted text (cursorPos 0); {@code false}
+     *                     to leave it <em>after</em> (cursorPos 1). These
+     *                     map directly onto the {@code newCursorPosition}
+     *                     argument of
+     *                     {@link android.view.inputmethod.InputConnection#commitText}
+     */
     public InputAction(String text, boolean beforeCursor) {
         mCursorPos = beforeCursor ? 0 : 1;
         mText = text;
@@ -50,11 +67,10 @@ public class InputAction implements Action<Void> {
 
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Finishes any in-progress composing text, clears the model's
+     * composing buffer, then commits {@code mText} through the input
+     * connection at the configured cursor offset. No-op if
+     * {@code mText} is {@code null}.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

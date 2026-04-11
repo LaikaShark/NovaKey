@@ -32,26 +32,47 @@ import hyperobject.keyboard.novakey.core.model.Model;
 import hyperobject.keyboard.novakey.core.utils.Predicate;
 
 /**
- * Created by Viviano on 6/15/2016.
+ * Deletes text from the current editor, in either direction and at
+ * either "slow" (one character at a time) or "fast" (chew up to the
+ * next space) granularity. Returns the deleted string so callers can
+ * feed it into undo or clipboard flows.
  * <p>
- * Action performs a delete action
- * Returns the text that is deleted as a String
+ * Fast mode is what powers the delete-swipe gesture's run-on behavior:
+ * the handler fires a {@code DeleteAction(false, true)} on each
+ * additional segment and the character-until-space predicate eats
+ * entire words at a time. Slow mode (the default) is what the tap-style
+ * delete button and the selection-backspace path use.
  */
 public class DeleteAction implements Action<String> {
 
     private final boolean mForward, mFast;
 
 
+    /**
+     * Slow backspace (delete one character to the left of the caret).
+     */
     public DeleteAction() {
         this(false);
     }
 
 
+    /**
+     * Slow delete in a chosen direction.
+     *
+     * @param forwards {@code true} for forward-delete (delete-to-right),
+     *                 {@code false} for backspace
+     */
     public DeleteAction(boolean forwards) {
         this(forwards, false);
     }
 
 
+    /**
+     * @param forwards {@code true} for forward-delete, {@code false} for backspace
+     * @param fast     {@code true} to delete until the next space
+     *                 character, {@code false} to delete exactly one
+     *                 character
+     */
     public DeleteAction(boolean forwards, boolean fast) {
         mForward = forwards;
         mFast = fast;
@@ -59,11 +80,21 @@ public class DeleteAction implements Action<String> {
 
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Dispatches between the two delete pathways and returns whatever
+     * text was removed.
+     * <p>
+     * How:
+     * <ul>
+     *   <li>If the current selection is non-empty, treat this as a
+     *       "delete the selection" and just send the appropriate
+     *       {@code KEYCODE_DEL} / {@code KEYCODE_FORWARD_DEL} through
+     *       the IME so the field handles it natively. Returns the
+     *       original selected text.</li>
+     *   <li>Otherwise, delegate to {@link #handleDelete} with a
+     *       predicate that decides when to stop eating characters:
+     *       slow mode stops immediately (always-true predicate),
+     *       fast mode stops when it hits a space.</li>
+     * </ul>
      */
     @Override
     public String trigger(NovaKeyService ime, Controller control, Model model) {
@@ -89,14 +120,32 @@ public class DeleteAction implements Action<String> {
 
 
     /**
-     * Call this to delete until a predicate is reached
+     * Eats characters from around the cursor until a predicate says stop.
+     * <p>
+     * How: pulls the extracted text out of the IME, splits it into the
+     * portion left and right of the selection, and walks character by
+     * character away from the caret (backwards into {@code left}, forwards
+     * into {@code right}). Each character is tested against {@code until};
+     * if the predicate returns {@code false} the character is appended
+     * to the builder and the walk continues. If it returns {@code true}
+     * the walk stops, and the stopping character is included only when
+     * {@code included} is true.
+     * <p>
+     * After the walk, the composing text is committed (so Android's
+     * spell-checker sees the field as settled), the {@code InputState}'s
+     * composing buffer is cleared to match, and a single
+     * {@code deleteSurroundingText} call removes the run of characters
+     * from the editor. Finally an {@link UpdateShiftAction} is fired so
+     * auto-capitalize can kick back in if the caret is now at a sentence
+     * boundary.
      *
-     *
-     * @param ime
-     * @param backspace true if deleting to left, false if deleting to right
-     * @param until     will delete until this predicate is reached
-     * @param included  true if it should delete the character which made it stop
-     * @return the deleted string
+     * @param backspace {@code true} to eat left of the caret, {@code false}
+     *                  to eat right
+     * @param until     stopping predicate: returns {@code true} when the
+     *                  current character should end the walk
+     * @param included  whether the stopping character itself is deleted
+     * @return the concatenation of every character that was deleted,
+     *         in left-to-right order
      */
     public String handleDelete(NovaKeyService ime, Controller control, Model model,
                                boolean backspace, Predicate<Character> until, boolean included) {

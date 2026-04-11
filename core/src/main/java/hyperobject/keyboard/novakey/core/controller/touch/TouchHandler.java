@@ -25,17 +25,38 @@ import android.view.MotionEvent;
 import hyperobject.keyboard.novakey.core.controller.Controller;
 
 /**
- * Created by Viviano on 6/12/2016.
+ * Strategy object for an in-progress gesture. TouchHandlers are the
+ * third leg of NovaKey's Element/Action/TouchHandler triad: while an
+ * {@link hyperobject.keyboard.novakey.core.elements.Element Element}
+ * draws something and handles the initial routing, a TouchHandler
+ * owns the gesture <em>state machine</em> once the gesture has been
+ * claimed.
+ * <p>
+ * The {@link Controller} keeps at most one "active" handler at a time
+ * (the last one whose {@code handle} returned true). When
+ * {@code handle} returns false the Controller releases it and falls
+ * back to element-walking routing for the next event — typically this
+ * happens on {@code ACTION_UP}.
+ * <p>
+ * Concrete handlers in this package: {@link TypingHandler} (the
+ * default key-picker), {@link SelectingHandler} (text-selection mode),
+ * {@link RotatingHandler} (abstract base for any gesture that reacts
+ * to sector rotation around the wheel), {@link DeleteHandler}
+ * (rotation-driven delete/undo), and {@link AreaCrossedHandler}
+ * (abstract base that dispatches into down/move/cross/up callbacks).
  */
 public interface TouchHandler {
 
     /**
-     * Handles the logic given a touch event and
-     * a view
+     * Feeds one raw {@link MotionEvent} into the gesture state machine.
      *
-     * @param event   current touch event
-     * @param control controller used for context
-     * @return true to continue action, false otherwise
+     * @param event   the touch event as delivered to the view
+     * @param control the controller, used both as context (getModel,
+     *                invalidate) and as the {@link hyperobject.keyboard.novakey.core.controller.Gun
+     *                Gun} the handler fires actions through
+     * @return {@code true} to stay active (the Controller will route
+     *         the next event here too), {@code false} to release this
+     *         handler and resume element-walking routing
      */
     boolean handle(MotionEvent event, Controller control);
 }

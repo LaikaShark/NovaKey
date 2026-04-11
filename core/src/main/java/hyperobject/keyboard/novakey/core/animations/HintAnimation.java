@@ -28,7 +28,14 @@ import hyperobject.keyboard.novakey.core.elements.keyboards.Key;
 import hyperobject.keyboard.novakey.core.elements.keyboards.KeySizeAnimator;
 
 /**
- * Created by Viviano on 11/15/2015.
+ * {@link CharAnimation} that previews a touch on one of the wheel's
+ * sector groups by shrinking every non-highlighted key toward
+ * {@code 0} and nudging the keys in the touched sector larger. Uses
+ * an {@link AccelerateInterpolator} so the effect eases in slowly and
+ * then snaps, and runs with no stagger delay (style {@code -1}) so
+ * the whole keyboard reacts simultaneously. Default duration is
+ * 100ms, short enough to feel like live feedback rather than an
+ * animation.
  */
 public class HintAnimation extends CharAnimation {
 
@@ -36,23 +43,27 @@ public class HintAnimation extends CharAnimation {
     private final int mArea;
 
 
+    /**
+     * @param area     sector group index to highlight
+     * @param duration total animation duration in milliseconds
+     */
     public HintAnimation(int area, long duration) {
         super(-1, duration);
         mArea = area;
     }
 
 
+    /**
+     * Convenience constructor using a 100ms duration suitable for
+     * live touch feedback.
+     */
     public HintAnimation(int area) {
         this(area, 100);
     }
 
 
     /**
-     * Will be called when building the animation to set this particular key's
-     * interpolator
-     *
-     * @param k key whose interpolator you wish to set
-     * @return an interpolator to set
+     * Every key shares the same {@link AccelerateInterpolator}.
      */
     @Override
     protected TimeInterpolator getInterpolatorFor(Key k) {
@@ -61,11 +72,12 @@ public class HintAnimation extends CharAnimation {
 
 
     /**
-     * Called when building the animation to determine which animator to assign
-     * to which key
-     *
-     * @param k key whose animator you wish to set
-     * @return the animator to set
+     * Returns a size animator from the key's current size down to
+     * {@code 0} for keys outside the highlighted area. Keys inside
+     * the highlighted area construct a grow-to-{@code 1.2f} animator
+     * but fall through to the shrink animator — note that the branch
+     * creates the grow animator as an unused expression, so in its
+     * present form every key ends up shrinking.
      */
     @Override
     protected Animator<Key> getAnimatorFor(Key k) {
@@ -75,24 +87,14 @@ public class HintAnimation extends CharAnimation {
         return new KeySizeAnimator(k.getSize(), 0);
     }
 
-//    /**
-//     * Override this method if you want to set the initial state of a key
-//     *
-//     * @param k
-//     */
-//    @Override
-//    protected void setInitialState(Key k) {
-//        this.values.get("endSize").put(k, k.group == mArea ? 1.2f : 0);
-//        this.values.get("begSize").put(k, k.size);
-//        this.values.get("begx").put(k, k.x);
-//        this.values.get("begy").put(k, k.y);
-//        this.values.get("destx").put(k,
-//                k.group == mArea ? view.getAreaX(lastArea(k.group, k.loc)) : k.x);
-//        this.values.get("desty").put(k,
-//                k.group == mArea ? view.getAreaY(lastArea(k.group, k.loc)) : k.y);
-//    }
 
-
+    /**
+     * Helper that picks the "last" area index adjacent to the given
+     * group/loc pair — walks forward, back, or to the center depending
+     * on the {@code loc}. Currently only referenced by the commented-out
+     * initial-state override that was removed during cleanup, so it is
+     * effectively dead code kept for future use.
+     */
     private static int lastArea(int group, int loc) {
         if (loc == 0)
             return group;

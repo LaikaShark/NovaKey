@@ -30,7 +30,21 @@ import android.view.View;
 import hyperobject.keyboard.novakey.core.utils.drawing.drawables.Drawable;
 
 /**
- * Created by Viviano on 10/22/2015.
+ * Lightweight Android {@link View} that draws a single NovaKey
+ * {@link Drawable} centred in the view's bounds and calls back through
+ * its own {@link OnClickListener} on touch-down.
+ * <p>
+ * Used as a minimal button widget in the tutorial / setup screens —
+ * it's not themed and it doesn't participate in accessibility focus or
+ * ripple, it just draws an icon and fires a click. The view enables
+ * software layer rendering so the vector {@link Drawable} can use
+ * features (shadow layers, blur filters) that the hardware layer
+ * wouldn't otherwise support.
+ * <p>
+ * The {@code touched} flag is flipped on down/up and the view
+ * invalidates, but the current {@link #onDraw} paints the same colour
+ * either way — a future visual press state is stubbed out via the
+ * {@code TODO} below.
  */
 public class IconView extends View implements View.OnTouchListener {
 
@@ -43,6 +57,11 @@ public class IconView extends View implements View.OnTouchListener {
     private OnClickListener listener;
 
 
+    /**
+     * Standard XML-inflation ctor. Enables software layer rendering,
+     * registers itself as its own {@link View.OnTouchListener}, and
+     * allocates an antialiased shared {@link Paint}.
+     */
     public IconView(Context context, AttributeSet attrs) {
         super(context, attrs);
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
@@ -52,21 +71,32 @@ public class IconView extends View implements View.OnTouchListener {
     }
 
 
+    /** Replaces the icon drawn inside the view. Caller must invalidate. */
     public void setIcon(Drawable icon) {
         this.icon = icon;
     }
 
 
+    /**
+     * Sets the icon's render size as a fraction of the view width. The
+     * icon is drawn with a half-diameter of {@code width * size}.
+     */
     public void setSize(float size) {
         this.size = size;
     }
 
 
+    /** Sets the tint applied to the icon glyph. */
     public void setColor(int color) {
         mColor = color;
     }
 
 
+    /**
+     * Draws the icon centred in the view. The paint colour is the
+     * plain {@code mColor} regardless of touched state — a lighter
+     * pressed variant is noted as a TODO but not implemented.
+     */
     @Override
     public void onDraw(Canvas canvas) {
         float w = getWidth(), h = getHeight();
@@ -75,6 +105,14 @@ public class IconView extends View implements View.OnTouchListener {
     }
 
 
+    /**
+     * Touch handler that doubles as the click dispatcher. Fires the
+     * {@link OnClickListener} on {@link MotionEvent#ACTION_DOWN}
+     * (unlike Android's standard View, which fires on UP), toggles
+     * the {@code touched} flag on down/up, and invalidates the view
+     * so any pressed state change is redrawn. Always returns
+     * {@code true} to claim the gesture.
+     */
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         switch (event.getAction()) {
@@ -93,11 +131,17 @@ public class IconView extends View implements View.OnTouchListener {
     }
 
 
+    /** Installs the click callback fired on touch-down. */
     public void setClickListener(OnClickListener listener) {
         this.listener = listener;
     }
 
 
+    /**
+     * Parameterless click callback — no view argument, unlike the
+     * platform {@code View.OnClickListener}. Intentional: callers
+     * already know which {@link IconView} they hooked up.
+     */
     public interface OnClickListener {
         void onClick();
     }

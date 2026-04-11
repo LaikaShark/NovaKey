@@ -26,7 +26,24 @@ import hyperobject.keyboard.novakey.core.controller.Controller;
 import hyperobject.keyboard.novakey.core.elements.MainElement;
 
 /**
- * Created by Viviano on 6/12/2016.
+ * Abstract {@link TouchHandler} base class that lifts raw
+ * {@link MotionEvent}s into a friendlier down/move/cross/up callback
+ * API keyed on the wheel's area grid. Subclasses don't deal with
+ * {@code ACTION_*} constants or coordinate math — they override the
+ * protected hooks and reason in terms of "user just crossed from area
+ * A into area B".
+ * <p>
+ * The "area" here is the one defined by
+ * {@link MainElement#getArea(float, float, hyperobject.keyboard.novakey.core.model.Model)}:
+ * 0 for the inner circle, 1–5 for the five outer sectors, -1 for
+ * off-wheel. On every MOVE event {@code handle} recomputes the current
+ * area and, if it differs from the last one seen, fires {@link #onCross}
+ * before updating the stored previous area.
+ * <p>
+ * Used by {@link TypingHandler} (to collect an area-crossing list for
+ * key decoding) and by
+ * {@link hyperobject.keyboard.novakey.core.elements.keyboards.overlays.menus.OnUpMenu
+ * OnUpMenu}'s inner handler.
  */
 public abstract class AreaCrossedHandler implements TouchHandler {
 
@@ -35,12 +52,19 @@ public abstract class AreaCrossedHandler implements TouchHandler {
 
 
     /**
-     * Handles the logic given a touch event and
-     * a view
-     *
-     * @param event   current touch event
-     * @param control view being acted on
-     * @return true to continue action, false otherwise
+     * Feeds one raw touch event into the area-cross state machine.
+     * <p>
+     * How: updates the cached finger position and computes the current
+     * area, then dispatches on the event's masked action:
+     * <ul>
+     *   <li>{@code DOWN}: fires {@link #onDown} and seeds prevArea.</li>
+     *   <li>{@code MOVE}: fires {@link #onMove}; if the area changed
+     *       since the last event, also fires {@link #onCross} with a
+     *       {@link CrossEvent}.</li>
+     *   <li>{@code UP}: fires {@link #onUp}.</li>
+     * </ul>
+     * The overall boolean return is AND-combined from each hook's result
+     * — any hook returning false releases this handler.
      */
     @Override
     public boolean handle(MotionEvent event, Controller control) {
@@ -70,12 +94,10 @@ public abstract class AreaCrossedHandler implements TouchHandler {
 
 
     /**
-     * Override this to specify onDown behaviour
-     *
-     * @param x          current x position
-     * @param y          current y position
-     * @param area       current area
-     * @param controller controller used for context
+     * Called on {@code ACTION_DOWN}. Default is a no-op returning true.
+     * Override to react to the initial finger-down (for example, start
+     * a long-press timer). Returning false releases this handler
+     * immediately.
      */
     protected boolean onDown(float x, float y, int area, Controller controller) {
         return true;
@@ -83,11 +105,10 @@ public abstract class AreaCrossedHandler implements TouchHandler {
 
 
     /**
-     * Override this to specify onMove behaviour
-     *
-     * @param x          current x position
-     * @param y          current y position
-     * @param controller controller used for context
+     * Called on every {@code ACTION_MOVE} before {@link #onCross} is
+     * considered. Default is a no-op returning true. Override to react
+     * to continuous finger motion, e.g. cache the current position for
+     * the draw pass.
      */
     protected boolean onMove(float x, float y, Controller controller) {
         return true;
@@ -95,21 +116,19 @@ public abstract class AreaCrossedHandler implements TouchHandler {
 
 
     /**
-     * Called when the touch listener detects that there
-     * has been a cross, either in sector or range
-     *
-     * @param event      describes the event
-     * @param controller controller used for context
+     * Called whenever the finger's current area differs from the
+     * previously recorded one — i.e. the user has crossed a sector
+     * or ring boundary. The {@link CrossEvent} carries both old and new
+     * area so the subclass can tell direction of travel without
+     * consulting its own state.
      */
     protected abstract boolean onCross(CrossEvent event, Controller controller);
 
 
     /**
-     * Called when the user lifts finger, typically this
-     * method expects a finalized action to be triggered
-     * like typing a character
-     *
-     * @param controller controller used for context
+     * Called on {@code ACTION_UP}. Subclasses typically fire a
+     * finalized action here (the key the user meant to type, the menu
+     * entry they selected, …) and return false to release the handler.
      */
     protected abstract boolean onUp(Controller controller);
 

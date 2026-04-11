@@ -25,24 +25,37 @@ import hyperobject.keyboard.novakey.core.NovaKeyService;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Created by Viviano on 6/15/2016.
+ * Nudges the active text selection by one character in one direction,
+ * respecting the current cursor mode. Used by the cursor overlay so the
+ * user can fine-tune a selection after establishing it: the mode decides
+ * whether the start edge, end edge, or both move.
+ * <p>
+ * Does not touch the model — all state change is delegated to
+ * {@link NovaKeyService#moveSelection(int, int)}, which the IME applies
+ * via the input connection.
  */
 public class RenameSelectionAction implements Action<Void> {
 
     private boolean mMoveRight;
 
 
+    /**
+     * @param moveRight {@code true} to shift the selection one character
+     *                  to the right, {@code false} to shift it left
+     */
     public RenameSelectionAction(boolean moveRight) {
         mMoveRight = moveRight;
     }
 
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Computes a {@code (ds, de)} start/end delta pair from the cursor
+     * mode and asks the IME to apply it.
+     * <p>
+     * How: cursor mode {@code <= 0} means the start edge is live, so
+     * move it by ±1; cursor mode {@code >= 0} means the end edge is
+     * live, so move it by ±1. Mode 0 (both edges live) therefore moves
+     * both edges in lockstep, preserving the selection length.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

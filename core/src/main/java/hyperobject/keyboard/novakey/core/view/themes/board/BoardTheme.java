@@ -27,30 +27,41 @@ import hyperobject.keyboard.novakey.core.utils.drawing.drawables.Drawable;
 import hyperobject.keyboard.novakey.core.view.themes.ChildTheme;
 
 /**
- * Created by Viviano on 2/2/2016.
+ * Sub-theme that paints the circular wheel itself — the board back,
+ * the sector divider lines, the inner circle — and the per-key
+ * glyphs/icons drawn on top of it. Concrete variants (donut, material,
+ * multicolor, separate sections, icon) override the two draw methods
+ * to produce different visual styles.
+ * <p>
+ * Also extends {@link PickerItem} so a board theme can render itself as
+ * a thumbnail in the theme-picker grid.
  */
 public interface BoardTheme extends PickerItem, ChildTheme {
 
     /**
-     * Draw the center of the board
+     * Paints the wheel for one frame: whatever board-back shape the
+     * variant uses (filled disc, donut ring, half-and-half, …) plus
+     * the sector divider lines and the small inner circle.
      *
-     * @param x      center X position
-     * @param y      center Y position
-     * @param r      radius of keyboard
-     * @param canvas canvas to draw on
+     * @param x      wheel center X
+     * @param y      wheel center Y
+     * @param r      wheel outer radius
+     * @param sr     wheel inner radius
+     * @param canvas canvas to paint into
      */
     void drawBoard(float x, float y, float r, float sr, Canvas canvas);
 
 
     /**
-     * Draws an object, ensuring contrast, on top of the board.
-     * Use this to draw thngs like letters, text, icons bmps and such
+     * Paints a single item (letter, icon, glyph) on top of the wheel,
+     * using whatever foreground color the variant picks to stay
+     * readable against its board back.
      *
-     * @param drawable drawable object to draw
-     * @param x        x position to draw
-     * @param y        y position to draw
-     * @param size     size of object to draw
-     * @param canvas   canvas to draw on
+     * @param drawable the foreground object to paint
+     * @param x        item center X
+     * @param y        item center Y
+     * @param size     item size in pixels
+     * @param canvas   canvas to paint into
      */
     void drawItem(Drawable drawable, float x, float y, float size, Canvas canvas);
 }

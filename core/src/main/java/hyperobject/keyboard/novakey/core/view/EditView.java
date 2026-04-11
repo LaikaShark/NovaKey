@@ -41,7 +41,16 @@ import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 import hyperobject.keyboard.novakey.core.view.themes.Themeable;
 
 /**
- * Created by Viviano on 3/5/2016.
+ * The "resize keyboard" input view the IME swaps in when the user enters
+ * edit mode. Hosts a {@link NovaKeyEditView} (which handles the drag /
+ * pinch gestures and draws a live preview), three {@link FloatingButton}s
+ * (cancel / reset / accept), and a {@link SeekBar} with a reset icon that
+ * together control the ratio between the outer and inner radii.
+ * <p>
+ * The cancel/accept buttons fire a {@link SetEditingAction} through the
+ * {@link Gun} to ask the controller to leave edit mode, after optionally
+ * persisting the new dimensions via
+ * {@link NovaKeyEditView#saveDimens()}.
  */
 public class EditView extends RelativeLayout implements Themeable {
 
@@ -54,6 +63,21 @@ public class EditView extends RelativeLayout implements Themeable {
     private final MainDimensions mDimens;
 
 
+    /**
+     * Inflates {@code R.layout.edit_view_layout} into this
+     * {@link RelativeLayout}, wires every child (resize view, floating
+     * buttons, seekbar, reset icon) to its listener, and seeds the
+     * seekbar from the currently-saved inner/outer radius ratio.
+     * <p>
+     * The seekbar models the ratio "outer / inner" in tenths, inverted
+     * so the slider's right end corresponds to a larger inner circle —
+     * {@link #srToProgress(float)} handles the conversion both ways.
+     *
+     * @param context host context
+     * @param gun     action firing channel used to exit edit mode
+     * @param dimens  the live main dimensions used to lock this view's
+     *                measured size
+     */
     public EditView(Context context, Gun gun, MainDimensions dimens) {
         super(context);
         mGun = gun;
@@ -111,10 +135,15 @@ public class EditView extends RelativeLayout implements Themeable {
 
 
     /**
-     * Will set this view's theme with the given one
+     * Propagates the theme to every child that knows how to be themed:
+     * the resize preview, the three floating buttons, the reset icon,
+     * and the seekbar's background, progress and thumb drawables (tinted
+     * via {@link PorterDuff} color filters). Thumb tinting is gated on
+     * API &gt;= Jelly Bean since {@link SeekBar#getThumb()} didn't exist
+     * before that.
      *
-     * @param theme theme to set to
-     * @throws IllegalArgumentException if the theme passed is null
+     * @param theme theme to apply; must not be {@code null}
+     * @throws IllegalArgumentException if {@code theme} is null
      */
     public void setTheme(MasterTheme theme) {
         mResizeView.setTheme(theme);
@@ -138,23 +167,44 @@ public class EditView extends RelativeLayout implements Themeable {
     }
 
 
+    /**
+     * Cancel button handler: fires a {@code SetEditingAction(false)}
+     * without touching the dimensions, so any in-progress resize is
+     * discarded.
+     */
     private void onCancel() {
         mGun.fire(new SetEditingAction(false));
     }
 
 
+    /**
+     * Refresh button handler: resets the preview to the default radius /
+     * position via {@link NovaKeyEditView#resetDimens()} and snaps the
+     * seekbar back to the {@link #DEFAULT} ratio.
+     */
     private void onRefresh() {
         mResizeView.resetDimens();
         mSeekBar.setProgress(srToProgress(DEFAULT));
     }
 
 
+    /**
+     * Accept button handler: persists the preview's current dimensions
+     * via {@link NovaKeyEditView#saveDimens()}, then fires a
+     * {@code SetEditingAction(false)} to leave edit mode.
+     */
     private void onSave() {
         mResizeView.saveDimens();
         mGun.fire(new SetEditingAction(false));
     }
 
 
+    /**
+     * Maps a radius-ratio {@code sr} (outer / inner) to the inverted
+     * seekbar integer space: multiplies by 10 to hit the tenths
+     * resolution used by the seekbar, then subtracts from {@link #MAX}
+     * so sliding right yields a larger inner circle.
+     */
     private int srToProgress(float sr) {
         sr *= 10;
         return (int) (MAX - sr);

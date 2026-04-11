@@ -25,22 +25,29 @@ import android.graphics.Canvas;
 import hyperobject.keyboard.novakey.core.view.themes.ChildTheme;
 
 /**
- * Created by Viviano on 8/14/2016.
+ * Sub-theme responsible for painting the area behind the circular wheel —
+ * effectively the flat "wallpaper" of the IME view. The main element
+ * calls this before it draws the board so the wheel is composited over
+ * whatever shade/gradient/pattern the background theme produces.
  */
 public interface BackgroundTheme extends ChildTheme {
 
     /**
-     * Draw background of keyboard
+     * Fills the background rectangle for one frame. The rectangle
+     * {@code (l, t) -> (rt, b)} is the full canvas extent, while the
+     * {@code (x, y, r, sr)} quartet locates the wheel inside it so
+     * variants that want to draw concentric rings or masks know where
+     * the board sits.
      *
-     * @param l      left position
-     * @param t      top position
-     * @param rt     right position
-     * @param b      bottom position
-     * @param x      center X position
-     * @param y      center Y position
-     * @param r      radius of keyboard
-     * @param sr     small radius of keyboard
-     * @param canvas canvas to draw on
+     * @param l      left edge of the rect to fill, in canvas pixels
+     * @param t      top edge of the rect to fill
+     * @param rt     right edge of the rect to fill
+     * @param b      bottom edge of the rect to fill
+     * @param x      wheel center X
+     * @param y      wheel center Y
+     * @param r      wheel outer radius
+     * @param sr     wheel inner radius
+     * @param canvas canvas to paint into
      */
     void drawBackground(float l, float t, float rt, float b, float x, float y,
                         float r, float sr, Canvas canvas);

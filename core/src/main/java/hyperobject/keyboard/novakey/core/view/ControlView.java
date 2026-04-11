@@ -25,15 +25,28 @@ import android.util.DisplayMetrics;
 import android.view.View;
 
 /**
- * Created by Viviano on 3/8/2016.
+ * Full-width, zero-height placeholder view used as the IME's candidates
+ * view slot. NovaKey does not ship a suggestion strip, so this view only
+ * reserves the screen width and occupies no vertical space, keeping the
+ * framework happy without pushing the keyboard up.
  */
 public class ControlView extends View {
 
+    /**
+     * Builds the placeholder in the given context. No measurement state
+     * is cached — dimensions are pulled fresh each measure pass.
+     */
     public ControlView(Context context) {
         super(context);
     }
 
 
+    /**
+     * Reports a size of {@code (screenWidth, 0)} regardless of the
+     * incoming specs: width comes from {@link DisplayMetrics#widthPixels}
+     * so the view spans the display, height is zero so nothing is drawn
+     * above the keyboard.
+     */
     @Override
     public void onMeasure(int widthSpec, int heightSpec) {
         DisplayMetrics metrics = getResources().getDisplayMetrics();

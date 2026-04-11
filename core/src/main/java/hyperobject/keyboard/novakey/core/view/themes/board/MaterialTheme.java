@@ -26,10 +26,21 @@ import android.graphics.Paint;
 import hyperobject.keyboard.novakey.core.utils.drawing.Draw;
 
 /**
- * Created by Viviano on 6/6/2015.
+ * Flat material-style board variant. Inherits the empty board back from
+ * {@link BaseTheme} so the wheel shows through to the background, and
+ * overrides only the divider lines: short ticks drawn with
+ * {@link Draw#lines} plus a thin inner circle, both in the accent
+ * color, with a subtle drop shadow when 3D mode is on.
  */
 public class MaterialTheme extends BaseTheme {
 
+    /**
+     * Paints the inner circle and five short divider ticks in the
+     * accent color. The ticks are {@code (r - sr) / 10} long, a hair
+     * shorter than the sector radii, which gives the wheel its
+     * clean material look. Drops a soft shadow under both when 3D
+     * mode is on.
+     */
     @Override
     public void drawLines(float x, float y, float r, float sr, float w, Canvas canvas) {
         if (mParent.is3D())

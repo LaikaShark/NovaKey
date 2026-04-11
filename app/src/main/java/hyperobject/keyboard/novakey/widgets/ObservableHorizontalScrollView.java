@@ -28,34 +28,50 @@ import android.view.View;
 import android.widget.HorizontalScrollView;
 
 /**
- * Created by Viviano on 1/19/2016.
+ * {@link HorizontalScrollView} subclass that exposes scroll position
+ * changes via an {@link OnScrollListener}. Used by
+ * {@link hyperobject.keyboard.novakey.widgets.pickers.HorizontalPicker}
+ * so that scrolling the enclosing picker dismisses the release-picker
+ * popup and cancels any in-flight long-press timer.
  */
 public class ObservableHorizontalScrollView extends HorizontalScrollView {
 
     OnScrollListener mListener;
 
 
+    /** Programmatic constructor. */
     public ObservableHorizontalScrollView(Context context) {
         super(context);
     }
 
 
+    /** XML-inflation constructor. */
     public ObservableHorizontalScrollView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
 
+    /** Three-arg constructor for styled inflation. */
     public ObservableHorizontalScrollView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 
 
+    /**
+     * Four-arg constructor; API 21+. Kept under a
+     * {@link TargetApi} annotation from before the module's
+     * {@code minSdk} was bumped to 21 in the 2026 modernization pass.
+     */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public ObservableHorizontalScrollView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
     }
 
 
+    /**
+     * Forwards every scroll event to the attached listener after
+     * letting the superclass update its own scroll state.
+     */
     @Override
     protected void onScrollChanged(int x, int y, int oldx, int oldy) {
         super.onScrollChanged(x, y, oldx, oldy);
@@ -65,12 +81,24 @@ public class ObservableHorizontalScrollView extends HorizontalScrollView {
     }
 
 
+    /** Registers the scroll listener. Pass {@code null} to clear. */
     public void setOnScrollListener(OnScrollListener listener) {
         this.mListener = listener;
     }
 
 
+    /** Callback interface matching the arguments of {@link #onScrollChanged(int, int, int, int)}. */
     public interface OnScrollListener {
+        /**
+         * Fired after the superclass commits a scroll position change.
+         *
+         * @param view source view
+         * @param x    new horizontal scroll offset
+         * @param y    new vertical scroll offset (always 0 for a
+         *             horizontal scroll view)
+         * @param oldx previous horizontal offset
+         * @param oldy previous vertical offset
+         */
         void onScrollChanged(View view, int x, int y, int oldx, int oldy);
     }
 }

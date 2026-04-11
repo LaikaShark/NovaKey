@@ -24,26 +24,17 @@ import hyperobject.keyboard.novakey.core.model.MainDimensions;
 import hyperobject.keyboard.novakey.core.utils.Util;
 
 /**
- * RelativePosn based on both the inner and outer radius
- * takes a location and an angle where the angle is the real
- * angle based on the center of the board
+ * A polar {@link RelativePosn} that interpolates between the inner and
+ * outer radii.
  * <p>
- * and distance is the fraction in which the coordinate lies between the
- * inner and outer radius
- * <p>
- * For Example:
- * 0 would lie exactly on the inner radius
- * 1 would lie exactly on the outer radius
- * .5 would lie exactly half-way between the inner and outer radius
- * <p>
- * Anything below 0 or above 1 would be place inside the inner radius
- * or outside the outer radius, respectively, with the distance between the
- * corresponding radii being directly proportional to the difference between both
- * radii
- * this means a distance of 2 would lie exactly (2 * (outer - inner)) distance away
- * from the inner radius
- * <p>
- * Created by Viviano on 6/10/2016.
+ * Math: the effective radial distance is
+ * {@code smallRadius + fraction * (radius - smallRadius)}, so a fraction
+ * of {@code 0} lands on the inner ring, {@code 1} lands on the outer
+ * ring, and {@code 0.5} lands on the midline. Values outside [0, 1]
+ * extrapolate linearly — {@code 2} lies at {@code 2 * (outer - inner)}
+ * past the inner ring, and negative values push inside it. This is the
+ * position used for keys on the outer sectors, which are all described
+ * in terms of "how far between the two rings."
  */
 public class RadiiPosn extends RelativePosn {
 
@@ -51,6 +42,12 @@ public class RadiiPosn extends RelativePosn {
     private double angle;
 
 
+    /**
+     * Builds an inner/outer-radius-interpolated polar position.
+     *
+     * @param distance fraction between rings: 0 = inner, 1 = outer
+     * @param angle    angle in radians, measured in the wheel's frame
+     */
     public RadiiPosn(float distance, double angle) {
         this.distance = distance;
         this.angle = angle;
@@ -58,8 +55,9 @@ public class RadiiPosn extends RelativePosn {
 
 
     /**
-     * @param model model to base posn off
-     * @return x coordinate based on the model dimensions
+     * Resolves X by linearly interpolating the radial distance between
+     * {@code d.getSmallRadius()} and {@code d.getRadius()} by
+     * {@code distance}, then projecting to cartesian at {@code angle}.
      */
     @Override
     public float getX(MainDimensions model) {
@@ -70,8 +68,9 @@ public class RadiiPosn extends RelativePosn {
 
 
     /**
-     * @param model model to base posn off
-     * @return y coordinate based on the model dimensions
+     * Resolves Y by the same radial interpolation, projected via
+     * {@link Util#yFromAngle} (which flips the sign so screen-space Y
+     * grows downward).
      */
     @Override
     public float getY(MainDimensions model) {

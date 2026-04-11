@@ -24,19 +24,33 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 /**
- * Created by Viviano on 6/21/2016.
+ * NovaKey's internal drawable abstraction.
  * <p>
- * Simple interface for drawable items
+ * Intentionally distinct from {@link android.graphics.drawable.Drawable}:
+ * the Android API expects drawables to own bounds/state and to be painted
+ * via {@code draw(Canvas)}, which assumes a stateful, long-lived resource.
+ * NovaKey's drawing layer is almost entirely stateless — elements walk the
+ * model every frame and pass in the center point, desired size, and the
+ * shared {@link Paint} at the moment of the draw — so this interface is a
+ * single function pointer taking (x, y, size, paint, canvas) with no
+ * per-instance geometry. Implementations include {@link BMPDrawable},
+ * {@link TextDrawable}, {@link FlatTextDrawable}, and {@link FontIcon},
+ * plus the shapes under {@code shapes/} which also implement this
+ * interface so they can double as hit-test + paint objects.
  */
 public interface Drawable {
     /**
-     * Interface for any kind of drawable
+     * Paints this drawable centered at (x, y) sized to {@code size} using
+     * the supplied paint and canvas.
      *
-     * @param x      x position
-     * @param y      y position
-     * @param size   size of icon
-     * @param p      paint to use
-     * @param canvas canvas to draw on
+     * @param x      center x in canvas pixels
+     * @param y      center y in canvas pixels
+     * @param size   nominal pixel size (meaning is implementation-specific:
+     *               text height, bitmap edge length, shape diameter, etc.)
+     * @param p      paint whose color/shadow/typeface state the caller has
+     *               already configured; implementations may temporarily
+     *               mutate it but must restore anything they change
+     * @param canvas destination canvas
      */
     void draw(float x, float y, float size, Paint p, Canvas canvas);
 }

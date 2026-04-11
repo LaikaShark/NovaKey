@@ -46,7 +46,31 @@ import hyperobject.keyboard.novakey.core.utils.drawing.Icons;
 import hyperobject.keyboard.novakey.core.view.themes.AppTheme;
 
 /**
- * Created by Viviano on 7/10/2015.
+ * Central orchestrator of the keyboard runtime. Owns the {@link Model},
+ * the {@link NovaKeyView}, and the current {@link TouchHandler}, and is
+ * the single mutation choke point — elements and handlers never touch
+ * model state directly, they build an {@link Action} and hand it to
+ * {@link #fire(Action)}.
+ * <p>
+ * Lifetime: one Controller is constructed per {@link NovaKeyService}
+ * instance in {@code onCreate}. Construction is the "big bang" that wires
+ * up themes, fonts, icons, the clipboard menu, settings, the model, and
+ * the view, then registers itself as the view's {@code OnTouchListener}.
+ * <p>
+ * Runtime loop:
+ * <ol>
+ *   <li>Android delivers a {@link MotionEvent} to the view.</li>
+ *   <li>{@link #onTouch} routes it: if there's an "active" handler from a
+ *       previous event, the event goes straight there; otherwise Controller
+ *       walks the model's element list top-down and hands the event to each
+ *       until one claims it ({@code handle} returns true), at which point
+ *       that element's handler becomes the active handler.</li>
+ *   <li>Handlers respond by firing actions via {@link #fire(Action)}.</li>
+ *   <li>Every {@code fire} call ends with {@link #invalidate()} so the
+ *       view redraws on the next frame.</li>
+ * </ol>
+ * The active handler is released when it returns {@code false} from
+ * {@code handle} — typically on {@code ACTION_UP}.
  */
 public class Controller implements Gun, View.OnTouchListener {
 
@@ -61,10 +85,19 @@ public class Controller implements Gun, View.OnTouchListener {
 
 
     /**
-     * Controller initializes models and creates private references to
-     * the given IME and View
+     * Wires up the entire keyboard runtime. In order: initializes color
+     * constants, loads app themes, creates fonts, loads icons, seeds
+     * {@link InfiniteMenu}'s hidden-keys table, builds the clipboard menu,
+     * hooks the {@link Settings} singleton to shared preferences and pulls
+     * an initial snapshot, constructs the {@link MainModel} and
+     * {@link MainView}, binds the view to the model/theme, and registers
+     * {@code this} as the view's touch listener. Finally primes the
+     * double-press timer that toggles editing mode when the user holds a
+     * second finger for a second.
      *
-     * @param ime the input method service
+     * @param ime the owning {@link NovaKeyService}; used both as Context
+     *            for resource loading and as the target all fired actions
+     *            eventually call back into
      */
     public Controller(NovaKeyService ime) {
         // context
@@ -103,35 +136,32 @@ public class Controller implements Gun, View.OnTouchListener {
     }
 
 
-    /**
-     * @return returns the main view
-     */
+    /** Returns the keyboard's root view so the IME can attach it as its input view. */
     public NovaKeyView getView() {
         return mView;
     }
 
 
-    /**
-     * @return returns the draw model
-     */
+    /** Returns the live model backing this controller. */
     public Model getModel() {
         return mModel;
     }
 
 
-    /**
-     * Redraws the view
-     */
+    /** Requests a redraw of the view on the next frame. */
     public void invalidate() {
         mView.invalidate();
     }
 
 
     /**
-     * Triggers action and update the view
+     * The single mutation entry point. Calls {@code action.trigger(ime,
+     * this, model)} if the action is non-null, then invalidates the view
+     * so the effect is visible on the next frame. Returns whatever the
+     * action returned (or {@code null} if the action itself was null).
      *
-     * @param action action to fire
-     * @return returns the result of the action
+     * @param action the action to fire (nullable — no-op if null)
+     * @param <T>    the action's return type
      */
     @Override
     public <T> T fire(Action<T> action) {
@@ -143,6 +173,26 @@ public class Controller implements Gun, View.OnTouchListener {
     }
 
 
+    /**
+     * Touch event router. On every incoming event:
+     * <ul>
+     *   <li>Multi-touch bookkeeping first: a second pointer going down
+     *       arms the 1-second double-press timer which, if it fires,
+     *       enters editing mode; the second pointer lifting or the primary
+     *       pointer going up cancels it.</li>
+     *   <li>If there is already an active {@link TouchHandler} (from a
+     *       previous event in the same gesture), the event goes straight
+     *       to it; if {@code handle} returns false, the handler is
+     *       released.</li>
+     *   <li>Otherwise Controller walks the model's element list
+     *       back-to-front (topmost element first) and offers the event to
+     *       each. The first handler that returns true becomes the new
+     *       active handler and receives all subsequent events until it
+     *       releases.</li>
+     * </ul>
+     * Always returns true — the keyboard claims every touch that lands on
+     * its view.
+     */
     @Override
     public boolean onTouch(View view, MotionEvent event) {
         switch (event.getAction() & MotionEvent.ACTION_MASK) {

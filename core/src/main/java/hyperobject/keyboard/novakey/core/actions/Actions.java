@@ -25,28 +25,32 @@ import hyperobject.keyboard.novakey.core.NovaKeyService;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Triggers an Array of actions consecutively
- * if any of it's child actions return anything it will be
- * ignored
- * <p>
- * Created by Viviano on 6/16/2016.
+ * Composite {@link Action} that fires a pre-built list of sub-actions
+ * in order, so an Element or TouchHandler can queue several side effects
+ * from a single call to {@link Controller#fire}. Any return values from
+ * the children are discarded — use this only when the composite itself
+ * has no meaningful result.
  */
 public class Actions implements Action<Void> {
 
     private final Action[] mActions;
 
 
+    /**
+     * Captures the list of actions to fire in sequence.
+     *
+     * @param actions the sub-actions, executed in argument order
+     */
     public Actions(Action... actions) {
         mActions = actions;
     }
 
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Fires each wrapped action through {@link Controller#fire} in the
+     * original order. Because every sub-action goes through {@code fire},
+     * each one triggers its own view invalidate — the composite itself
+     * does not need to call invalidate.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

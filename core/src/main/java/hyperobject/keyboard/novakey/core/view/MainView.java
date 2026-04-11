@@ -26,14 +26,31 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.WindowInsets;
 
+/**
+ * Concrete {@link NovaKeyView} the IME service actually installs as its
+ * input view. Inherits the element-walking draw loop from its parent,
+ * adds a software-rendered layer type, and owns the sizing logic that
+ * reports the correct height on Android 15+ edge-to-edge IME windows.
+ * <p>
+ * Touch events are delivered to an {@link android.view.View.OnTouchListener}
+ * registered by the controller, so this class deliberately does not
+ * override {@code onTouchEvent} — the controller's listener fans events
+ * out to the active touch handler and the model's element list.
+ */
 public class MainView extends NovaKeyView {
 
+    /** Simple constructor; delegates to the (Context, AttributeSet) form. */
     public MainView(Context context) {
         this(context, null);
 
     }
 
 
+    /**
+     * XML-inflation constructor. Forces software layer rendering because
+     * the keyboard's gradient/shader background does not render
+     * correctly on every hardware pipeline.
+     */
     public MainView(Context context, AttributeSet attrs) {
         super(context, attrs);
         setLayerType(LAYER_TYPE_SOFTWARE, null);
@@ -94,10 +111,3 @@ public class MainView extends NovaKeyView {
     }
 
 }
-
-
-
-
-
-
-

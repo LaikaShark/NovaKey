@@ -37,17 +37,32 @@ import hyperobject.keyboard.novakey.core.utils.drawing.Icons;
 import hyperobject.keyboard.novakey.core.view.themes.AppTheme;
 
 /**
- * Hosts the {@link PreferencesFragment} settings UI and acts as the launcher
- * activity for the app.
- *
- * Migrated during the AndroidX modernization pass from
- * {@code android.preference.PreferenceActivity} (deprecated since API 28) to
- * {@link AppCompatActivity}. The fragment is now installed via the support
- * fragment manager — the framework FragmentManager that the old code used is
- * incompatible with {@link androidx.preference.PreferenceFragmentCompat}.
+ * Launcher activity of the app and host for {@link PreferencesFragment}.
+ * <p>
+ * Post-modernization this is an AndroidX {@link AppCompatActivity} using
+ * the support fragment manager. Prior to the 2026 pass it extended the
+ * framework {@code android.preference.PreferenceActivity}, which was
+ * deprecated in API 28 and is incompatible with
+ * {@link androidx.preference.PreferenceFragmentCompat}.
+ * <p>
+ * First-run flow: if {@link MainNovaKeyService#MY_PREFERENCES} has no
+ * {@code has_setup} flag, the user is redirected to {@link SetupActivity}
+ * instead of seeing the preferences screen.
  */
 public class SettingsActivity extends AppCompatActivity {
 
+    /**
+     * Activity create hook: initializes the drawing/theme singletons
+     * (which are normally set up by the IME service, but may not have
+     * run yet when settings is launched cold), binds the global
+     * {@link Settings} object to the default preferences, and either
+     * redirects to setup on first launch or installs the preferences
+     * fragment.
+     * <p>
+     * The {@code savedInstanceState == null} guard avoids stacking a
+     * second fragment copy on configuration changes — Android restores
+     * the original fragment for us.
+     */
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

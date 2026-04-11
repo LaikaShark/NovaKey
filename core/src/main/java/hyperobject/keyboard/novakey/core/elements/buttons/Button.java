@@ -37,7 +37,15 @@ import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 import hyperobject.keyboard.novakey.core.view.themes.button.ButtonTheme;
 
 /**
- * Created by Viviano on 6/22/2015.
+ * Base class for the fixed buttons that sit around the wheel (space,
+ * punctuation, mode-change, etc.). A button has a {@link ButtonData}
+ * describing its shape/position/size, an optional icon, and two behaviors:
+ * a short-click action and a long-press action, both supplied by subclasses.
+ * <p>
+ * Touch flow: ACTION_DOWN inside the button's shape starts a long-press
+ * timer and claims the gesture. ACTION_MOVE that leaves the shape cancels
+ * the long-press and releases the gesture. ACTION_UP fires the click
+ * action unless the long-press already fired (which clears the click flag).
  */
 public abstract class Button implements Element {
 
@@ -49,16 +57,19 @@ public abstract class Button implements Element {
     private ButtonData mData;
 
 
+    /**
+     * Stores the layout data; subclasses are responsible for supplying
+     * the icon and the click/long-press actions.
+     */
     public Button(ButtonData data) {
         mData = data;
     }
 
 
     /**
-     * Must be called by children of this class in order to
-     * set the icon of this button
-     *
-     * @param icon icon to set
+     * Subclass hook to install the icon drawn in the center of the button.
+     * Called by subclass constructors (or whenever state changes force an
+     * icon swap, e.g. shift state icons).
      */
     protected final void setIcon(Drawable icon) {
         mIcon = icon;
@@ -66,24 +77,26 @@ public abstract class Button implements Element {
 
 
     /**
-     * @return action to fire, or null if no action is needed
+     * Subclass hook for a tap. Returning {@code null} makes the button a
+     * no-op on click; otherwise the returned action is fired through the
+     * controller in {@link #handle}.
      */
     protected abstract Action onClickAction();
 
 
     /**
-     * @return action to fire, or null if no action is needed
+     * Subclass hook for a long-press. Returning {@code null} disables
+     * long-press behavior; otherwise the returned action is fired when
+     * the long-press timer finishes.
      */
     protected abstract Action onLongPressAction();
 
 
     /**
-     * Draws the button. Button must handle it's own paint.
-     * Never call this method directly unless inside of a
-     * View's onDraw() method
-     *
-     * @param theme  theme for drawing properties
-     * @param canvas canvas to draw on
+     * Draws the button back plate followed by the icon (scaled to 70% of
+     * the button size). Both draws go through the current {@link ButtonTheme}
+     * so styling is consistent across buttons. Must only be called from
+     * inside a view's {@code onDraw} pass.
      */
     @Override
     public void draw(Model model, MasterTheme theme, Canvas canvas) {
@@ -102,12 +115,20 @@ public abstract class Button implements Element {
 
 
     /**
-     * Handles the logic given a touch event and
-     * a view
+     * Routes a touch event through the tap / long-press state machine.
+     * <p>
+     * How:
+     * <ul>
+     *   <li>DOWN inside the shape: start long-press timer, claim gesture.</li>
+     *   <li>DOWN outside the shape: ignore, return false.</li>
+     *   <li>MOVE outside: cancel long-press and drop the gesture.</li>
+     *   <li>MOVE inside: keep holding the gesture.</li>
+     *   <li>UP: cancel timer and fire the click action if the long-press
+     *       hadn't already fired (which would have cleared {@code mShouldClick}).</li>
+     * </ul>
      *
-     * @param event   current touch event
-     * @param control view being acted on
-     * @return true to continue action, false otherwise
+     * @return {@code true} while the button wants to keep the gesture,
+     *         {@code false} once it's released
      */
     @Override
     public boolean handle(MotionEvent event, Controller control) {
@@ -145,6 +166,13 @@ public abstract class Button implements Element {
     }
 
 
+    /**
+     * Arms a one-shot timer for {@link Settings#longPressTime} ms. When
+     * it finishes it clears the click flag (so ACTION_UP won't also fire
+     * a tap) and dispatches the long-press action. Resets {@code mShouldClick}
+     * to {@code true} on every arm so a previous cancelled long-press
+     * doesn't suppress the next tap.
+     */
     private void startLongPress(Controller control) {
         mShouldClick = true;
         mLongPress = new CountDownTimer(Settings.longPressTime, Settings.longPressTime) {
@@ -165,35 +193,13 @@ public abstract class Button implements Element {
     }
 
 
+    /**
+     * Stops the long-press timer if one is currently running. Safe to
+     * call when there is none.
+     */
     private void cancelLongPress() {
         if (mLongPress != null)
             mLongPress.cancel();
     }
-
-
-//    /*
-//        Btns will be saved as a Single String, each button will contain it's data and meta data
-//        inside a substring of this main string, all buttons are to be separated by "|"
-//     */
-//    public static ArrayList<Button> btnsFromString(String s) {
-//        if (s.equals(Settings.DEFAULT)) {
-//            return btnsFromString(
-//                    "0," + Math.PI*3/4 + "," + (1+getRadius(SMALL, 1)) + "," + (CIRCLE|SMALL) + "|" +
-//                    "1," + Math.PI*1/4 + "," + (1+getRadius(SMALL, 1)) + "," + (CIRCLE|SMALL)
-//
-//
-//            //this is space button
-//            + (Settings.hasSpaceBar ?
-//                    "|" + "2," + Math.PI/2 + "," + 1.16667f + "," + (ARC|LARGE)
-//                    : "")
-//            );
-//        }
-//        String[] b = s.split("[|]");
-//        ArrayList<Button> B = new ArrayList<Button>();
-//        for (String str : b) {
-//            B.add(btnFromString(str));
-//        }
-//        return B;
-//    }
 
 }

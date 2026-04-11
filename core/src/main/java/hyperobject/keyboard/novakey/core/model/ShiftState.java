@@ -21,7 +21,18 @@
 package hyperobject.keyboard.novakey.core.model;
 
 /**
- * Created by Viviano on 6/7/2016.
+ * The three stable positions in NovaKey's shift cycle, realizing the
+ * README's Default → Shift → Caps Lock state machine. Transitions are
+ * produced by {@code ShiftAction} / {@code UpdateShiftAction} and stored
+ * on the {@link Model}; key rendering and character output both branch
+ * on this enum.
+ * <ul>
+ *   <li>{@link #LOWERCASE} — the resting state; keys emit lowercase.</li>
+ *   <li>{@link #UPPERCASE} — a one-shot shift; the next key emitted
+ *       reverts the state back to {@link #LOWERCASE}.</li>
+ *   <li>{@link #CAPS_LOCKED} — sticky shift; every key stays uppercase
+ *       until the user explicitly leaves caps lock.</li>
+ * </ul>
  */
 public enum ShiftState {
     LOWERCASE,

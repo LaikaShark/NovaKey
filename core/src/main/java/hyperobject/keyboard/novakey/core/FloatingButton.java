@@ -34,7 +34,18 @@ import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 import hyperobject.keyboard.novakey.core.view.themes.Themeable;
 
 /**
- * Created by Viviano on 3/8/2016.
+ * A self-drawing Material-style floating action button used in the
+ * setup / tutorial / demo flows.
+ * <p>
+ * Renders as a circle with a soft drop shadow and an icon glyph on
+ * top, rather than relying on the platform {@code FloatingActionButton}.
+ * Picks up its size, icon, and colours from XML via the
+ * {@code R.styleable.FloatingButton} attr set, and implements
+ * {@link Themeable} so the hosting screen can retint it in bulk when
+ * the app theme changes by calling {@link #setTheme(MasterTheme)}.
+ * <p>
+ * Does not handle touches itself — hosting layouts attach an
+ * {@code OnClickListener} through {@link View}'s normal API.
  */
 public class FloatingButton extends View implements Themeable {
 
@@ -46,16 +57,26 @@ public class FloatingButton extends View implements Themeable {
     private Paint p;
 
 
+    /** Single-arg ctor for programmatic instantiation without a style. */
     public FloatingButton(Context context) {
         this(context, null);
     }
 
 
+    /** Two-arg ctor used by XML inflation without a default style. */
     public FloatingButton(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
 
+    /**
+     * Full ctor: allocates the shared {@link Paint}, pulls
+     * {@code R.dimen.button_radius} for the circle radius, and then
+     * reads {@code button_height}, {@code back_color}, {@code front_color},
+     * and {@code button_icon} from the {@code FloatingButton} styleable
+     * attrs to initialise the cosmetic fields. The styled attributes
+     * array is always recycled in the {@code finally} block.
+     */
     public FloatingButton(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
@@ -80,12 +101,28 @@ public class FloatingButton extends View implements Themeable {
     }
 
 
+    /**
+     * Reports a square measured size of
+     * {@code (mHeight * 2 + radius * 2)} in each dimension, leaving
+     * slack around the circle for the drop shadow.
+     * <p>
+     * Note the signature uses {@code onMeasure(int w, int h)} instead
+     * of the {@code View.onMeasure(int widthSpec, int heightSpec)}
+     * contract, so this override is effectively a new overload —
+     * documentation-only pass, left as-is.
+     */
     @Override
     public void onMeasure(int w, int h) {
         setMeasuredDimension(mHeight * 2 + (int) mRadius * 2, mHeight * 2 + (int) mRadius * 2);
     }
 
 
+    /**
+     * Draws one frame: a circle at the view centre offset upward by
+     * {@code mRealHeight} (so the drop shadow has room below it), a
+     * soft shadow layer behind it, and then the icon glyph centred in
+     * the same position.
+     */
     @Override
     public void onDraw(Canvas canvas) {
         float x = getWidth() / 2;
@@ -102,46 +139,59 @@ public class FloatingButton extends View implements Themeable {
     }
 
 
+    /** Returns the ARGB fill colour of the button circle. */
     public int getBackColor() {
         return mBackground;
     }
 
 
+    /** Sets the ARGB fill colour of the button circle. */
     public void setBackColor(int backColor) {
         this.mBackground = backColor;
     }
 
 
+    /** Returns the icon {@link Drawable} currently rendered on the button. */
     public Drawable getIcon() {
         return mIcon;
     }
 
 
+    /** Replaces the icon drawn on top of the button. */
     public void setIcon(Drawable icon) {
         this.mIcon = icon;
     }
 
 
+    /** Returns the elevation value (used for shadow offset, not size). */
     public int getButtonHeight() {
         return mHeight;
     }
 
 
+    /** Sets the elevation value (used for shadow offset, not size). */
     public void setButtonHeight(int height) {
         this.mHeight = height;
     }
 
 
+    /** Returns the ARGB colour of the icon glyph. */
     public int getFrontColor() {
         return mFront;
     }
 
 
+    /** Sets the ARGB colour of the icon glyph. */
     public void setFrontColor(int front) {
         this.mFront = front;
     }
 
 
+    /**
+     * {@link Themeable} hook: repaints the button in the active app
+     * theme — primary colour for the background, contrast colour for
+     * the icon. The caller is responsible for invalidating the view.
+     */
     public void setTheme(MasterTheme theme) {
         setBackColor(theme.getPrimaryColor());
         setFrontColor(theme.getContrastColor());

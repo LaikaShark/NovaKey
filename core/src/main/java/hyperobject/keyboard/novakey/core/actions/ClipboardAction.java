@@ -32,24 +32,56 @@ import hyperobject.keyboard.novakey.core.model.InputState;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Created by Viviano on 6/16/2016.
+ * Multiplexed clipboard operation driven by a {@link Clipboard} opcode:
+ * copy, cut, paste, select-all, or deselect-all. The target editor is
+ * whatever field the IME is currently attached to — this action reads
+ * its selection through {@link NovaKeyService#getExtractedText()} and
+ * writes back through {@code inputText} / {@code setSelection}.
+ * <p>
+ * User-visible effects: system clipboard mutated on copy/cut (with a
+ * short "Text Copied" toast); selection replaced with clipboard contents
+ * on paste; entire field selected or collapsed on the select/deselect
+ * variants.
  */
 public class ClipboardAction implements Action<String> {
 
     private final int mAction;
 
 
+    /**
+     * Captures which clipboard sub-operation to run.
+     *
+     * @param action one of the {@link Clipboard} opcodes
+     *               ({@code COPY}, {@code CUT}, {@code PASTE},
+     *               {@code SELECT_ALL}, {@code DESELECT_ALL})
+     */
     public ClipboardAction(int action) {
         mAction = action;
     }
 
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Dispatches on the stored opcode.
+     * <p>
+     * How:
+     * <ul>
+     *   <li>COPY/CUT: grabs the current selection via
+     *       {@link NovaKeyService#getSelectedText()}, pushes it onto the
+     *       system clipboard via {@link #copy}, and on CUT also replaces
+     *       the selection with an empty string. Fires a
+     *       {@link ShowToastAction} on success.</li>
+     *   <li>PASTE: reads the primary clip's last item and inserts it
+     *       via an {@link InputAction}, so the paste flows through the
+     *       same composing-text pathway as typing.</li>
+     *   <li>SELECT_ALL: extends the selection from 0 to the length of
+     *       the extracted text.</li>
+     *   <li>DESELECT_ALL: collapses the selection to one end — the
+     *       start if the cursor-mode is "selecting right", otherwise
+     *       the end — so deselect keeps the caret where the user was
+     *       most recently anchored.</li>
+     * </ul>
+     * Always returns {@code null}; the {@code Action<String>} parameter
+     * is historical and unused by callers.
      */
     @Override
     public String trigger(NovaKeyService ime, Controller control, Model model) {
@@ -90,7 +122,13 @@ public class ClipboardAction implements Action<String> {
     }
 
 
-    //Returns true if copy was successful
+    /**
+     * Pushes a plain-text string onto the system clipboard.
+     *
+     * @return {@code true} if anything was copied, {@code false} if the
+     *         string was empty (the clipboard is left alone in that case
+     *         so we don't wipe whatever the user previously copied)
+     */
     public boolean copy(String text, NovaKeyService ime) {
         if (text.length() > 0) {
             ClipData cd = ClipData.newPlainText("text", text);

@@ -27,16 +27,22 @@ import hyperobject.keyboard.novakey.core.utils.PickerItem;
 import hyperobject.keyboard.novakey.core.utils.Colors;
 
 /**
- * Created by Viviano on 1/8/2016.
+ * {@link HorizontalPicker} concrete subclass that picks a {@link Colors}
+ * entry. Each color "island" may have multiple shades; long-pressing an
+ * island pops the {@link ReleasePicker} so the user can drag to select
+ * a specific shade before releasing.
+ * <p>
+ * Emits the selected color through the inherited
+ * {@link HorizontalPicker.OnItemSelectedListener}. The
+ * {@code subIndex} argument of the callback is the chosen shade index
+ * within the selected {@link Colors} family.
  */
 public class ColorPicker extends HorizontalPicker {
 
     /**
-     * Constructor used by XML layout.
-     * Will also set all the subIndexes to the defaults
-     *
-     * @param context
-     * @param attrs
+     * XML-inflation constructor. Also seeds {@link #mSubIndexes} so
+     * that the initial shade shown for each color island is its
+     * {@link Colors#mainIndex()}.
      */
     public ColorPicker(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -48,11 +54,7 @@ public class ColorPicker extends HorizontalPicker {
     }
 
 
-    /**
-     * Will be called during the constructor to start the picker items
-     *
-     * @return the array that will be set to the pickerItems
-     */
+    /** Returns the full {@link Colors#ALL} array as the picker's items. */
     @Override
     protected PickerItem[] initializeItems() {
         return Colors.ALL;
@@ -60,12 +62,11 @@ public class ColorPicker extends HorizontalPicker {
 
 
     /**
-     * Will start the release picker if the selected island has more than one shade
-     * it will do nothing
-     *
-     * @param index  index of item which has been long pressed
-     * @param startX corrected finger X position
-     * @param startY corrected finger Y position
+     * Long-press handler: if the tapped color has more than one
+     * shade, starts the {@link ReleasePicker} popup centered on the
+     * finger so the user can radially pick a shade. Multi-shade
+     * colors pass all their shade indices to the release picker;
+     * single-shade colors silently no-op.
      */
     @Override
     protected void onItemLongPress(int index, float startX, float startY) {

@@ -26,19 +26,21 @@ import android.graphics.Paint;
 import hyperobject.keyboard.novakey.core.utils.Util;
 
 /**
- * Created by Viviano on 6/17/2016.
+ * Circular {@link Shape}. The {@code size} parameter is interpreted as
+ * the full diameter so that a circle and a square with the same
+ * {@code size} occupy the same bounding box — this lets callers swap
+ * shapes on a button without rescaling.
  */
 public class Circle implements Shape {
 
     /**
-     * Determines if the given coordinates are inside the shape
-     *
-     * @param fingX x coordinate to test
-     * @param fingY y coordinate to test
-     * @param x     x coordinate to test
-     * @param y     y coordinate to test
-     * @param size
-     * @return true if inside the shape
+     * Hit-tests the finger point against a disk of radius {@code size/2}
+     * centered at {@code (x, y)}.
+     * <p>
+     * How: computes the euclidean distance between the finger point and
+     * the center via {@link Util#distance} and returns {@code true} if
+     * it is less than or equal to the radius. Note this is inclusive
+     * on the boundary, matching the visual edge of the drawn circle.
      */
     @Override
     public boolean isInside(float fingX, float fingY, float x, float y, float size) {
@@ -47,14 +49,14 @@ public class Circle implements Shape {
 
 
     /**
-     * DO NOT CALL THIS call Icons.draw() instead as it does null checks before
-     * drawing
-     *
-     * @param x      x position
-     * @param y      y position
-     * @param size   size of icon
-     * @param p      paint to use
-     * @param canvas canvas to draw on
+     * Paints a filled circle of radius {@code size/2} centered at
+     * {@code (x, y)} using the supplied paint. The paint's color,
+     * style, and shadow layer are assumed to have been configured by
+     * the caller (typically the button theme).
+     * <p>
+     * Callers that want null-safe icon draws should route through
+     * {@code Icons.draw()} — this method itself assumes a non-null
+     * canvas and paint.
      */
     @Override
     public void draw(float x, float y, float size, Paint p, Canvas canvas) {

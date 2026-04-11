@@ -33,7 +33,10 @@ import hyperobject.keyboard.novakey.core.utils.drawing.drawables.Drawable;
 import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 
 /**
- * Created by Viviano on 9/2/2016.
+ * Overlay shown while the user is holding a delete gesture. Draws a
+ * single backspace glyph scaled to 80% of the inner radius and routes
+ * touch events to a {@link DeleteHandler} which handles the repeat
+ * cadence and per-character vs per-word deletion logic.
  */
 public class DeleteOverlay implements OverlayElement {
 
@@ -41,6 +44,7 @@ public class DeleteOverlay implements OverlayElement {
     private final Drawable mIcon;
 
 
+    /** Grabs the shared backspace icon and installs a fresh delete handler. */
     public DeleteOverlay() {
         mHandler = new DeleteHandler();
         mIcon = Icons.get("backspace");
@@ -48,13 +52,9 @@ public class DeleteOverlay implements OverlayElement {
 
 
     /**
-     * Draws the element.
-     * Never call this method directly unless inside of a
-     * View's onDraw() method
-     *
-     * @param model
-     * @param theme  theme for drawing properties
-     * @param canvas canvas to draw on
+     * Draws the backspace icon centered on the wheel at 80% of the
+     * inner radius. Must only be called from inside a view's
+     * {@code onDraw}.
      */
     @Override
     public void draw(Model model, MasterTheme theme, Canvas canvas) {
@@ -64,6 +64,7 @@ public class DeleteOverlay implements OverlayElement {
     }
 
 
+    /** Forwards the touch to the {@link DeleteHandler}. */
     @Override
     public boolean handle(MotionEvent event, Controller control) {
         return mHandler.handle(event, control);

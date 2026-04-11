@@ -24,19 +24,25 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 /**
- * Created by Viviano on 1/5/2016.
+ * Contract for anything that can render itself as one cell inside a
+ * picker widget (colour swatches, font samples, theme previews, …).
+ * <p>
+ * The picker passes each item a center point and a square "dimension"
+ * so the item can draw itself at any size, plus a {@code selected} flag
+ * so it can highlight itself when it's the current choice.
  */
 public interface PickerItem {
 
     /**
-     * Draw method for the picker item
+     * Renders the picker item centered at {@code (x, y)}.
      *
-     * @param x        center x position
-     * @param y        center y position
-     * @param dimen    dimension equivalent to the maximum height
-     * @param selected whether it is selected
-     * @param index    sub index of picker item
-     * @param p        paint used
+     * @param x        center x position in pixels
+     * @param y        center y position in pixels
+     * @param dimen    maximum edge length the item should fit inside
+     * @param selected whether this item is the currently selected one
+     * @param index    sub-index within the item (e.g. shade index in a
+     *                 {@link Colors} swatch row)
+     * @param p        shared paint object the caller owns and recycles
      * @param canvas   canvas to draw on
      */
     void drawPickerItem(float x, float y, float dimen, boolean selected, int index, Paint p, Canvas canvas);

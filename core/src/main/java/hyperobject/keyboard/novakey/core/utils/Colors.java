@@ -26,7 +26,22 @@ import android.graphics.Paint;
 import hyperobject.keyboard.novakey.core.utils.drawing.Draw;
 
 /**
- * Created by Viviano on 7/9/2015.
+ * One row of Material-style colour shades (e.g. Reds 100–900) wrapped
+ * up as a {@link PickerItem} so it can be dropped into the colour
+ * picker UI.
+ * <p>
+ * Each instance holds an ordered ARGB array from lightest to darkest
+ * shade. Index {@link #main} (4) is treated as the "500" default that
+ * shows up first when the picker opens. The class also hosts a family
+ * of static singletons — {@code REDS}, {@code PINKS}, … — plus the
+ * aggregate {@link #ALL} array used by the picker and by
+ * {@link #path(int)} for round-tripping a raw colour back to an
+ * {@code (familyIndex, shadeIndex)} pair.
+ * <p>
+ * The static fields are initialised eagerly at class-load time and
+ * re-initialised by {@link #initialize()} — that redundancy is
+ * inherited from the original code and kept as-is (documentation-only
+ * pass).
  */
 public class Colors implements PickerItem {
 
@@ -34,12 +49,19 @@ public class Colors implements PickerItem {
     private static final int main = 4;
 
 
+    /**
+     * Wraps a pre-built shade ramp. The array is stored by reference —
+     * the caller must not mutate it after construction.
+     */
     public Colors(int[] colors) {
         this.colors = colors;
     }
 
 
-    //Returns the color given an index (upper bound is protected)
+    /**
+     * Returns the ARGB colour at {@code shade}, clamping to the darkest
+     * shade if the index runs past the end of the ramp.
+     */
     public int shade(int shade) {
         if (shade >= size())
             return colors[size() - 1];
@@ -47,19 +69,28 @@ public class Colors implements PickerItem {
     }
 
 
-    //Returns default main index of Color set
+    /**
+     * Returns the default "main" shade index for this family — shade 4
+     * (the Material 500 slot) unless the family is shorter than that,
+     * in which case the last shade is used.
+     */
     public int mainIndex() {
         return Math.min(main, size() - 1);
     }
 
 
-    // Returns size of Color set
+    /** Number of shades in this colour family. */
     public int size() {
         return colors.length;
     }
 
 
-    //Finds the index of the given color
+    /**
+     * Linear search for {@code color} in this family's shade ramp.
+     *
+     * @return the shade index, or {@code -1} if the colour is not in
+     *         this family
+     */
     public int index(int color) {
         for (int i = 0; i < size(); i++) {
             if (shade(i) == color)
@@ -69,6 +100,12 @@ public class Colors implements PickerItem {
     }
 
 
+    /**
+     * Draws one shade of this colour family as a picker cell: a soft
+     * drop shadow plus a filled circle from {@link Draw#colorItem}. The
+     * {@code index} parameter selects which shade to draw; the picker
+     * uses this to render a column of shades for the same family.
+     */
     @Override
     public void drawPickerItem(float x, float y, float dimen, boolean selected, int index, Paint p, Canvas canvas) {
         p.setShadowLayer(dimen * .1f / 2, 0, dimen * .1f / 2, 0x80000000);
@@ -76,6 +113,12 @@ public class Colors implements PickerItem {
     }
 
 
+    /**
+     * Rebuilds every static colour-family singleton and refreshes the
+     * {@link #ALL} aggregate. Safe to call repeatedly; the fields are
+     * already populated at class load so calling this is only needed if
+     * code ever stomped on them at runtime.
+     */
     //TODO: maybe read off file
     public static void initialize() {
         REDS = new Colors(new int[]{0xffFFCDD2, 0xffEF9A9A, 0xffE57373, 0xffEF5350, 0xffF44336, 0xffE53935, 0xffD32F2F, 0xffC62828, 0xffB71C1C});
@@ -106,6 +149,14 @@ public class Colors implements PickerItem {
     }
 
 
+    /**
+     * Locates a raw ARGB colour within {@link #ALL}.
+     * <p>
+     * Walks each family in {@code ALL} and returns the first
+     * {@code (familyIndex, shadeIndex)} pair whose shade matches.
+     * Returns {@code {-1, -1}} if the colour doesn't belong to any
+     * registered family.
+     */
     public static int[] path(int color) {
         for (int i = 0; i < ALL.length; i++) {
             int j = ALL[i].index(color);

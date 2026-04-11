@@ -26,7 +26,25 @@ import hyperobject.keyboard.novakey.core.controller.Controller;
 import hyperobject.keyboard.novakey.core.elements.MainElement;
 
 /**
- * Created by Viviano on 6/15/2016.
+ * Abstract {@link TouchHandler} base class that models a gesture as
+ * "rotation around the wheel" — the user drags their finger around the
+ * board and the handler reports clockwise/counter-clockwise sector
+ * crossings. Sibling to {@link AreaCrossedHandler} but aimed at
+ * continuous spinning motions rather than discrete area picks.
+ * <p>
+ * Tracks two independent partitions of the wheel:
+ * <ul>
+ *   <li><b>Area</b> — 0 for inner circle, 1–5 for outer sectors, -1 off.
+ *       Used only to fire {@link #onCenterCross} when the finger enters
+ *       or exits the inner circle.</li>
+ *   <li><b>Sector</b> — always 1–5, even when the finger is inside the
+ *       inner circle. This is what drives {@link #onRotate}: whenever the
+ *       sector changes from the last frame, the handler decides whether
+ *       the motion was clockwise or counter-clockwise and fires the
+ *       callback.</li>
+ * </ul>
+ * Concrete subclasses: {@link DeleteHandler} (rotation-driven
+ * delete/undo) and {@link SelectingHandler} (text-selection scrubbing).
  */
 public abstract class RotatingHandler implements TouchHandler {
 
@@ -36,12 +54,24 @@ public abstract class RotatingHandler implements TouchHandler {
 
 
     /**
-     * Handles the logic given a touch event and
-     * a view
-     *
-     * @param event   current touch event
-     * @param control
-     * @return true to continue action, false otherwise
+     * Feeds one raw touch event into the rotation state machine.
+     * <p>
+     * How: refreshes the cached finger position, area, and sector, then:
+     * <ul>
+     *   <li>{@code DOWN}: fires {@link #onDown} and seeds both prev-area
+     *       and prev-sector.</li>
+     *   <li>{@code MOVE}: fires {@link #onMove}; if the area crossed
+     *       into or out of the inner circle fires {@link #onCenterCross};
+     *       if the sector changed (and we're past the initial frame, so
+     *       there's actually a previous sector to compare to) computes
+     *       clockwise-ness by checking whether
+     *       {@code (prevSector - 1) == (currSector mod 5)} — i.e. the
+     *       new sector is one step below the old modulo 5 — and fires
+     *       {@link #onRotate} with that and whether the finger is
+     *       currently in the center.</li>
+     *   <li>{@code UP}: fires {@link #onUp}.</li>
+     * </ul>
+     * All hook returns are AND-combined into the final result.
      */
     @Override
     public boolean handle(MotionEvent event, Controller control) {
@@ -81,12 +111,9 @@ public abstract class RotatingHandler implements TouchHandler {
 
 
     /**
-     * Override this to specify onDown behaviour
-     *
-     * @param x          current x position
-     * @param y          current y position
-     * @param area       current area
-     * @param controller controller used for context
+     * Called on {@code ACTION_DOWN}. Default no-op returning true.
+     * Override to react to the initial finger-down; returning false
+     * releases this handler immediately.
      */
     protected boolean onDown(float x, float y, int area, Controller controller) {
         return true;
@@ -94,23 +121,21 @@ public abstract class RotatingHandler implements TouchHandler {
 
 
     /**
-     * Called when the user enters or exits the inner circle.
-     * Call unrelated to onMove()
+     * Called exactly once each time the finger crosses the inner-circle
+     * boundary. Orthogonal to {@link #onMove} — both fire on the same
+     * event when applicable.
      *
-     * @param entered    true if event was triggered by entering the
-     *                   inner circle, false if was triggered by exit
-     * @param controller provides context
+     * @param entered true if the finger just entered the center, false
+     *                if it just left
      */
     protected abstract boolean onCenterCross(boolean entered, Controller controller);
 
 
     /**
-     * Called for every move event so that the handler can update
-     * display properly. Called before onRotate()
-     *
-     * @param x          current finger x position
-     * @param y          current finger y position
-     * @param controller provides context
+     * Called on every {@code ACTION_MOVE} before the rotation / center
+     * checks run. Default no-op returning true. Override to react to
+     * continuous motion (for example, to update a cached finger position
+     * that the draw pass consumes).
      */
     protected boolean onMove(float x, float y, Controller controller) {
         return true;
@@ -118,22 +143,21 @@ public abstract class RotatingHandler implements TouchHandler {
 
 
     /**
-     * Called when the touch listener detects that there
-     * has been a cross, either in sector or range
+     * Called once for every sector crossing.
      *
-     * @param clockwise  true if rotation is clockwise, false otherwise
-     * @param inCenter   if finger position is currently in the center
-     * @param controller provides context
+     * @param clockwise {@code true} if the finger rotated clockwise from
+     *                  the previous sector into the current one,
+     *                  {@code false} for counter-clockwise
+     * @param inCenter  {@code true} if the finger is currently inside
+     *                  the inner circle
      */
     protected abstract boolean onRotate(boolean clockwise, boolean inCenter, Controller controller);
 
 
     /**
-     * Called when the user lifts finger, typically this
-     * method expects a finalized action to be triggered
-     * like typing a character
-     *
-     * @param controller provides context
+     * Called on {@code ACTION_UP}. Subclasses typically fire a finalized
+     * action, restore the previous overlay, and return false to release
+     * the handler.
      */
     protected abstract boolean onUp(Controller controller);
 }

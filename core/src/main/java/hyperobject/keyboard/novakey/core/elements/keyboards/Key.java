@@ -35,7 +35,16 @@ import hyperobject.keyboard.novakey.core.view.posns.RelativePosn;
 import hyperobject.keyboard.novakey.core.view.posns.SmallRadiusPosn;
 
 /**
- * Created by Viviano on 10/12/2015.
+ * One character on a {@link Keyboard}, with the geometry that places it
+ * on the wheel. Each key belongs to a {@code group} (0 for the center
+ * cluster, 1–5 for the five outer sectors) and a {@code loc} (its slot
+ * within that group).
+ * <p>
+ * A {@code Key} is also an {@link Action} — when the typing handler
+ * commits a gesture to a specific key, it fires the key through the
+ * controller, and {@link #trigger} forwards to the pre-built
+ * {@link KeyAction} that actually inserts the character. Caching a
+ * single {@code KeyAction} per key avoids allocating one per tap.
  */
 public class Key implements Action<Void> {
 
@@ -49,11 +58,24 @@ public class Key implements Action<Void> {
     private final TextDrawable mDrawable;
 
 
+    /** Convenience constructor for non-alt-layout keys. */
     public Key(Character c, int group, int loc) {
         this(c, group, loc, false);
     }
 
 
+    /**
+     * Builds a key with character, group/loc address, and alt-layout flag.
+     * Pre-computes its resting position via {@link #getDesiredPosn} and
+     * its drawable so the render path doesn't allocate per frame.
+     *
+     * @param c         the character this key inputs
+     * @param group     0 for center cluster, 1–5 for outer sectors
+     * @param loc       slot within the group (semantics depend on group)
+     * @param altLayout whether this key lives on an alt layout — shifts
+     *                  the "outermost" slot from loc 4 to loc 0 so wider
+     *                  groups pack differently
+     */
     public Key(Character c, int group, int loc, boolean altLayout) {
         mChar = c;
         mInput = new KeyAction(mChar);
@@ -65,34 +87,27 @@ public class Key implements Action<Void> {
     }
 
 
-    /**
-     * @return this key's character in uppercase
-     */
+    /** Returns this key's character uppercased. */
     public Character getUppercase() {
         return Character.toUpperCase(mChar);
     }
 
 
-    /**
-     * @return this key's character in lowercase
-     */
+    /** Returns this key's character lowercased. */
     public Character getLowercase() {
         return Character.toLowerCase(mChar);
     }
 
 
-    /**
-     * @return this key's relative position
-     */
+    /** Returns the current relative position used for drawing. */
     public RelativePosn getPosn() {
         return mPosn;
     }
 
 
     /**
-     * set this key's relative position to this
-     *
-     * @param posn
+     * Overrides the resting position, e.g. when {@link KeySizeAnimator}
+     * repositions keys mid-animation.
      */
     public void setPosn(RelativePosn posn) {
         mPosn = posn;
@@ -100,32 +115,26 @@ public class Key implements Action<Void> {
 
 
     /**
-     * @return this key's size factor from 0-1
-     * 0 being as small as possible, 1 being the default size
-     * 2 being twice the default size. And so forth
+     * Returns the current size multiplier (1 = default, 2 = double, etc.).
+     * Drawing multiplies this by the board radius to get a pixel size.
      */
     public float getSize() {
         return mSize;
     }
 
 
-    /**
-     * sets this key's size factor
-     *
-     * @param size from 0-1
-     *             0 being as small as possible, 1 being the default size
-     *             2 being twice the default size. And so forth
-     */
+    /** Sets the size multiplier; see {@link #getSize} for units. */
     public void setSize(float size) {
         mSize = size;
     }
 
 
     /**
-     * returns this key properties drawable based on the shift state
-     *
-     * @param shiftState used to determine text and font of drawable
-     * @return a TextDrawable representing this Key
+     * Returns the cached drawable with its text and font updated for the
+     * given shift state. CAPS_LOCKED uses a bolder condensed font to
+     * distinguish it from transient uppercase; upper vs lower only
+     * changes the displayed text. The underlying {@code TextDrawable}
+     * instance is reused across frames, so this is allocation-free.
      */
     public TextDrawable getDrawable(ShiftState shiftState) {
         mDrawable.setFont(shiftState == ShiftState.CAPS_LOCKED ?
@@ -138,14 +147,24 @@ public class Key implements Action<Void> {
     }
 
 
-    /**
-     * @return this key's character code
-     */
+    /** Returns the raw character this key represents (always the source case). */
     public char getChar() {
         return mChar;
     }
 
 
+    /**
+     * Computes where this key should sit on the wheel based on its
+     * {@code group}/{@code loc} address.
+     * <p>
+     * How: group 0 is the center cluster — loc 0 sits at the dead center
+     * (delta (0,0)), other locs sit at 2/3 of the small radius at the
+     * angle for that loc. Groups 1–5 are the outer sectors — loc 2 is
+     * tucked just inside the inner radius, loc 4 (or loc 0 for alt
+     * layouts) is just past the outer radius, loc 0 is just inside the
+     * outer radius, and everything else rides the midline between the
+     * two radii.
+     */
     private RelativePosn getDesiredPosn() {
         if (group == 0) {
             if (loc == 0)
@@ -165,6 +184,12 @@ public class Key implements Action<Void> {
     }
 
 
+    /**
+     * Returns the radial angle (in radians) for this key. Keys at loc 0
+     * sit on the sector's midline; locs 1 and 3 are offset ±2/3 of the
+     * sector's angular width to splay them apart without overlapping
+     * the neighboring sectors.
+     */
     private double getAngle() {
         if (group == 0)
             return angleAt(loc);
@@ -177,16 +202,21 @@ public class Key implements Action<Void> {
     }
 
 
+    /**
+     * Returns the center angle for sector {@code i} (1-indexed), offset
+     * so sector 1 sits at the top (π/2 + π/5) and sectors progress
+     * counterclockwise by 2π/5 each.
+     */
     private double angleAt(int i) {
         return ((i - 1) * 2 * Math.PI) / 5 + Math.PI / 2 + Math.PI / 5;
     }
 
 
     /**
-     * Returns the hidden keys menu based on this key
-     *
-     * @param shiftState whether to get the uppercase or lowercase keys
-     * @return an infinite menu or null if none was found
+     * Returns the hidden-keys popup menu for this key in the given shift
+     * state, or {@code null} if there's no hidden menu for this character.
+     * Upper/caps-locked use the uppercase variant so e.g. long-press on
+     * 'A' shows capital accented variants, not lowercase ones.
      */
     public InfiniteMenu getHiddenKeys(ShiftState shiftState) {
         switch (shiftState) {
@@ -201,11 +231,9 @@ public class Key implements Action<Void> {
 
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * {@link Action} implementation: fires the cached {@link KeyAction}
+     * through the controller, which actually inserts the character into
+     * the IME's input connection.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

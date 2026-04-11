@@ -24,17 +24,24 @@ import hyperobject.keyboard.novakey.core.model.MainDimensions;
 import hyperobject.keyboard.novakey.core.utils.Util;
 
 /**
- * RelativePosn in which the angle is exactly the angle given
- * and the distance is the product between the distance given and the
- * outer radius of the keyboard
+ * A polar {@link RelativePosn} measured against the wheel's outer radius.
  * <p>
- * Created by Viviano on 6/10/2016.
+ * Math: the point sits at the given angle, a distance of
+ * {@code fraction * d.getRadius()} from the wheel center. A fraction of
+ * {@code 1} lands exactly on the outer ring, {@code 0.5} halfway in from
+ * the center, and {@code 1.2} pushes 20% beyond the outer ring.
  */
 public class RadiusPosn extends RelativePosn {
     private float distance;
     private double angle;
 
 
+    /**
+     * Builds a polar position on (or scaled from) the outer radius.
+     *
+     * @param distance fraction of the outer radius (1 = on the ring)
+     * @param angle    angle in radians, measured in the wheel's frame
+     */
     public RadiusPosn(float distance, double angle) {
         this.distance = distance;
         this.angle = angle;
@@ -42,8 +49,9 @@ public class RadiusPosn extends RelativePosn {
 
 
     /**
-     * @param model model to base posn off
-     * @return x coordinate based on the model dimensions
+     * Resolves X as
+     * {@code d.getX() + cos(angle) * distance * d.getRadius()} via
+     * {@link Util#xFromAngle}.
      */
     @Override
     public float getX(MainDimensions model) {
@@ -52,8 +60,10 @@ public class RadiusPosn extends RelativePosn {
 
 
     /**
-     * @param model model to base posn off
-     * @return y coordinate based on the model dimensions
+     * Resolves Y as
+     * {@code d.getY() - sin(angle) * distance * d.getRadius()} via
+     * {@link Util#yFromAngle} (screen-space Y grows downward, hence the
+     * sign flip handled inside the helper).
      */
     @Override
     public float getY(MainDimensions model) {

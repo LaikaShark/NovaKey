@@ -35,7 +35,21 @@ import hyperobject.keyboard.novakey.core.model.Model;
 import hyperobject.keyboard.novakey.core.utils.Util;
 
 /**
- * Created by Viviano on 10/27/2015.
+ * Abstract {@link BaseAnimation} that animates every {@link Key} on
+ * the active keyboard in parallel, using a per-key delay/interpolator
+ * combination driven by a {@link MultiValueAnimator}. Concrete
+ * subclasses pick the per-key interpolator ({@link #getInterpolatorFor})
+ * and the per-key mutation ({@link #getAnimatorFor}); this class
+ * handles building the multi-animator and staggering each key's start
+ * time according to a style flag.
+ * <p>
+ * The style is a bitmask using {@link #NONE}, {@link #CENTER},
+ * {@link #RANDOM}, {@link #FLIP_X}, {@link #FLIP_Y}, {@link #RIGHT},
+ * and {@link #UP} which control whether keys stagger in from the
+ * center, in random order, or from one of the four edges of the wheel.
+ * The total animation duration is split evenly between "move" and
+ * "finish" phases, giving each key a window of {@code duration/2} to
+ * play inside the total {@code duration}.
  */
 public abstract class CharAnimation extends BaseAnimation {
 
@@ -47,11 +61,19 @@ public abstract class CharAnimation extends BaseAnimation {
     private final Map<Key, Animator<Key>> mAnimators;
 
 
+    /**
+     * Convenience constructor using a default total duration of 500ms.
+     */
     public CharAnimation(int style) {
         this(style, 500);
     }
 
 
+    /**
+     * @param style    bitmask selecting the stagger direction (see the
+     *                 class-level docs for the flag constants)
+     * @param duration total animation duration in milliseconds
+     */
     public CharAnimation(int style, long duration) {
         mStyle = style;
         mDuration = duration;
@@ -60,9 +82,14 @@ public abstract class CharAnimation extends BaseAnimation {
 
 
     /**
-     * @param model given to reference. Also should call
-     *              model.update() to invalidate the view
-     * @return ValueAnimator which will be called
+     * Builds a {@link MultiValueAnimator} keyed by {@link Key}: for
+     * every key on the active keyboard it computes a stagger delay via
+     * {@link #getDelay}, wraps the subclass-supplied interpolator in a
+     * {@link DelayableInterpolator} spanning {@code [delay, delay + duration/2]}
+     * within the total {@code mDuration}, and registers the per-key
+     * mutator via {@link #getAnimatorFor}. The multi-animator's update
+     * listener then routes each per-key fraction back to the matching
+     * {@link Animator} so it can write the new state onto the key.
      */
     @Override
     protected ValueAnimator animator(Model model) {
@@ -96,31 +123,34 @@ public abstract class CharAnimation extends BaseAnimation {
 
 
     /**
-     * Will be called when building the animation to set this particular key's
-     * interpolator
-     *
-     * @param k key whose interpolator you wish to set
-     * @return an interpolator to set
+     * Subclass hook: return the {@link TimeInterpolator} to use for
+     * the given key. Called once per key while building the animation.
      */
     protected abstract TimeInterpolator getInterpolatorFor(Key k);
 
 
     /**
-     * Called when building the animation to determine which animator to assign
-     * to which key
-     *
-     * @param k key whose animator you wish to set
-     * @return the animator to set
+     * Subclass hook: return the {@link Animator} that will mutate the
+     * given key on each frame, or {@code null} to leave that key
+     * untouched. Called once per key while building the animation.
      */
     protected abstract Animator<Key> getAnimatorFor(Key k);
 
 
     /**
-     * Will determine the delay according to this animator's  parameters
+     * Computes the per-key start delay for the configured stagger style.
+     * <p>
+     * How: style {@code -1} yields zero delay for every key. With the
+     * {@link #RANDOM} bit set, the delay is a uniform random in
+     * {@code [0, max)}. Otherwise a reference point (x,y) is picked
+     * from the wheel: the center for {@link #CENTER}, shifted right or
+     * left by {@link #RIGHT}+{@link #FLIP_X}, or up/down by
+     * {@link #UP}+{@link #FLIP_Y}. The delay is then {@code max} scaled
+     * by the distance from the key to that reference point, normalized
+     * by the wheel diameter — keys farther from the reference point
+     * wait longer, producing a wave effect.
      *
-     * @param k   key to set delay of
-     * @param max maximum delay
-     * @return the delay in milliseconds
+     * @return the delay in milliseconds, capped to {@code max}
      */
     private long getDelay(Model model, Key k, long max) {
         MainDimensions d = model.getMainDimensions();

@@ -23,7 +23,14 @@ package hyperobject.keyboard.novakey.core.elements.keyboards.overlays;
 import hyperobject.keyboard.novakey.core.elements.Element;
 
 /**
- * Created by Viviano on 8/31/2016.
+ * Marker interface for elements that can be installed as the overlay
+ * layer on top of the main wheel — the typing {@link hyperobject.keyboard.novakey.core.elements.keyboards.Keyboard},
+ * {@link CursorOverlay}, {@link DeleteOverlay}, and popup menus all
+ * implement this.
+ * <p>
+ * There's no extra API beyond {@link Element}; the interface exists
+ * purely so {@code MainElement#setOverlay} can take a narrower type
+ * than raw {@code Element} and make the role explicit at the call site.
  */
 public interface OverlayElement extends Element {
 

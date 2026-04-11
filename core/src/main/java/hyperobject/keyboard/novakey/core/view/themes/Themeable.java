@@ -21,17 +21,19 @@
 package hyperobject.keyboard.novakey.core.view.themes;
 
 /**
- * Created by Viviano on 8/14/2016.
- * <p>
- * Any UI element which wishes to use a theme to determine how to be drawn
- * should implement this interface
+ * Marker interface for any UI element whose appearance is controlled by
+ * a {@link MasterTheme}. Implementers accept a theme via {@link #setTheme}
+ * and consult it (directly or through sub-themes) during their draw pass
+ * rather than hard-coding colors/fonts.
  */
 public interface Themeable {
 
     /**
-     * Will set this object's theme
+     * Installs the master theme this element should draw itself with.
+     * The implementation is expected to retain the reference — subsequent
+     * draw calls will pull colors and child themes from it.
      *
-     * @param theme a Master Theme
+     * @param theme the master theme this element should use
      */
     void setTheme(MasterTheme theme);
 }

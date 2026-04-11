@@ -21,11 +21,23 @@
 package hyperobject.keyboard.novakey.core.utils;
 
 /**
- * Simple predicate utility interface.
- * Created because Java's Predicate interface is not available before API 24
+ * Pre-Java-8 functional interface for a boolean-valued test of one argument.
+ * <p>
+ * Mirrors {@code java.util.function.Predicate} but exists because the
+ * standard library's version is only available from API 24 while NovaKey
+ * currently supports {@code minSdk 21}. Implementations should be
+ * side-effect free and idempotent — callers treat {@link #test(Object)}
+ * as a pure query.
  *
- * Created by Viviano on 4/18/2016.
+ * @param <T> the type of value being tested
  */
 public interface Predicate<T> {
+
+    /**
+     * Evaluates this predicate on {@code t}.
+     *
+     * @param t the input argument
+     * @return {@code true} if the argument matches the predicate
+     */
     boolean test(T t);
 }

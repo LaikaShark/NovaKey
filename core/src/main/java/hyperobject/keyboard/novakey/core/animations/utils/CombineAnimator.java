@@ -24,23 +24,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Viviano on 9/2/2016.
+ * Composite {@link Animator} that fans a single {@code (target, fraction)}
+ * update out to a list of child animators. Lets callers stack several
+ * independent per-frame mutations (e.g. size + color + position) on
+ * the same target and drive them all from a single animation.
+ *
+ * @param <T> the type of object each child animator mutates
  */
 public class CombineAnimator<T> implements Animator<T> {
 
     private final List<Animator<T>> mList;
 
 
+    /** Wraps a pre-built list of child animators. */
     public CombineAnimator(List<Animator<T>> list) {
         mList = list;
     }
 
 
+    /** Creates an empty combine animator; build it up with {@link #add}. */
     public CombineAnimator() {
         mList = new ArrayList<>();
     }
 
 
+    /**
+     * Appends a child animator. Package-private because callers
+     * normally build via the list constructor. Returned for fluent
+     * chaining.
+     */
     CombineAnimator<T> add(Animator<T> animator) {
         mList.add(animator);
         return this;
@@ -48,11 +60,9 @@ public class CombineAnimator<T> implements Animator<T> {
 
 
     /**
-     * Takes in a T and a fraction and updates the T according
-     * to the fraction
-     *
-     * @param t        object to update
-     * @param fraction percentage of animation where 0 is the start & 1 is the end
+     * Forwards the frame update to every child animator in insertion
+     * order, so each one gets a chance to write its own property onto
+     * the same target.
      */
     @Override
     public void update(T t, float fraction) {

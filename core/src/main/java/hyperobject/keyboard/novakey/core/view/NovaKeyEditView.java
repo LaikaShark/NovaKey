@@ -37,6 +37,23 @@ import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 import hyperobject.keyboard.novakey.core.view.themes.Themeable;
 
 
+/**
+ * Live preview surface hosted by {@link EditView} for the "resize
+ * keyboard" mode. Loads the currently-saved dimensions on construction,
+ * lets the user drag the wheel around and pinch to resize it, then
+ * writes the result back through the {@link MainDimensionsLoader} when
+ * {@link #saveDimens()} is called.
+ * <p>
+ * Acts as its own {@link View.OnTouchListener} instead of overriding
+ * {@link View#onTouchEvent} so callers can re-route touches without
+ * subclassing. The draw pass just uses the model's background and board
+ * themes directly — there are no keys or overlays in edit mode.
+ * <p>
+ * Note: the internal {@code smallRadius} field holds the ratio
+ * {@code outerRadius / innerRadius} (a divisor), not the inner radius
+ * in pixels — {@link #saveDimens()} converts before handing it to
+ * {@link MainDimensions}.
+ */
 public class NovaKeyEditView extends View implements View.OnTouchListener, Themeable {
 
     private MasterTheme mTheme;
@@ -59,16 +76,25 @@ public class NovaKeyEditView extends View implements View.OnTouchListener, Theme
     private float resizeDist, oldRadius;//resizing
 
 
+    /** Simple constructor; delegates to the (Context, AttributeSet) form. */
     public NovaKeyEditView(Context context) {
         this(context, null);
     }
 
 
+    /** XML-inflation constructor; delegates to the three-arg form. */
     public NovaKeyEditView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
 
+    /**
+     * Full constructor: sets up the antialiased paint, registers this
+     * view as its own touch listener, captures the display metrics, and
+     * loads the saved {@link MainDimensions} through a fresh
+     * {@link MainDimensionsLoader} so the preview starts at the same
+     * size the live keyboard currently has.
+     */
     public NovaKeyEditView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         p = new Paint();
@@ -86,9 +112,8 @@ public class NovaKeyEditView extends View implements View.OnTouchListener, Theme
 
 
     /**
-     * Will set this object's theme
-     *
-     * @param theme a Master Theme
+     * Installs the theme used by {@link #onDraw} to render the preview's
+     * background and circular board.
      */
     @Override
     public void setTheme(MasterTheme theme) {
@@ -96,7 +121,17 @@ public class NovaKeyEditView extends View implements View.OnTouchListener, Theme
     }
 
 
-    //When created or resized
+    /**
+     * Measure pass: pulls radius, ratio, horizontal center and padding
+     * from the saved {@link MainDimensions}, then forces the view to
+     * occupy the entire screen ({@code screenWidth x screenHeight}).
+     * After {@code setMeasuredDimension} it rereads {@code viewWidth} /
+     * {@code viewHeight} from the incoming specs to recover the actual
+     * laid-out size (which can be smaller than the screen when the IME
+     * window has a title bar). Finally, {@code centerY} is reconstructed
+     * so the preview aligns with where the live keyboard would sit
+     * inside that window.
+     */
     @Override
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 
@@ -122,6 +157,13 @@ public class NovaKeyEditView extends View implements View.OnTouchListener, Theme
     }
 
 
+    /**
+     * Restores the preview geometry to a neutral starting point:
+     * default radius from {@code R.dimen.default_radius}, horizontally
+     * centered, vertically anchored so the bottom of the wheel touches
+     * the bottom of the view, ratio 3 (so the inner radius is one third
+     * of the outer), and triggers a redraw.
+     */
     public void resetDimens() {
         radius = getResources().getDimension(R.dimen.default_radius);
         centerX = viewWidth / 2;
@@ -132,6 +174,15 @@ public class NovaKeyEditView extends View implements View.OnTouchListener, Theme
     }
 
 
+    /**
+     * Writes the preview's current geometry back into {@link MainDimensions}
+     * and persists via the loader so the live keyboard picks up the new
+     * size on its next relayout. Converts the internal ratio into the
+     * pixel-valued inner radius the renderer expects, computes a height
+     * that accounts for the wheel's current vertical offset, and guards
+     * against a zero ratio by falling back to the default "third"
+     * divisor.
+     */
     public void saveDimens() {
         mDimens.setRadius(radius);
         // The local `smallRadius` field holds the divisor used by the resize
@@ -147,21 +198,37 @@ public class NovaKeyEditView extends View implements View.OnTouchListener, Theme
     }
 
 
+    /** Returns the current outer radius in pixels. */
     public float getRadius() {
         return radius;
     }
 
 
+    /**
+     * Returns the current {@code outer / inner} radius ratio. Note this
+     * is a divisor, not the inner radius in pixels.
+     */
     public float getSmallRadius() {
         return smallRadius;
     }
 
 
+    /**
+     * Sets the {@code outer / inner} radius ratio live — called by the
+     * seekbar listener on every tick so the preview tracks the slider
+     * without waiting for the user to commit.
+     */
     public void setSmallRadius(float sr) {
         smallRadius = sr;
     }
 
 
+    /**
+     * Draws the preview: first the themed background across the whole
+     * measurable area (anchored at {@code centerY - radius - padding} to
+     * land just above the wheel's top edge), then the circular board on
+     * top. Keys and overlays are deliberately absent in edit mode.
+     */
     @Override
     public void onDraw(Canvas canvas) {
         mTheme.getBackgroundTheme()
@@ -173,6 +240,27 @@ public class NovaKeyEditView extends View implements View.OnTouchListener, Theme
     }
 
 
+    /**
+     * Touch dispatch for drag and pinch-resize gestures.
+     * <ul>
+     *     <li>{@code ACTION_DOWN} inside the current wheel starts a
+     *     drag, capturing the touch-to-center offset.</li>
+     *     <li>{@code ACTION_MOVE} updates either the center (drag) or
+     *     the radius (pinch using the two-pointer distance delta), then
+     *     runs a batch of clamps: keep the wheel inside the view, snap
+     *     the center to the horizontal midline when within
+     *     {@code center_threshold}, cap the radius so the wheel fits on
+     *     both axes, and enforce {@code min_radius}.</li>
+     *     <li>{@code ACTION_UP} clears both gesture flags.</li>
+     *     <li>{@code ACTION_POINTER_DOWN} with a second pointer below
+     *     the wheel's top promotes the gesture from drag to pinch,
+     *     stashing the starting radius and finger distance.</li>
+     *     <li>{@code ACTION_POINTER_UP} cancels both modes — safer than
+     *     trying to revert to a single-finger drag mid-gesture.</li>
+     * </ul>
+     * Always returns {@code true} to claim the gesture for the lifetime
+     * of the view.
+     */
     @Override
     public boolean onTouch(View view, MotionEvent event) {
         float currX = event.getX(0), currY = event.getY(0);

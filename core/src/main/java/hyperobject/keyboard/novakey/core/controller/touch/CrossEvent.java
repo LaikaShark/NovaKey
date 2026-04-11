@@ -21,20 +21,39 @@
 package hyperobject.keyboard.novakey.core.controller.touch;
 
 /**
+ * Immutable value object passed to {@link AreaCrossedHandler#onCross}
+ * whenever the finger crosses from one wheel area into another. Carries
+ * both the old and the new area index so the callback can tell direction
+ * of travel without consulting the handler state.
+ * <p>
+ * Area indices follow the {@link hyperobject.keyboard.novakey.core.elements.MainElement
+ * MainElement} convention: 0 for the inner circle, 1–5 for the five
+ * outer sectors, -1 for off-wheel.
+ * <p>
  * TODO: add velocityX & velocityY to crossEvent
- * Created by Viviano on 6/13/2016.
  */
 public class CrossEvent {
 
     public final int newArea, prevArea;
 
 
+    /**
+     * Captures a sector-transition event.
+     *
+     * @param newArea  area the finger just entered
+     * @param prevArea area the finger is leaving
+     */
     public CrossEvent(int newArea, int prevArea) {
         this.newArea = newArea;
         this.prevArea = prevArea;
     }
 
 
+    /**
+     * Two CrossEvents are equal iff both their {@code newArea} and
+     * {@code prevArea} fields match. Provided so handlers and tests can
+     * use CrossEvents as map keys or in equality checks.
+     */
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof CrossEvent))
@@ -45,6 +64,7 @@ public class CrossEvent {
     }
 
 
+    /** Hash consistent with {@link #equals}: combines both area fields. */
     @Override
     public int hashCode() {
         return newArea * 31 + prevArea;

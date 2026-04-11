@@ -27,10 +27,19 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- * Created by Viviano on 8/27/2016.
+ * Tiny registry that maps integer ids to concrete {@code Class} tokens
+ * and instantiates them on demand via the default constructor.
+ * Subclasses fill the map in {@link #build(Map)}; call sites use the
+ * integer id as a stable over-the-wire identifier (so prefs can store
+ * "theme #3" without caring about class names).
  * <p>
- * Holds a list of "Constructors" which can be used to instantiate new objects
- * using the construct(Class) method
+ * Used by {@link ThemeFactory.Boards} to look up {@code BoardTheme}
+ * implementations by number; designed to be reusable for other
+ * "numbered catalog of classes" cases that may be added later.
+ * <p>
+ * Doubles as its own {@link Iterator}/{@link Iterable} — note that it
+ * is <em>not</em> re-entrant: {@link #iterator()} resets the one shared
+ * iterator cursor, so nesting loops will break.
  */
 public abstract class InstanceList<T> implements Iterator<T>, Iterable<T> {
 
@@ -38,6 +47,11 @@ public abstract class InstanceList<T> implements Iterator<T>, Iterable<T> {
     private Iterator<Map.Entry<Integer, Class>> mIter;
 
 
+    /**
+     * Builds the backing map and immediately asks the subclass to fill
+     * it. A {@link LinkedHashMap} is used so iteration order matches
+     * insertion order, which lets the subclass pick the display order.
+     */
     public InstanceList() {
         mMap = new LinkedHashMap<>();
         build(mMap);
@@ -45,18 +59,23 @@ public abstract class InstanceList<T> implements Iterator<T>, Iterable<T> {
 
 
     /**
-     * Called when constructing, use this to build the
-     *
-     * @param map
+     * Subclass hook: populate {@code map} with {@code id → Class}
+     * entries. Called once from the constructor.
      */
     protected abstract void build(Map<Integer, Class> map);
 
 
+    /** Returns the number of registered entries. */
     public int size() {
         return mMap.size();
     }
 
 
+    /**
+     * Reflectively invokes {@code clazz}'s no-arg constructor and
+     * returns the result. Every reflection exception is caught and
+     * logged to stderr, in which case the method returns {@code null}.
+     */
     private T construct(Class clazz) {
         try {
             return (T) clazz.getConstructor().newInstance();
@@ -73,6 +92,11 @@ public abstract class InstanceList<T> implements Iterator<T>, Iterable<T> {
     }
 
 
+    /**
+     * Looks up the class registered under {@code key} and returns a
+     * fresh instance, or {@code null} if the id is unknown or
+     * construction fails.
+     */
     public T getValue(int key) {
         try {
             return construct(mMap.get(key));
@@ -82,6 +106,11 @@ public abstract class InstanceList<T> implements Iterator<T>, Iterable<T> {
     }
 
 
+    /**
+     * Reverse lookup: walks the map in insertion order searching for an
+     * entry whose class token matches {@code clazz} by identity, and
+     * returns its id. Returns {@code null} if no entry matches.
+     */
     public Integer getKey(Class clazz) {
         for (Map.Entry<Integer, Class> e : mMap.entrySet()) {
             if (e.getValue() == clazz) {
@@ -93,9 +122,9 @@ public abstract class InstanceList<T> implements Iterator<T>, Iterable<T> {
 
 
     /**
-     * Returns an {@link Iterator} for the elements in this object.
-     *
-     * @return An {@code Iterator} instance.
+     * Resets and returns the shared iterator cursor. Since this class
+     * is its own Iterator, the returned object is always {@code this};
+     * calling {@code iterator()} again invalidates any in-progress walk.
      */
     @Override
     public Iterator<T> iterator() {
@@ -104,11 +133,7 @@ public abstract class InstanceList<T> implements Iterator<T>, Iterable<T> {
     }
 
 
-    /**
-     * Returns true if there is at least one more element, false otherwise.
-     *
-     * @see #next
-     */
+    /** Delegates to the shared cursor advanced by {@link #iterator()}. */
     @Override
     public boolean hasNext() {
         return mIter.hasNext();
@@ -116,11 +141,9 @@ public abstract class InstanceList<T> implements Iterator<T>, Iterable<T> {
 
 
     /**
-     * Returns the next object and advances the iterator.
-     *
-     * @return the next object.
-     * @throws NoSuchElementException if there are no more elements.
-     * @see #hasNext
+     * Advances the shared cursor and returns a freshly constructed
+     * instance of the next registered class. Throws
+     * {@link NoSuchElementException} if the cursor is exhausted.
      */
     @Override
     public T next() {
@@ -129,13 +152,8 @@ public abstract class InstanceList<T> implements Iterator<T>, Iterable<T> {
 
 
     /**
-     * Removes the last object returned by {@code next} from the collection.
-     * This method can only be called once between each call to {@code next}.
-     *
-     * @throws UnsupportedOperationException if removing is not supported by the collection being
-     *                                       iterated.
-     * @throws IllegalStateException         if {@code next} has not been called, or {@code remove} has
-     *                                       already been called after the last call to {@code next}.
+     * Always throws — this registry is read-only once built, so
+     * {@link Iterator#remove()} is not supported.
      */
     @Override
     public void remove() {

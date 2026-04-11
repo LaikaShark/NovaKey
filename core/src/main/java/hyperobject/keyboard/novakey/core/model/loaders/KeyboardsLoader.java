@@ -25,25 +25,38 @@ import android.content.Context;
 import hyperobject.keyboard.novakey.core.elements.keyboards.Keyboards;
 
 /**
- * Created by viviano on 11/26/2017.
+ * Loader for the {@link Keyboards} registry. All of the interesting
+ * work happens inside the {@link Keyboards} constructor — it reads
+ * the string-array resources for every shipped language/fixed board —
+ * so this class is really just a thin {@link Loader} wrapper that
+ * holds onto a {@link Context} for resource access.
  */
-
 public class KeyboardsLoader implements Loader<Keyboards> {
 
     private final Context mContext;
 
 
+    /**
+     * Captures the context the {@link Keyboards} constructor will use
+     * when decoding its string-array resources.
+     */
     public KeyboardsLoader(Context context) {
         mContext = context;
     }
 
 
+    /** Builds a fresh {@link Keyboards} registry from code-defined resources. */
     @Override
     public Keyboards load() {
         return new Keyboards(mContext);
     }
 
 
+    /**
+     * No-op pending a future user-defined layouts feature — keyboard
+     * layouts are currently built from string-array resources, with
+     * nothing to persist.
+     */
     @Override
     public void save(Keyboards keyboards) {
         //TODO

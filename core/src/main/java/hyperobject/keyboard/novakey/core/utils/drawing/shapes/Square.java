@@ -24,19 +24,20 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 /**
- * Created by vcantu on 10/2/16.
+ * Axis-aligned square {@link Shape}. The {@code size} parameter is the
+ * edge length (not half-edge), so a square and a circle with the same
+ * {@code size} share the same bounding box and can be swapped on a
+ * button without rescaling its position/size data.
  */
 public class Square implements Shape {
 
     /**
-     * Determines if the given coordinates are inside the shape
-     *
-     * @param fingX x coordinate to test
-     * @param fingY y coordinate to test
-     * @param x     x coordinate of shape
-     * @param y     y coordinate of shape
-     * @param size  size of shape
-     * @return true if inside the shape
+     * Hit-tests the finger point against an axis-aligned square of edge
+     * {@code size} centered at {@code (x, y)}.
+     * <p>
+     * How: inclusive bounds check on both axes against
+     * {@code [x-size/2, x+size/2]} and {@code [y-size/2, y+size/2]}.
+     * Points exactly on the edge count as inside.
      */
     @Override
     public boolean isInside(float fingX, float fingY, float x, float y, float size) {
@@ -46,13 +47,9 @@ public class Square implements Shape {
 
 
     /**
-     * Interface for any kind of drawable
-     *
-     * @param x      x position
-     * @param y      y position
-     * @param size   size of icon
-     * @param p      paint to use
-     * @param canvas canvas to draw on
+     * Paints a filled square of edge {@code size} centered at
+     * {@code (x, y)} via {@link Canvas#drawRect}. Paint color/style/
+     * shadow are assumed to have been configured by the caller.
      */
     @Override
     public void draw(float x, float y, float size, Paint p, Canvas canvas) {

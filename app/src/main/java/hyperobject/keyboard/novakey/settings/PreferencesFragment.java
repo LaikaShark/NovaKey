@@ -33,20 +33,41 @@ import hyperobject.keyboard.novakey.core.model.Settings;
 import hyperobject.keyboard.novakey.tutorial.TutorialActivity;
 
 /**
- * Settings screen content.
- *
- * Migrated from the framework {@code android.preference.PreferenceFragment}
- * (deprecated since API 28) to {@link PreferenceFragmentCompat} during the
- * AndroidX modernization pass. The notable behavioral differences:
- *
- *   - The XML inflation now happens in {@link #onCreatePreferences} instead of
- *     {@code onCreate}, and uses {@link #setPreferencesFromResource}.
- *   - {@link androidx.preference.Preference} is the AndroidX class — methods
- *     like {@code findPreference} are now generic and return {@code <T>}.
- *   - SeekBarPreference entries in settings.xml use AndroidX's built-in
- *     widget, not the abandoned {@code com.pavelsikun} library.
+ * Main settings screen content. Hosts the preference tree defined by
+ * {@code res/xml/settings.xml} and wires the non-persistent entries
+ * (style picker, tutorial, market link, reddit link, beta-test link,
+ * hidden emoji test screen) to their respective activity launches.
+ * <p>
+ * Post-modernization this is an AndroidX {@link PreferenceFragmentCompat}
+ * hosted by {@link SettingsActivity} (which is itself an
+ * {@link androidx.appcompat.app.AppCompatActivity}). The legacy
+ * framework {@code android.preference.PreferenceFragment} was deprecated
+ * in API 28 and dropped in the 2026 pass. The notable behavioral
+ * differences:
+ * <ul>
+ *   <li>XML inflation happens in {@link #onCreatePreferences} via
+ *       {@link #setPreferencesFromResource}, not in {@code onCreate}.</li>
+ *   <li>{@link Preference} is now the AndroidX class;
+ *       {@code findPreference} is generic and returns {@code <T>}.</li>
+ *   <li>SeekBar entries in {@code settings.xml} use AndroidX's built-in
+ *       widget, not the abandoned {@code com.pavelsikun} library.</li>
+ * </ul>
  */
 public class PreferencesFragment extends PreferenceFragmentCompat {
+
+    /**
+     * AndroidX preference-tree setup hook. Inflates the XML into the
+     * fragment's preference hierarchy and attaches click listeners to
+     * the entries that launch other activities (style picker, tutorial,
+     * Play Store rating, beta program, subreddit, hidden emoji test).
+     * <p>
+     * Each click listener is guarded by a null check so that a
+     * preference missing from the XML (e.g. a build variant that drops
+     * it) silently no-ops instead of crashing.
+     *
+     * @param savedInstanceState preference-state bundle (unused)
+     * @param rootKey            fragment root key — null for the top-level screen
+     */
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.settings, rootKey);

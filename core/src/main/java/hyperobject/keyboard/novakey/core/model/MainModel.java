@@ -42,11 +42,17 @@ import hyperobject.keyboard.novakey.core.model.loaders.ThemeLoader;
 import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 
 /**
- * Created by Viviano on 6/10/2016.
+ * Production {@link Model} used by the running IME. Owns the
+ * {@link MainElement} plus the flat element list, and caches the
+ * dimensions/theme/keyboards that the four {@link Loader}s produce from
+ * user preferences. {@link Settings} itself is the singleton source of
+ * truth for simple flag/int prefs; MainModel layers the richer structured
+ * state (dimensions, themes, keyboard layouts) on top.
  * <p>
- * Model that stores all of it's data internally.
- * Upon creation it will load all of its data from the TrueModel,
- * which gets its data from user preferences.
+ * Construction order matters: the theme / dimensions / keyboards loaders
+ * are all built first, then {@link #syncWithPrefs()} primes their caches,
+ * and only then is the main element built around the freshly loaded
+ * default keyboard.
  */
 public class MainModel implements Model {
     //Loaders
@@ -57,28 +63,29 @@ public class MainModel implements Model {
 
     private MainDimensions mDimensions;
 
-    //Theme
     private MasterTheme mTheme;
 
-    //States
     private ShiftState mShiftState;
     private int mCursorMode = 0;
     private InputState mInputState;
 
-    //Keyboard
     private int mKeyboardCode = Keyboards.DEFAULT;
     private Keyboards mKeyboards;
 
-    //Elements
     private MainElement mMain;
     private final List<Element> mElements;
 
-    //Corrections
     private Corrections mCorrections;
 
 
+    /**
+     * Wires up the four loaders, primes the dimensions/theme/keyboards
+     * caches via {@link #syncWithPrefs()}, then constructs the input
+     * state, corrections engine, {@link MainElement}, and the flat list
+     * of auxiliary buttons. The initial shift state is {@link ShiftState#UPPERCASE}
+     * so the very first keystroke on a fresh install is capitalized.
+     */
     public MainModel(Context context) {
-        //loaders
         mThemeLoader = new ThemeLoader(context);
         mMainDimensionsLoader = new MainDimensionsLoader(context);
         mElementLoader = new ElementsLoader();
@@ -86,7 +93,6 @@ public class MainModel implements Model {
 
         syncWithPrefs();
 
-        //Input State determined during start
         mInputState = new InputState();
         mCorrections = new BasicCorrections();
         mCorrections.initialize(context);
@@ -102,7 +108,9 @@ public class MainModel implements Model {
 
 
     /**
-     * Syncs the models with the user preferences
+     * Re-reads dimensions, theme, and keyboards from the loaders. Called
+     * from the constructor and from {@link #onStart} so every new typing
+     * session picks up settings changes.
      */
     @Override
     public void syncWithPrefs() {
@@ -112,6 +120,11 @@ public class MainModel implements Model {
     }
 
 
+    /**
+     * Returns a fresh copy of the element list with {@link MainElement}
+     * prepended — the main element always draws first / handles touches
+     * last, so placing it at index 0 satisfies both orderings at once.
+     */
     @Override
     public List<Element> getElements() {
         List<Element> list = new ArrayList<>(mElements);
@@ -120,33 +133,35 @@ public class MainModel implements Model {
     }
 
 
+    /** Forwards the overlay swap to the owning {@link MainElement}. */
     @Override
     public void setOverlayElement(OverlayElement element) {
         mMain.setOverlay(element);
     }
 
 
+    /** Returns the cached {@link MainDimensions} bag (mutated live during resize). */
     @Override
     public MainDimensions getMainDimensions() {
         return mDimensions;
     }
 
 
+    /** Returns the cached master theme. */
     @Override
     public MasterTheme getTheme() {
         return mTheme;
     }
 
 
+    /** Replaces the cached master theme. */
     @Override
     public void setTheme(MasterTheme theme) {
         mTheme = theme;
     }
 
 
-    /**
-     * @return the current input state
-     */
+    /** Returns the live {@link InputState} for the current session. */
     @Override
     public InputState getInputState() {
         return mInputState;
@@ -154,9 +169,11 @@ public class MainModel implements Model {
 
 
     /**
-     * Uses the given editor info to update the input state
-     *
-     * @param editorInfo info used to generate input state
+     * Begins a typing session: refreshes the input state from
+     * {@code editorInfo}, re-syncs prefs, optionally recolors the theme
+     * from the host package when auto-color is on, and picks a starting
+     * keyboard for the field type (text → alphabet, everything else →
+     * punctuation). TODO below is pre-existing.
      */
     @Override
     public void onStart(EditorInfo editorInfo) {
@@ -187,18 +204,14 @@ public class MainModel implements Model {
     }
 
 
-    /**
-     * @return the key layout that should be drawn
-     */
+    /** Resolves the current keyboard code to the concrete {@link Keyboard}. */
     @Override
     public Keyboard getKeyboard() {
         return mKeyboards.get(getKeyboardCode());
     }
 
 
-    /**
-     * @return the code/index of the current keyboard
-     */
+    /** Returns the integer code identifying the active keyboard. */
     @Override
     public int getKeyboardCode() {
         return mKeyboardCode;
@@ -206,7 +219,9 @@ public class MainModel implements Model {
 
 
     /**
-     * @param code key layout code
+     * Switches to {@code code} and pushes the new keyboard into the main
+     * element's overlay slot so drawing and touch dispatch both pick it
+     * up immediately.
      */
     @Override
     public void setKeyboard(int code) {
@@ -215,18 +230,14 @@ public class MainModel implements Model {
     }
 
 
-    /**
-     * @return the current shift state of the keyboard
-     */
+    /** Returns the current shift state. */
     @Override
     public ShiftState getShiftState() {
         return mShiftState;
     }
 
 
-    /**
-     * @param shiftState the shiftState to set the keyboard to
-     */
+    /** Replaces the current shift state. */
     @Override
     public void setShiftState(ShiftState shiftState) {
         this.mShiftState = shiftState;
@@ -234,11 +245,9 @@ public class MainModel implements Model {
 
 
     /**
-     * if cursor mode is 0 both the left and the right are moving,
-     * if cursor mode is -1 the left only is moving,
-     * if cursor mdoe is 1 the right only is moving
-     *
-     * @return current cursor mode
+     * Returns the cursor-move mode: {@code 0} moves both caret endpoints,
+     * {@code -1} moves only the left endpoint, {@code 1} moves only the
+     * right endpoint.
      */
     @Override
     public int getCursorMode() {
@@ -247,12 +256,9 @@ public class MainModel implements Model {
 
 
     /**
-     * if cursor mode is 0 both the left and the right are moving,
-     * if cursor mode is -1 the left only is moving,
-     * if cursor mdoe is 1 the right only is moving
-     *
-     * @param cursorMode cursor mode to set
-     * @throws IllegalArgumentException if the param is outside the range [-1, 1]
+     * Sets the cursor-move mode after validating it lies in [-1, 1] —
+     * any out-of-range value throws {@link IllegalArgumentException}
+     * rather than silently normalizing.
      */
     @Override
     public void setCursorMode(int cursorMode) {
@@ -262,11 +268,7 @@ public class MainModel implements Model {
     }
 
 
-    /**
-     * Gets the current corrections logic of the model
-     *
-     * @return current correction method
-     */
+    /** Returns the installed {@link Corrections} strategy. */
     @Override
     public Corrections getCorrections() {
         return mCorrections;

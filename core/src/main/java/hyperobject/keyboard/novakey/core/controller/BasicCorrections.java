@@ -28,7 +28,13 @@ import hyperobject.keyboard.novakey.core.R;
 import hyperobject.keyboard.novakey.core.utils.Util;
 
 /**
- * Created by vcantu on 9/18/16.
+ * Placeholder {@link Corrections} implementation: expands English-style
+ * apostrophe-less contractions back into the apostrophe form (e.g. "dont"
+ * → "don't") by table lookup against {@code R.array.contractions}.
+ * <p>
+ * Preserves the user's casing — ALL CAPS stays ALL CAPS, Leading-cap stays
+ * Leading-cap, otherwise lowercase. This is not a real corrections engine;
+ * it's a stand-in until a proper predictive/autocorrect model is wired in.
  */
 public class BasicCorrections implements Corrections {
 
@@ -36,9 +42,9 @@ public class BasicCorrections implements Corrections {
 
 
     /**
-     * This is where all data should be loaded
-     *
-     * @param context used to load data saved on device
+     * Loads the contractions lookup table out of resources. Called once at
+     * controller setup; the array is cached on the instance so per-keystroke
+     * lookups stay allocation-free.
      */
     @Override
     public void initialize(Context context) {
@@ -47,10 +53,13 @@ public class BasicCorrections implements Corrections {
 
 
     /**
-     * TODO: this corrections method will change drastically this is just a place holder
+     * Looks up {@code composing} in the contractions table (via
+     * {@link #contractionIndex}) and, if found, returns the apostrophe form
+     * with casing matched to the input: all-caps input → all-caps output,
+     * leading-cap input → leading-cap output, otherwise the table entry
+     * verbatim. Returns the input unchanged if no entry matches.
      *
-     * @param composing
-     * @return
+     * TODO: this corrections method will change drastically — placeholder.
      */
     @Override
     public String correction(String composing) {
@@ -69,6 +78,11 @@ public class BasicCorrections implements Corrections {
     }
 
 
+    /**
+     * Linear scan of the contractions table. For each entry, strips the
+     * apostrophe and compares case-insensitively to {@code text}. Returns
+     * the matching index, or -1 if nothing matched.
+     */
     private int contractionIndex(String text) {
         for (int i = 0; i < mContractions.length; i++) {
             String check = mContractions[i].replace("\'", "");

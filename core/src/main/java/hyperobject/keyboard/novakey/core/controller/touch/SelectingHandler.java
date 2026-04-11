@@ -27,13 +27,23 @@ import hyperobject.keyboard.novakey.core.actions.SetOverlayAction;
 import hyperobject.keyboard.novakey.core.actions.ToggleCursorModeAction;
 
 /**
- * Created by Viviano on 6/15/2016.
+ * {@link TouchHandler} for the text-selection gesture: while active,
+ * rotating the finger clockwise extends the selection (or moves the
+ * cursor) one character to the right, counter-clockwise moves it left,
+ * and crossing into the inner circle toggles between cursor-move and
+ * selection-extend modes.
+ * <p>
+ * Activated when the typing handler detects the user started rotating
+ * around the wheel (see {@link TypingHandler#getRotatingStatus}); stays
+ * active until the user lifts, at which point it swaps the overlay back
+ * to the keyboard.
  */
 public class SelectingHandler extends RotatingHandler {
 
     private final Action mRight, mLeft;
 
 
+    /** Caches the two directional actions so they aren't re-allocated per rotate tick. */
     public SelectingHandler() {
         mRight = new RenameSelectionAction(true);
         mLeft = new RenameSelectionAction(false);
@@ -41,12 +51,9 @@ public class SelectingHandler extends RotatingHandler {
 
 
     /**
-     * Called when the user enters or exits the inner circle.
-     * Call unrelated to onMove()
-     *
-     * @param entered    true if event was triggered by entering the
-     *                   inner circle, false if was triggered by exit
-     * @param controller
+     * Fires {@link ToggleCursorModeAction} on entry into the inner
+     * circle so the user flips between "move cursor" and "extend
+     * selection" modes by swinging through the center. Ignores exits.
      */
     @Override
     protected boolean onCenterCross(boolean entered,
@@ -57,14 +64,7 @@ public class SelectingHandler extends RotatingHandler {
     }
 
 
-    /**
-     * Called for every move event so that the handler can update
-     * display properly. Called before onRotate()
-     *
-     * @param x          current finger x position
-     * @param y          current finger y position
-     * @param controller
-     */
+    /** No-op — selection scrubbing is driven entirely by {@link #onRotate}. */
     @Override
     protected boolean onMove(float x, float y, Controller controller) {
         //Do nothing
@@ -73,12 +73,10 @@ public class SelectingHandler extends RotatingHandler {
 
 
     /**
-     * Called when the touch listener detects that there
-     * has been a cross, either in sector or range
-     *
-     * @param clockwise  true if rotation is clockwise, false otherwise
-     * @param inCenter   if finger position is currently in the center
-     * @param controller
+     * Drives the selection: one tick per sector crossing. Clockwise fires
+     * the "right" rename-selection action, counter-clockwise fires the
+     * "left" one. Skipped entirely when the finger is in the center,
+     * since inner-circle rotation doesn't represent a selection change.
      */
     @Override
     protected boolean onRotate(boolean clockwise, boolean inCenter,
@@ -91,11 +89,8 @@ public class SelectingHandler extends RotatingHandler {
 
 
     /**
-     * Called when the user lifts finger, typically this
-     * method expects a finalized action to be triggered
-     * like typing a character
-     *
-     * @param controller
+     * Releases the handler on finger-up and swaps the overlay back to
+     * the current keyboard so the user sees keys again.
      */
     @Override
     protected boolean onUp(Controller controller) {

@@ -23,18 +23,26 @@ package hyperobject.keyboard.novakey.core.controller;
 import hyperobject.keyboard.novakey.core.actions.Action;
 
 /**
- * Interface that can fire actions
+ * Minimal interface for anything that can fire an {@link Action}. In practice
+ * the {@link Controller} is the only implementation — this interface exists
+ * so that elements and touch handlers can be handed something that lets them
+ * mutate model state without seeing the full Controller API (or depending on
+ * it directly in tests).
  * <p>
- * Created by Viviano on 6/18/2016.
+ * {@code Gun.fire} is the single choke point for state changes: elements and
+ * handlers never mutate the model themselves, they build an Action and hand
+ * it to whatever Gun they were given.
  */
 public interface Gun {
 
     /**
-     * Triggers action
+     * Invokes the action and returns its typed result.
      *
-     * @param action action to fire
+     * @param action action to execute (may be null, in which case
+     *               implementations are expected to no-op)
      * @param <T>    action return type
-     * @return returns the result of the action
+     * @return whatever the action produced, or {@code null} if the action
+     *         was null or returned null
      */
     <T> T fire(Action<T> action);
 }

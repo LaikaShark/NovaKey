@@ -23,24 +23,35 @@ package hyperobject.keyboard.novakey.core.controller;
 import android.content.Context;
 
 /**
- * Created by vcantu on 9/18/16.
+ * Strategy interface for text corrections and predictions — given the
+ * composing-region text (whatever the user has just typed but not yet
+ * committed), produce the replacement the keyboard should offer or commit.
  * <p>
- * Will be used for Text Corrections and Predictions
+ * Today the only implementation is {@link BasicCorrections}, which is a
+ * placeholder contraction expander. A real corrections/predictions engine
+ * would plug in here by implementing this interface.
  */
 public interface Corrections {
 
     /**
-     * This is where all data should be loaded
+     * One-time setup hook called before any call to {@link #correction(String)}.
+     * Implementations should load their dictionaries / model data here so the
+     * per-keystroke path stays cheap.
      *
-     * @param context used to load data saved on device
+     * @param context used to pull resources and on-device data files
      */
     void initialize(Context context);
 
 
     /**
-     * TODO: this corrections method will change drastically this is just a place holder
+     * Returns the replacement for the given composing text, or the same
+     * text unchanged if no correction applies.
      *
-     * @return
+     * TODO: this corrections method will change drastically — current
+     * implementation is only a placeholder.
+     *
+     * @param composing the text currently being composed by the user
+     * @return the corrected text, or {@code composing} if no correction fires
      */
     String correction(String composing);
 

@@ -26,24 +26,33 @@ import hyperobject.keyboard.novakey.core.model.Model;
 import hyperobject.keyboard.novakey.core.model.ShiftState;
 
 /**
- * Created by Viviano on 6/15/2016.
+ * Forces the model's {@link ShiftState} to an exact value
+ * (LOWERCASE / UPPERCASE / CAPS_LOCKED), bypassing the usual "cycle"
+ * stepping. Used by {@link ShiftAction} and {@link UpdateShiftAction}
+ * after they've decided what the next state should be, and by
+ * auto-capitalize logic that snaps the state back to UPPERCASE at the
+ * start of a sentence.
+ * <p>
+ * User-visible effect: the key labels are redrawn in the new case on
+ * the next frame (keys fetch their drawable via
+ * {@code getDrawable(shiftState)}).
  */
 public class SetShiftStateAction implements Action<Void> {
 
     private final ShiftState mSetTo;
 
 
+    /**
+     * @param setTo the exact {@link ShiftState} to assign to the model
+     */
     public SetShiftStateAction(ShiftState setTo) {
         this.mSetTo = setTo;
     }
 
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Writes the new shift state into the model and invalidates the
+     * view so the redraw picks up the updated key labels.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

@@ -30,25 +30,30 @@ import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 import hyperobject.keyboard.novakey.core.view.themes.board.BoardTheme;
 
 /**
- * Created by Viviano on 1/24/2016.
+ * {@link HorizontalPicker} concrete subclass that picks a
+ * {@link BoardTheme}. The visible item set comes from
+ * {@link ThemeFactory#BOARDS}; each entry is reparented onto a shared
+ * {@link BaseMasterTheme} so it can render itself in the picker row
+ * without disturbing the editor's live theme.
+ * <p>
+ * Unlike {@link ColorPicker}, there's no sub-selection story here,
+ * so the long-press hook is a deliberate no-op. Selection is emitted
+ * through the inherited
+ * {@link HorizontalPicker.OnItemSelectedListener}.
  */
 public class ThemePicker extends HorizontalPicker {
 
-    /**
-     * Constructor used by XML layout.
-     *
-     * @param context
-     * @param attrs
-     */
+    /** XML-inflation constructor. */
     public ThemePicker(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
 
     /**
-     * Will be called during the constructor to start the picker items
-     *
-     * @return the array that will be set to the pickerItems
+     * Builds the picker item set by walking {@link ThemeFactory#BOARDS}
+     * and reparenting each {@link BoardTheme} onto a shared
+     * {@link BaseMasterTheme} so it can draw itself in the picker
+     * strip independent of the actively-edited theme.
      */
     @Override
     protected PickerItem[] initializeItems() {
@@ -65,12 +70,9 @@ public class ThemePicker extends HorizontalPicker {
 
 
     /**
-     * Will be called when the given item is long pressed. Used to communicate,
-     * with the ReleasePicker
-     *
-     * @param index  index of item which has been long pressed
-     * @param startX corrected finger X position
-     * @param startY corrected finger Y position
+     * Long-press is deliberately ignored — there is no secondary
+     * selection for a board theme, so the entire interaction is
+     * handled by single taps.
      */
     @Override
     protected void onItemLongPress(int index, float startX, float startY) {

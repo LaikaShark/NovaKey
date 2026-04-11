@@ -31,25 +31,26 @@ import hyperobject.keyboard.novakey.core.utils.drawing.drawables.TextDrawable;
 import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 
 /**
- * Created by Viviano on 7/9/2015.
- * <p>
- * changed from onClicked() to onDown()
+ * The mode-switch button: cycles between the alpha keyboard and the
+ * punctuation/symbols keyboards. Icon flips based on current mode — it
+ * reads "#!" when the alpha keyboard is active (tap to go to punctuation)
+ * and "AZ" when a non-alpha keyboard is active (tap to go back to alpha).
+ * Long-press jumps straight to the symbols keyboard regardless of mode.
  */
 public class ButtonToggleModeChange extends Button {
 
+    /** Delegates layout to the base class; icon is chosen per-frame in {@link #draw}. */
     public ButtonToggleModeChange(ButtonData data) {
         super(data);
     }
 
 
     /**
-     * Draws the button. Button must handle it's own paint.
-     * Never call this method directly unless inside of a
-     * View's onDraw() method
-     *
-     * @param model
-     * @param theme  theme for drawing properties
-     * @param canvas canvas to draw on
+     * Picks the icon based on the currently active keyboard, then lets
+     * the base class do the actual drawing. Icon is recreated every frame
+     * — cheap because {@code TextDrawable} is a thin wrapper around a
+     * short string, and it keeps the button in sync with keyboard changes
+     * without needing an observer.
      */
     @Override
     public void draw(Model model, MasterTheme theme, Canvas canvas) {
@@ -62,18 +63,14 @@ public class ButtonToggleModeChange extends Button {
     }
 
 
-    /**
-     * @return action to fire, or null if no action is needed
-     */
+    /** Tap fires {@link ToggleKeyboardAction}, which flips alpha ↔ punctuation. */
     @Override
     protected Action onClickAction() {
         return new ToggleKeyboardAction();
     }
 
 
-    /**
-     * @return action to fire, or null if no action is needed
-     */
+    /** Long-press jumps directly to the symbols keyboard. */
     @Override
     protected Action onLongPressAction() {
         return new SetKeyboardAction(Keyboards.SYMBOLS);

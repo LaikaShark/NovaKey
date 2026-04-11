@@ -25,24 +25,37 @@ import hyperobject.keyboard.novakey.core.actions.NoAction;
 import hyperobject.keyboard.novakey.core.utils.drawing.Icons;
 
 /**
- * Created by Viviano on 6/16/2016.
+ * Shared contract for the popup menu overlays ({@link InfiniteMenu},
+ * {@link OnUpMenu}). Each menu is a list of {@link Entry entries};
+ * concrete menus decide how to lay them out, how touches select them,
+ * and when to commit.
  */
 public interface Menu {
 
     /**
-     * Base class for each entry
-     * can be extended to add more functionality
+     * One selectable item in a menu. {@code data} is the payload to
+     * render — typically a {@code Character}, {@code String}, or
+     * {@code Drawable}. {@code action} is fired when the user commits
+     * on this entry.
      */
     class Entry {
         public final Object data;
         public final Action action;
 
 
+        /**
+         * @param data   what the menu draws for this entry (char/string/drawable)
+         * @param action the action to fire on commit
+         */
         public Entry(Object data, Action action) {
             this.data = data;
             this.action = action;
         }
     }
 
+    /**
+     * Shared "cancel" entry — shows the clear icon and fires a
+     * {@link NoAction} so commits on it are a silent no-op.
+     */
     Entry CANCEL = new Entry(Icons.get("clear"), new NoAction());
 }

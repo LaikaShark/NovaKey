@@ -25,120 +25,148 @@ import hyperobject.keyboard.novakey.core.view.themes.board.BoardTheme;
 import hyperobject.keyboard.novakey.core.view.themes.button.ButtonTheme;
 
 /**
- * Created by Viviano on 8/14/2016.
+ * Top-level theme bundle handed to every drawable element. A master theme
+ * owns three swappable sub-themes — {@link BackgroundTheme} for the area
+ * behind the wheel, {@link BoardTheme} for the circular board itself and
+ * its keys, {@link ButtonTheme} for the fixed buttons around the wheel —
+ * plus three shared color slots (primary / accent / contrast) and a 3D
+ * shadow flag that the children read back when they paint.
  * <p>
- * Master theme which holds information which all of it's child themes will need to draw
+ * Setters return {@code this} to support fluent configuration from the
+ * {@code ThemeLoader}.
  */
 public interface MasterTheme {
 
 
     /**
-     * sets whether theme should use shadows to appear 3D
+     * Toggles 3D mode. When on, child themes apply soft drop shadows to
+     * give the keyboard a raised look; when off, they draw flat.
      *
-     * @param is3D true if theme should appear 3D
+     * @param is3D true to render with shadow layers, false for flat
+     * @return this master theme, for chaining
      */
     MasterTheme set3D(boolean is3D);
 
 
     /**
-     * @returns whether this theme has 3d mode set
+     * @return true if 3D mode (shadow layers) is currently enabled
      */
     boolean is3D();
 
 
     /**
-     * Sets the colors of this theme given an array of colors
+     * Replaces all three color slots at once.
      *
-     * @param primary  primary color of the theme
-     * @param accent   accent color of the theme
-     * @param contrast contrast color of the theme
+     * @param primary  primary color (typically background / dominant area)
+     * @param accent   accent color (typically board / line decoration)
+     * @param contrast contrast color (typically foreground text/icons)
+     * @return this master theme, for chaining
      */
     MasterTheme setColors(int primary, int accent, int contrast);
 
 
     /**
-     * Sets the colors of this theme given an app package.
-     * This method gets the colors of the app using the package and sets them.
+     * Looks up an {@link AppTheme} by package name and copies its three
+     * colors into this master theme. No-op if the package is unknown.
      *
-     * @param appPackage app to get colors from
+     * @param appPackage Android package name of the foreground app
+     * @return this master theme, for chaining
      */
     MasterTheme setPackage(String appPackage);
 
 
     /**
-     * @return primary color of this theme
+     * @return the primary color currently installed on this theme
      */
     int getPrimaryColor();
 
 
     /**
-     * @param color sets this to the primary color
+     * Overwrites just the primary color slot.
+     *
+     * @param color new primary color
      */
     void setPrimaryColor(int color);
 
 
     /**
-     * @return accent color of this theme
+     * @return the accent color currently installed on this theme
      */
     int getAccentColor();
 
 
     /**
-     * @param color sets this to the accent color
+     * Overwrites just the accent color slot.
+     *
+     * @param color new accent color
      */
     void setAccentColor(int color);
 
 
     /**
-     * @return contrast color of this theme
+     * @return the contrast color currently installed on this theme
      */
     int getContrastColor();
 
 
     /**
-     * @param color sets this to the contrast color
+     * Overwrites just the contrast color slot.
+     *
+     * @param color new contrast color
      */
     void setContrastColor(int color);
 
 
     /**
-     * Set the board theme
+     * Installs a new board sub-theme. Implementations are expected to
+     * wire {@code this} as the new child's parent so it can read colors
+     * back during draw.
      *
-     * @param boardTheme board theme to set
+     * @param boardTheme the new board theme
+     * @return this master theme, for chaining
      */
     MasterTheme setBoardTheme(BoardTheme boardTheme);
 
 
     /**
-     * @return this master theme's board theme
+     * @return the board sub-theme responsible for painting the wheel
+     *         and its keys
      */
     BoardTheme getBoardTheme();
 
 
     /**
-     * Sets the button theme
+     * Installs a new button sub-theme. Implementations are expected to
+     * wire {@code this} as the new child's parent so it can read colors
+     * back during draw.
      *
-     * @param buttonTheme button theme to set
+     * @param buttonTheme the new button theme
+     * @return this master theme, for chaining
      */
     MasterTheme setButtonTheme(ButtonTheme buttonTheme);
 
 
     /**
-     * @return this master theme's button theme
+     * @return the button sub-theme responsible for painting the fixed
+     *         buttons around the wheel
      */
     ButtonTheme getButtonTheme();
 
 
     /**
-     * Sets the background theme
+     * Installs a new background sub-theme. Implementations are expected
+     * to wire {@code this} as the new child's parent so it can read
+     * colors back during draw.
      *
-     * @param backgroundTheme background theme to set
+     * @param backgroundTheme the new background theme
+     * @return this master theme, for chaining
      */
     MasterTheme setBackgroundTheme(BackgroundTheme backgroundTheme);
 
 
     /**
-     * @return this master theme's background theme
+     * @return the background sub-theme responsible for painting behind
+     *         the wheel
      */
     BackgroundTheme getBackgroundTheme();
 }

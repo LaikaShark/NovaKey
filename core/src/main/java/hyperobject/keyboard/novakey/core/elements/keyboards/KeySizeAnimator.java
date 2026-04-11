@@ -24,15 +24,21 @@ import hyperobject.keyboard.novakey.core.animations.utils.Animator;
 import hyperobject.keyboard.novakey.core.utils.Util;
 
 /**
- * Created by Viviano on 9/2/2016.
- * <p>
- * Will change the size of the key from the given factors
+ * Animator that linearly interpolates a {@link Key}'s size multiplier
+ * between a start and end value over the life of an animation. Plugged
+ * into the generic animation framework via {@link Animator}, so a
+ * {@code BaseAnimation} driving keys will call {@link #update} every
+ * frame with a fraction in [0, 1].
  */
 public class KeySizeAnimator implements Animator<Key> {
 
     private final float mStart, mEnd;
 
 
+    /**
+     * @param start size multiplier at fraction 0
+     * @param end   size multiplier at fraction 1
+     */
     public KeySizeAnimator(float start, float end) {
         mStart = start;
         mEnd = end;
@@ -40,11 +46,12 @@ public class KeySizeAnimator implements Animator<Key> {
 
 
     /**
-     * Takes in a T and a fraction and updates the T according
-     * to the fraction
+     * Writes the interpolated size onto the key. Delegates to
+     * {@link Util#fromFrac} for the actual lerp so the interpolation
+     * curve matches the rest of the app's animators.
      *
-     * @param key      object to update
-     * @param fraction percentage of animation where 0 is the start & 1 is the end
+     * @param key      the key whose size to set this frame
+     * @param fraction 0 = animation start, 1 = animation end
      */
     @Override
     public void update(Key key, float fraction) {

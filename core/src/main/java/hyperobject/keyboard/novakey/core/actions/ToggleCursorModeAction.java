@@ -25,19 +25,26 @@ import hyperobject.keyboard.novakey.core.NovaKeyService;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Toggles the cursor mode state accordingly
+ * Steps the model's cursor mode through its three-value cycle. The
+ * cursor mode decides which edge of the selection {@link RenameSelectionAction}
+ * moves: {@code 0} = both edges (collapsed caret or full-selection
+ * move), {@code -1} = start edge only, {@code 1} = end edge only.
  * <p>
- * Created by Viviano on 6/15/2016.
+ * User-visible effect: the cursor overlay's affordances switch to
+ * reflect which edge is now live. Paired with the cursor-overlay
+ * gesture UI.
  */
 public class ToggleCursorModeAction implements Action<Void> {
 
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Cycles {@code 0 → -1 → 1 → 1 …}.
+     * <p>
+     * How: a two-case switch on the current mode. From 0 we go to -1;
+     * from -1 we go to 1; any other value (i.e. 1) falls through the
+     * switch and stays at 0 — which is how the initial value ({@code res = 0})
+     * ends up getting written back, effectively wrapping 1 → 0 to
+     * complete the cycle.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

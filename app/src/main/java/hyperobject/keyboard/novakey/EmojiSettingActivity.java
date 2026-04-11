@@ -29,11 +29,29 @@ import hyperobject.keyboard.novakey.core.utils.drawing.drawables.Drawable;
 import hyperobject.keyboard.novakey.core.utils.drawing.emoji.Emoji;
 import hyperobject.keyboard.novakey.core.utils.drawing.emoji.ThrowAwayView;
 
+/**
+ * Internal / developer screen used to lay out emoji into a hex grid one
+ * at a time. Reachable from {@link PreferencesFragment} via the hidden
+ * "pref_test" key. Not shipped as a user-facing feature.
+ * <p>
+ * The activity owns a 10x10 {@code Drawable[][]} grid. As the user taps
+ * through the {@link ThrowAwayView} it picks up the emitted emoji and
+ * drops it into the next slot, advancing the insertion cursor row-major
+ * and wrapping back to (0,0) when both dimensions are exhausted.
+ */
 public class EmojiSettingActivity extends Activity {
 
     int x = 0, y = 0;
 
 
+    /**
+     * Loads the emoji assets, installs the hex grid layout, and wires the
+     * {@link ThrowAwayView} listener so that each emitted {@link Drawable}
+     * is written into {@code grid[x][y]} and the grid is re-drawn. After
+     * each insert, {@code (x, y)} advances: x first, then y once x hits
+     * the row width; both coordinates wrap at 10 so the grid fills back
+     * to front if the user keeps tapping.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

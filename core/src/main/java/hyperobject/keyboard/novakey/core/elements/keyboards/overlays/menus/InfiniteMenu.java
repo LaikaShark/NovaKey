@@ -41,7 +41,20 @@ import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 import hyperobject.keyboard.novakey.core.view.themes.board.BoardTheme;
 
 /**
- * Created by Viviano on 6/16/2016.
+ * A carousel-style popup menu for picking from a long list of entries
+ * (e.g. hidden keys under a long-press). The user rotates their finger
+ * around the wheel to scroll the list; the current entry sits in the
+ * center and neighboring entries fan out to either side at
+ * exponentially shrinking sizes (1/2, 1/4, 1/8, …) to give the
+ * "infinite scroll" look.
+ * <p>
+ * Commit happens on finger up: whichever entry is currently centered
+ * fires its action, then the overlay is restored to the previous
+ * keyboard.
+ * <p>
+ * Also hosts the static {@code HIDDEN_KEYS} registry used by
+ * {@link PunctuationButton} and {@link hyperobject.keyboard.novakey.core.elements.keyboards.Key#getHiddenKeys}
+ * to look up the right menu for a given parent character.
  */
 public class InfiniteMenu implements OverlayElement, Menu {
 
@@ -54,6 +67,10 @@ public class InfiniteMenu implements OverlayElement, Menu {
     private int mIndex = 0;//current entry
 
 
+    /**
+     * Wraps the given entries and installs a {@link RotatingHandler}
+     * subclass that advances/rewinds {@code mIndex} as the finger rotates.
+     */
     public InfiniteMenu(List<Menu.Entry> entries) {
         mEntries = entries;
         mHandler = new Handler();
@@ -61,13 +78,17 @@ public class InfiniteMenu implements OverlayElement, Menu {
 
 
     /**
-     * This draw method will be called if this is not a
-     * stand alone View, otherwise this method will never be called
-     * by outside sources
-     *
-     * @param model  for context
-     * @param theme  used to determine the color
-     * @param canvas canvas to draw on
+     * Draws the carousel for one frame.
+     * <p>
+     * How: uses the finger's angle relative to the wheel center to
+     * compute a "distance from the sector midline" in [-1, 1]. That
+     * value smoothly shifts the entire row of entries left or right
+     * between rotation ticks, so visually the carousel glides instead
+     * of snapping. Draws the centered entry (index {@code mIndex})
+     * plus three entries on each side, with each successive side
+     * entry at half the horizontal offset and half the opacity/size
+     * of the previous one. Entries past the ends of the list wrap via
+     * {@link #indexInBounds}.
      */
     @Override
     public void draw(Model model, MasterTheme theme, Canvas canvas) {
@@ -132,6 +153,11 @@ public class InfiniteMenu implements OverlayElement, Menu {
     }
 
 
+    /**
+     * Modulo that handles negatives: normalizes any integer into a
+     * valid index for {@code mEntries} by adding the list size until
+     * positive, then folding with {@code %}.
+     */
     private int indexInBounds(int i) {
         while (i < 0) {//add length until positive
             i += mEntries.size();
@@ -140,8 +166,16 @@ public class InfiniteMenu implements OverlayElement, Menu {
     }
 
 
-    /*
-     * Draws specific Entry based on it's index
+    /**
+     * Renders one entry at the given screen position and size. Handles
+     * the three supported payload types:
+     * <ul>
+     *   <li>{@link Drawable}: drawn directly via the board theme.</li>
+     *   <li>{@link Character} / {@link String}: wrapped in a
+     *       {@link TextDrawable}. Long strings are shrunk to 1/4 size,
+     *       soft-wrapped at 12 chars per line, and truncated with an
+     *       ellipsis after 5 lines to keep the popup readable.</li>
+     * </ul>
      */
     private void draw(int index, float x, float y, float size, BoardTheme theme, Canvas canvas) {
         Object o = mEntries.get(index).data;
@@ -177,6 +211,7 @@ public class InfiniteMenu implements OverlayElement, Menu {
     }
 
 
+    /** Forwards the touch to the inner rotation handler. */
     @Override
     public boolean handle(MotionEvent event, Controller control) {
         return mHandler.handle(event, control);
@@ -184,18 +219,13 @@ public class InfiniteMenu implements OverlayElement, Menu {
 
 
     /**
-     * This will be the
+     * Inner rotation handler: translates sector crosses into index
+     * changes, tracks the finger position for the draw pass to use
+     * as its interpolation input, and commits the centered entry on up.
      */
     private class Handler extends RotatingHandler {
 
-        /**
-         * Called when the user enters or exits the inner circle.
-         * Call unrelated to onMove()
-         *
-         * @param entered    true if event was triggered by entering the
-         *                   inner circle, false if was triggered by exit
-         * @param controller
-         */
+        /** Center crosses are irrelevant to the carousel — keep the gesture alive. */
         @Override
         protected boolean onCenterCross(boolean entered, Controller controller) {
             //do nothing
@@ -204,12 +234,8 @@ public class InfiniteMenu implements OverlayElement, Menu {
 
 
         /**
-         * Called for every move event so that the handler can update
-         * display properly. Called before onRotate()
-         *
-         * @param x          current fing x position
-         * @param y          current fing y position
-         * @param controller
+         * Caches the latest finger position for the next draw pass and
+         * invalidates the view so the smooth-scroll animation advances.
          */
         @Override
         protected boolean onMove(float x, float y, Controller controller) {
@@ -221,12 +247,12 @@ public class InfiniteMenu implements OverlayElement, Menu {
 
 
         /**
-         * Called when the touch listener detects that there
-         * has been a cross, either in sector or range
-         *
-         * @param clockwise  true if rotation is clockwise, false otherwise
-         * @param inCenter   if fing position is currently in the center
-         * @param controller
+         * Advances {@code mIndex} one step — clockwise rotates to the
+         * previous entry, counter-clockwise rotates to the next one —
+         * and wraps around the ends of the list. Invalidates so the
+         * carousel redraws on the new index (since the parent
+         * {@code RotatingHandler} fires {@code onRotate} after
+         * {@code onMove}, the draw pass needs a second invalidate).
          */
         @Override
         protected boolean onRotate(boolean clockwise, boolean inCenter, Controller controller) {
@@ -245,11 +271,9 @@ public class InfiniteMenu implements OverlayElement, Menu {
 
 
         /**
-         * Called when the user lifts fing, typically this
-         * method expects a finalized action to be triggered
-         * like typing a character
-         *
-         * @param controller
+         * Commits the centered entry's action, restores the previous
+         * keyboard as the overlay, and resets the carousel to index 0
+         * for the next time the menu opens.
          */
         @Override
         protected boolean onUp(Controller controller) {
@@ -262,9 +286,12 @@ public class InfiniteMenu implements OverlayElement, Menu {
 
 
     /**
-     * Loads the default hidden keys based on a String array
-     *
-     * @param arr string array containing all the hidden keys
+     * Populates the static hidden-keys registry from the loaded
+     * string-array resource. Each non-empty row becomes one menu whose
+     * first entry is the parent key and whose remaining entries are
+     * the variants that long-press exposes. The parent key has to be
+     * first because {@link #getHiddenKeys(char)} uses it as the lookup
+     * key.
      */
     public static void setHiddenKeys(String[] arr) {
         HIDDEN_KEYS = new ArrayList<>();
@@ -284,10 +311,9 @@ public class InfiniteMenu implements OverlayElement, Menu {
 
 
     /**
-     * Returns the hidden keys menu based
-     *
-     * @param parent parent of the hidden keys
-     * @return an infinite menu or null if none was found
+     * Looks up the hidden-keys menu for a given parent character by
+     * linear-scanning the registry and matching the first entry. Returns
+     * {@code null} if no menu is registered for that parent.
      */
     public static InfiniteMenu getHiddenKeys(char parent) {
         for (InfiniteMenu menu : HIDDEN_KEYS) {

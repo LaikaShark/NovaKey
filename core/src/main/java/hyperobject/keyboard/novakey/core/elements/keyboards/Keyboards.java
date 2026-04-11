@@ -29,7 +29,10 @@ import java.util.List;
 import hyperobject.keyboard.novakey.core.R;
 
 /**
- * Created by Viviano on 8/21/2016.
+ * Registry of all {@link Keyboard}s the IME knows about: the fixed
+ * symbols and punctuation boards plus the list of alphabet/language
+ * boards. Codes are negative for the fixed boards so they never collide
+ * with the positive language indices.
  */
 public class Keyboards {
 
@@ -41,6 +44,12 @@ public class Keyboards {
     private final List<Keyboard> mLanguages;
 
 
+    /**
+     * Loads every keyboard from string-array resources. Currently
+     * installs Symbols, Punctuation, and English; adding a language is
+     * a two-line change: add the resource array and another
+     * {@code mLanguages.add(...)} below.
+     */
     public Keyboards(Context context) {
         Resources res = context.getResources();
 
@@ -53,8 +62,9 @@ public class Keyboards {
 
 
     /**
-     * @param code keyboard code, which can be symbols or punctuation
-     * @return a keyboard based on the given code
+     * Resolves a keyboard code to the concrete {@link Keyboard}.
+     * Negative codes hit the fixed boards; non-negative codes index
+     * into the languages list.
      */
     public Keyboard get(int code) {
         switch (code) {
@@ -68,7 +78,14 @@ public class Keyboards {
     }
 
 
-    //converts a String[] to a String[][] of single characters
+    /**
+     * Converts a string-array resource into a {@code [group][loc]} grid
+     * of {@link Key}s. Each row in the resource becomes one group, and
+     * each character in the row becomes one key at that group's next
+     * loc. The alt-layout flag flips on when a non-center group has
+     * more than 4 keys, which shifts where the "outermost" slot sits
+     * (see {@link Key#getDesiredPosn}).
+     */
     private static Key[][] convert(int ID, Resources res) {
         String[] S = res.getStringArray(ID);
         Key[][] result = new Key[S.length][];

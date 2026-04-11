@@ -23,19 +23,35 @@ package hyperobject.keyboard.novakey.core.utils.drawing.shapes;
 import hyperobject.keyboard.novakey.core.utils.drawing.drawables.Drawable;
 
 /**
- * Created by Viviano on 6/17/2016.
+ * A geometric primitive that can be both painted and hit-tested.
+ * <p>
+ * Extending {@link Drawable} means a {@code Shape} can fill both roles
+ * in a button's definition: it is the back-plate that gets drawn every
+ * frame, and it is the hit region that the touch handler tests against.
+ * {@link hyperobject.keyboard.novakey.core.elements.buttons.Button}
+ * uses exactly this pattern — it calls {@link #isInside} on DOWN to
+ * decide whether to claim a gesture, and lets the theme call
+ * {@link Drawable#draw} to render the back.
+ * <p>
+ * The shape is positioned and sized by the caller at paint/test time,
+ * so implementations are stateless and can be reused across buttons.
  */
 public interface Shape extends Drawable {
 
     /**
-     * Determines if the given coordinates are inside the shape
+     * Returns whether the touch point {@code (fingX, fingY)} falls
+     * inside a shape centered at {@code (x, y)} with nominal size
+     * {@code size}.
      *
-     * @param fingX x coordinate to test
-     * @param fingY y coordinate to test
-     * @param x     x coordinate of shape
-     * @param y     y coordinate of shape
-     * @param size  size of shape
-     * @return true if inside the shape
+     * @param fingX finger x coordinate to test (canvas pixels)
+     * @param fingY finger y coordinate to test (canvas pixels)
+     * @param x     shape center x (canvas pixels)
+     * @param y     shape center y (canvas pixels)
+     * @param size  shape size (diameter for circles, edge length for
+     *              squares); the exact interpretation is up to the
+     *              implementation but must match what {@link Drawable#draw}
+     *              uses so hit-test matches what the user sees
+     * @return {@code true} if the point is inside the shape
      */
     boolean isInside(float fingX, float fingY, float x, float y, float size);
 }

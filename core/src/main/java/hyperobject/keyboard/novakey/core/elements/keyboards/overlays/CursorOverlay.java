@@ -33,18 +33,31 @@ import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 import hyperobject.keyboard.novakey.core.view.themes.board.BoardTheme;
 
 /**
- * Created by Viviano on 9/2/2016.
+ * Overlay shown when the user enters cursor/selection mode. Draws the
+ * neutral cursor icon and optionally one or both directional arrows
+ * based on {@code model.getCursorMode()}, and routes touches to a
+ * {@link SelectingHandler} which translates drags into cursor moves
+ * or selection changes.
  */
 public class CursorOverlay implements OverlayElement {
 
     private final TouchHandler mHandler;
 
 
+    /** Installs a fresh selection handler; the overlay holds no other state. */
     public CursorOverlay() {
         mHandler = new SelectingHandler();
     }
 
 
+    /**
+     * Renders the cursor layer. Always draws the base cursor glyph;
+     * additionally draws the left arrow when {@code cursorMode >= 0}
+     * and the right arrow when {@code cursorMode <= 0}. Mode 0 means
+     * "idle" and draws both arrows; positive/negative mean the cursor
+     * is currently moving in that direction, in which case only the
+     * matching arrow is shown.
+     */
     @Override
     public void draw(Model model, MasterTheme theme, Canvas canvas) {
         MainDimensions d = model.getMainDimensions();
@@ -62,6 +75,7 @@ public class CursorOverlay implements OverlayElement {
     }
 
 
+    /** Forwards the touch to the {@link SelectingHandler}. */
     @Override
     public boolean handle(MotionEvent event, Controller control) {
         return mHandler.handle(event, control);

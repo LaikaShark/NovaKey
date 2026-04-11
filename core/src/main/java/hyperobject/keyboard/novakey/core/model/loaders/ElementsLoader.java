@@ -32,12 +32,23 @@ import hyperobject.keyboard.novakey.core.utils.drawing.shapes.Circle;
 import hyperobject.keyboard.novakey.core.view.posns.DeltaRadiusPosn;
 
 /**
- * Created by viviano on 11/26/2017.
+ * Loader that produces the flat list of auxiliary {@link Button}
+ * elements NovaKey draws around its wheel — currently the mode-switch
+ * button and the punctuation button. Pure code right now: nothing is
+ * read from prefs, and {@link #save(List)} is a deliberate no-op.
+ * <p>
+ * Positions are picked on the lower-left and lower-right corners via
+ * {@link DeltaRadiusPosn}, both with a circular hit shape sized to the
+ * same pixel count as the button bitmap.
  */
-
 public class ElementsLoader implements Loader<List<Element>> {
 
 
+    /**
+     * Builds and returns a fresh two-button list on every call. TODO is
+     * pre-existing: the 150px hard-code should eventually be resolved
+     * from display density plus a user preference.
+     */
     @Override
     public List<Element> load() {
         //TODO: get button size from DPI and preferences
@@ -59,6 +70,10 @@ public class ElementsLoader implements Loader<List<Element>> {
     }
 
 
+    /**
+     * No-op: the button list is code-defined, so there's nothing to
+     * persist. Kept to satisfy the {@link Loader} contract.
+     */
     @Override
     public void save(List<Element> elements) {
 

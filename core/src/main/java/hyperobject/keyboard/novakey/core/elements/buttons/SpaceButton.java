@@ -25,28 +25,29 @@ import hyperobject.keyboard.novakey.core.actions.input.SpaceAction;
 import hyperobject.keyboard.novakey.core.utils.drawing.Icons;
 
 /**
- * Created by Viviano on 8/16/2015.
+ * The optional arc-shaped space bar that sits along the bottom of the
+ * wheel. Tap-only: fires a {@link SpaceAction}, which handles
+ * auto-correct commit and auto-capitalization downstream. Long-press is
+ * intentionally disabled so a dragged gesture on the wheel never gets
+ * hijacked.
  */
 public class SpaceButton extends Button {
 
+    /** Installs the pre-rendered {@code space_bar} icon from the shared icon registry. */
     public SpaceButton(ButtonData data) {
         super(data);
         setIcon(Icons.get("space_bar"));
     }
 
 
-    /**
-     * @return action to fire, or null if no action is needed
-     */
+    /** Tap inserts a space via {@link SpaceAction}. */
     @Override
     protected Action onClickAction() {
         return new SpaceAction();
     }
 
 
-    /**
-     * @return action to fire, or null if no action is needed
-     */
+    /** No long-press behavior — returning {@code null} makes it a no-op. */
     @Override
     protected Action onLongPressAction() {
         return null;

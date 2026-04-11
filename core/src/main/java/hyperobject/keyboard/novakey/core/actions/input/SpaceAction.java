@@ -30,16 +30,27 @@ import hyperobject.keyboard.novakey.core.model.Model;
 import hyperobject.keyboard.novakey.core.model.Settings;
 
 /**
- * Created by vcantu on 9/18/16.
+ * Inserts a single space character and runs the side effects that go
+ * with it: commits any in-progress correction/composing text, auto-
+ * switches back to the alphabet keyboard when the return-after-space
+ * flag is set (triggered by {@link KeyAction} on characters like
+ * {@code . , ; & ! ?}), and fires an {@link UpdateShiftAction} so
+ * auto-capitalize can kick in at a new sentence.
  */
 public class SpaceAction implements Action<Void> {
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Runs the commit → insert-space → side-effects sequence.
+     * <p>
+     * How: if auto-correct is on and the input state says the current
+     * composing text is correctable, {@link NovaKeyService#commitCorrection()}
+     * is called to lock in the corrected form; otherwise the raw
+     * composing text is committed via {@link NovaKeyService#commitComposingText()}.
+     * A literal " " is then inserted. If the input state had
+     * {@code returnAfterSpace} flagged, fires a
+     * {@link SetKeyboardAction} back to the default alphabet and
+     * clears the flag so it doesn't fire on the next space too.
+     * Finally queues an {@link UpdateShiftAction}.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

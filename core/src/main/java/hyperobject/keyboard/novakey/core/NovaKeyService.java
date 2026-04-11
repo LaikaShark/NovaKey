@@ -28,89 +28,142 @@ import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 
+/**
+ * Abstract {@link InputMethodService} that defines the host-contract
+ * every NovaKey IME implementation must satisfy. The rest of the core
+ * module talks to the OS through this narrow interface instead of
+ * depending directly on {@link InputConnection} / {@link EditorInfo},
+ * so actions, elements, and touch handlers can remain platform-agnostic.
+ * <p>
+ * The concrete subclass lives in the {@code :app} module as
+ * {@code MainNovaKeyService} (declared in {@code AndroidManifest.xml})
+ * and is the class Android actually instantiates when the user enables
+ * "NovaKey" under Languages &amp; input. That subclass is responsible
+ * for:
+ * <ul>
+ *   <li>Routing {@link #inputText}, {@link #commitCorrection} and the
+ *       cursor / selection helpers through the current
+ *       {@link InputConnection}.</li>
+ *   <li>Driving the device vibrator for {@link #vibrate(long)}.</li>
+ *   <li>Exposing the system {@link ClipboardManager} via
+ *       {@link #getClipboard()}.</li>
+ *   <li>Querying {@link #getCurrentCapsMode()} from the underlying
+ *       {@link EditorInfo#inputType} so {@code ShiftAction} can decide
+ *       when to auto-capitalise.</li>
+ * </ul>
+ * All of the standard {@code InputMethodService} lifecycle hooks
+ * ({@code onCreate}, {@code onStartInput}, {@code onCreateInputView}, …)
+ * are inherited unchanged — subclasses override whichever of them they
+ * need and leave the rest to the platform.
+ */
 public abstract class NovaKeyService extends InputMethodService {
 
     /**
+     * Returns the device {@link ClipboardManager} so actions can read
+     * or write the system clipboard. Kept abstract so the core module
+     * never has to import {@link android.content.Context}.
+     *
      * @return this device's clipboard manager
      */
     public abstract ClipboardManager getClipboard();
 
 
     /**
-     * Vibrates the device given an amount of milliseconds
+     * Fires the device vibrator for the given duration. Used by the
+     * {@code VibrateAction} family for haptic feedback on key press.
+     * Implementations should respect the user's vibrate-level setting.
      *
-     * @param milliseconds amount to activate vibrator for
+     * @param milliseconds amount of time to activate the vibrator for
      */
     public abstract void vibrate(long milliseconds);
 
 
     /**
-     * inputs the given text as is
+     * Commits {@code text} to the active input field verbatim, as
+     * though it had been typed.
      *
-     * @param text         text to input
-     * @param newCursorPos were the cursor should end
+     * @param text         text to commit
+     * @param newCursorPos position the cursor should end at, using the
+     *                     same semantics as
+     *                     {@link InputConnection#commitText(CharSequence, int)}
      */
     public abstract void inputText(String text, int newCursorPos);
 
 
     /**
-     * This method is expensive, avoid it
+     * Pulls the full editable text plus selection bounds out of the
+     * target field via an {@link ExtractedTextRequest}. The returned
+     * {@link ExtractedText} receives monitor updates if the
+     * implementation asked for them at {@code onStartInput} time.
+     * <p>
+     * This round-trip is expensive and callers should cache the result
+     * when possible.
      *
-     * @return extracted text object, which receives updates
+     * @return extracted text, or {@code null} if no field is active
      */
     public abstract ExtractedText getExtractedText();
 
 
     /**
-     * Get text that's selected
+     * Returns the text currently highlighted by the caret selection,
+     * or {@code null}/empty if nothing is selected.
      *
-     * @return text between the selection start and end
+     * @return the text between {@code selectionStart} and
+     *         {@code selectionEnd}
      */
     public abstract String getSelectedText();
 
 
     /**
-     * Gets the current capitalization mode at the current cursor position
+     * Queries the current capitalization mode at the caret, from which
+     * {@code UpdateShiftAction} decides whether to auto-shift.
      *
-     * @return 1 for caps 0 for not caps
+     * @return 1 for caps, 0 for not caps
      */
     public abstract int getCurrentCapsMode();
 
 
     /**
-     * move the selection from it's current position
+     * Shifts the selection endpoints relative to their current values —
+     * useful for extending or contracting a selection one character at
+     * a time.
      *
-     * @param deltaStart difference of start cursor
-     * @param deltaEnd   difference of end cursor
+     * @param deltaStart delta to add to {@code selectionStart}
+     * @param deltaEnd   delta to add to {@code selectionEnd}
      */
     public abstract void moveSelection(int deltaStart, int deltaEnd);
 
 
     /**
-     * move the selection to the absolute position
+     * Moves the selection to an absolute character range.
      *
-     * @param start start of cursor
-     * @param end   end of cursor
+     * @param start index of the selection start
+     * @param end   index of the selection end (may equal {@code start}
+     *              for a plain caret position)
      */
     public abstract void setSelection(int start, int end);
 
 
     /**
-     * Commits the current composing text with the best possible correction
+     * Commits whatever composing span is active, applying the best
+     * available correction (spellcheck suggestion, completion, etc).
+     * The composition ends and the corrected text becomes permanent.
      */
     public abstract void commitCorrection();
 
 
     /**
-     * Commits the given text replacing the current composing text
+     * Replaces the current composing text with {@code text} and
+     * commits it, without running any correction logic.
      *
-     * @param text text to commit
+     * @param text replacement text
      */
     public abstract void commitReplacementText(String text);
 
 
     /**
-     * Commits the current composing text to the editor without corrections
+     * Commits the current composing text exactly as typed, bypassing
+     * corrections. Finishes the composition span.
      */
     public abstract void commitComposingText();
 }

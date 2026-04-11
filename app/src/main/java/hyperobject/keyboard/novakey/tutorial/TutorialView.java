@@ -22,6 +22,13 @@ package hyperobject.keyboard.novakey.tutorial;
 
 import android.graphics.Paint;
 
+/**
+ * Skeleton class carrying only the hard-coded instruction strings and a
+ * paint object. Not wired into the current tutorial flow — the active
+ * tutorial lives in {@link TutorialActivity} + {@link TaskView} + {@link Task}.
+ * Kept around because the author may revive it as the renderer for a
+ * non-interactive walkthrough variant.
+ */
 public class TutorialView {
 
     private Paint p = new Paint();

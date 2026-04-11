@@ -24,30 +24,29 @@ import android.text.InputType;
 import android.view.inputmethod.EditorInfo;
 
 /**
- * Created by Viviano on 6/16/2016.
+ * Snapshot of the current typing session: what kind of field the user
+ * is on (password / email / URI / plain text, plus the broad class —
+ * text, number, phone, datetime), the composing-text buffer, selection
+ * and candidate spans, and a few stateful counters used by input logic
+ * such as repeat-close tracking and "return to default keyboard after
+ * space."
  * <p>
- * Represents the state of a typing session
+ * Written by the IME on {@code onStartInput} (via {@link #updateEditorInfo})
+ * and on every {@code onUpdateSelection} (via {@link #updateSelection}).
+ * Read by actions and touch handlers that need to know the field type or
+ * the current cursor/composing region.
  */
 public class InputState {
 
-    /**
-     * Editor data
-     */
     private boolean mOnPassword = false;
     private boolean mOnEmailAddress = false;
     private boolean mOnURI = false;
     private Type mType = Type.TEXT;
 
-    /**
-     * Session data
-     */
     private int mRepeatCount = 0;//current count of closing chars
     private StringBuilder mComposing = new StringBuilder();
     private boolean mReturnAfterSpace;
 
-    /**
-     * Cursor data
-     */
     private int mOldSelelectionStart;
     private int mOldSelectionEnd;
     private int mSelectionStart;
@@ -56,6 +55,13 @@ public class InputState {
     private int mCandidatesEnd;
 
 
+    /**
+     * Refreshes the field-type flags from a fresh {@link EditorInfo}.
+     * Branches on {@code inputType}'s class/variation masks to set one
+     * of the four {@link Type} values and toggle the password/email/URI
+     * booleans, then clears any leftover composing text from the
+     * previous session.
+     */
     public void updateEditorInfo(EditorInfo editorInfo) {
         mComposing.setLength(0);
 
@@ -98,14 +104,14 @@ public class InputState {
 
 
     /**
-     * The goal of this method in this class is to update the input state
+     * Mirrors the editor's selection/candidates spans into this state
+     * bag. Called from the IME's {@code onUpdateSelection} so cursor-mode
+     * code and composing-text logic can read the current positions
+     * without re-asking the InputConnection.
      */
     public void updateSelection(int oldSelStart, int oldSelEnd,
                                 int newSelStart, int newSelEnd,
                                 int candidatesStart, int candidatesEnd) {
-        /**
-         * Update cursors
-         */
         mOldSelelectionStart = oldSelStart;
         mOldSelectionEnd = oldSelEnd;
         mSelectionStart = newSelStart;
@@ -115,26 +121,21 @@ public class InputState {
     }
 
 
-    /**
-     * @return current composing string
-     */
+    /** Returns the current composing-text buffer as a plain {@link String}. */
     public String getComposingText() {
         return mComposing.toString();
     }
 
 
-    /**
-     * Clears the composing text
-     */
+    /** Empties the composing-text buffer without touching anything else. */
     public void clearComposingText() {
         mComposing.setLength(0);
     }
 
 
     /**
-     * replaces the composing text
-     *
-     * @param text text to replace with
+     * Replaces the composing-text buffer with {@code text}. Resets length
+     * to zero first so old characters do not leak through.
      */
     public void setComposingText(String text) {
         mComposing.setLength(0);
@@ -143,85 +144,81 @@ public class InputState {
 
 
     /**
-     * @return whether
+     * Returns whether the keyboard should snap back to the default
+     * alphabet layout after the next space — flagged when a single-shot
+     * punctuation/symbol visit was triggered mid-word.
      */
     public boolean returnAfterSpace() {
         return mReturnAfterSpace;
     }
 
 
-    /**
-     * @param returnAfterSpace true if should return back to default keys after space
-     */
+    /** Sets the "return to default after space" flag. */
     public void setReturnAfterSpace(boolean returnAfterSpace) {
         mReturnAfterSpace = returnAfterSpace;
     }
 
 
     /**
-     * adds 1 to the repeating character count
+     * Increments the repeat-close counter. Used by punctuation auto-close
+     * logic to track how many identical closing chars have been emitted
+     * in a row.
      */
     public void incrementRepeat() {
         mRepeatCount++;
     }
 
 
-    /**
-     * sets repeating character count to 0
-     */
+    /** Resets the repeat-close counter back to zero. */
     public void resetRepeat() {
         mRepeatCount = 0;
     }
 
 
-    /**
-     * @return the current repeating characters inputed
-     */
+    /** Returns the current value of the repeat-close counter. */
     public int getRepeatCount() {
         return mRepeatCount;
     }
 
 
-    /**
-     * @return whether the user is currently typing a password
-     */
+    /** True if the active field is flagged as a password variant. */
     public boolean onPassword() {
         return mOnPassword;
     }
 
 
-    /**
-     * @return whether the user is currently typing on an email address field
-     */
+    /** True if the active field is flagged as an email-address variant. */
     public boolean onEmailAddress() {
         return mOnEmailAddress;
     }
 
 
-    /**
-     * @return whether the user is currently typing on a URI
-     */
+    /** True if the active field is flagged as a URI variant. */
     public boolean onURI() {
         return mOnURI;
     }
 
 
     /**
-     * @return whether it should use autocorrect and composing text
+     * True if auto-correct and composing-text tracking should be used for
+     * the active field — suppressed on passwords, emails, and URIs so the
+     * IME doesn't garble credentials or addresses.
      */
     public boolean shouldAutoCorrect() {
         return !onPassword() && !onEmailAddress() && !onURI();
     }
 
 
-    /**
-     * @return the current user's type class
-     */
+    /** Returns the broad input-type class of the active field. */
     public Type getType() {
         return mType;
     }
 
 
+    /**
+     * Broad input-type classes NovaKey cares about when picking a
+     * starting keyboard layout for a field.
+     */
     public enum Type {
         TEXT,
         NUMBER,
@@ -230,49 +227,37 @@ public class InputState {
     }
 
 
-    /**
-     * @return previous start of selection
-     */
+    /** Previous selection start, as reported by the last {@code onUpdateSelection}. */
     public int getOldSelelectionStart() {
         return mOldSelelectionStart;
     }
 
 
-    /**
-     * @return previous end of selection
-     */
+    /** Previous selection end, as reported by the last {@code onUpdateSelection}. */
     public int getOldSelectionEnd() {
         return mOldSelectionEnd;
     }
 
 
-    /**
-     * @return current start of selection
-     */
+    /** Current selection start (or caret position when start == end). */
     public int getSelectionStart() {
         return mSelectionStart;
     }
 
 
-    /**
-     * @return curret end of selection
-     */
+    /** Current selection end (or caret position when start == end). */
     public int getSelectionEnd() {
         return mSelectionEnd;
     }
 
 
-    /**
-     * @return start of composing text or -1 if no composing
-     */
+    /** Start of the composing-text region in the editor, or -1 when none. */
     public int getCandidatesStart() {
         return mCandidatesStart;
     }
 
 
-    /**
-     * @return end of composing text or -1 if no composing
-     */
+    /** End of the composing-text region in the editor, or -1 when none. */
     public int getCandidatesEnd() {
         return mCandidatesEnd;
     }

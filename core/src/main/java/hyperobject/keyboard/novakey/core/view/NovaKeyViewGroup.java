@@ -24,7 +24,10 @@ import android.content.Context;
 import android.view.ViewGroup;
 
 /**
- * Created by Viviano on 6/6/2016.
+ * Thin {@link ViewGroup} wrapper that hosts a single {@link MainView}
+ * child. Acts as the root container the IME service can hand back to
+ * the framework, giving the keyboard a layoutable parent without forcing
+ * {@link MainView} to inherit from {@link ViewGroup} itself.
  */
 public class NovaKeyViewGroup extends ViewGroup {
 
@@ -32,9 +35,8 @@ public class NovaKeyViewGroup extends ViewGroup {
 
 
     /**
-     * Initializes the view group
-     *
-     * @param context
+     * Creates the view group and its single {@link MainView} child,
+     * attaching the child immediately so the group is ready to measure.
      */
     public NovaKeyViewGroup(Context context) {
         super(context);
@@ -44,13 +46,8 @@ public class NovaKeyViewGroup extends ViewGroup {
 
 
     /**
-     * {@inheritDoc}
-     *
-     * @param changed
-     * @param l
-     * @param t
-     * @param r
-     * @param b
+     * Lays the child {@link MainView} out at the same bounds as this
+     * group — no internal offsets, the child fills the container.
      */
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {

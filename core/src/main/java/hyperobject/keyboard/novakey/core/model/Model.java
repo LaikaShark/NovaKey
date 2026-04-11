@@ -32,123 +32,117 @@ import hyperobject.keyboard.novakey.core.elements.keyboards.overlays.OverlayElem
 import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 
 /**
- * Created by Viviano on 6/6/2016.
- * <p>
- * Provides all starting data
+ * Read/write contract the rest of the keyboard uses to talk to the
+ * model layer. Holds (or exposes access to) the element list, the
+ * wheel dimensions, the theme, the current keyboard layout, the shift
+ * state, the input state, the cursor mode, and the corrections logic.
+ * {@link MainModel} is the production implementation; actions mutate
+ * state through this interface, elements and the view read from it.
  */
 public interface Model {
 
     /**
-     * @return a list of elements where:
-     * the first on the list are the first drawn.
-     * Used by a view to draw, or touch listeners to send events to
-     * the first handlers on the list
+     * Returns the ordered list of drawable/touchable elements. The first
+     * entry is drawn first (so the last entry sits on top), and touch
+     * dispatch walks the list top-down until one element claims the
+     * gesture.
      */
     List<Element> getElements();
 
 
     /**
-     * Replaces or adds the given element to the topmost element which lives
-     * on top of the main element
-     *
-     * @param element element to live on top of the main element
+     * Installs {@code element} as the topmost overlay above the main
+     * element — used to swap between the typing overlay, cursor overlay,
+     * delete overlay, and popup menus.
      */
     void setOverlayElement(OverlayElement element);
 
 
     /**
-     * @return main dimensions of the keyboard, update this object to update dimensions
+     * Returns the live {@link MainDimensions} bag. Callers mutate this
+     * object directly during the resize gesture; the next draw pass
+     * picks up their edits.
      */
     MainDimensions getMainDimensions();
 
 
-    /**
-     * @return this model's theme
-     */
+    /** Returns the currently active master theme. */
     MasterTheme getTheme();
 
 
-    /**
-     * @param theme theme to set
-     */
+    /** Replaces the currently active master theme (used when the user picks a new one). */
     void setTheme(MasterTheme theme);
 
 
     /**
-     * Syncs the models with the user preferences
+     * Re-reads every loader-backed field from {@code SharedPreferences}.
+     * Called from {@link #onStart} and any time the settings UI writes
+     * new values.
      */
     void syncWithPrefs();
 
 
-    /**
-     * @return the current input state
-     */
+    /** Returns the live {@link InputState} for the current typing session. */
     InputState getInputState();
 
 
     /**
-     * Uses the given editor info to update the input state
-     *
-     * @param editorInfo info used to generate input state
+     * Begins a new typing session: updates the input state from
+     * {@code editorInfo}, syncs prefs, and picks a sensible default
+     * keyboard layout for the field type.
      */
     void onStart(EditorInfo editorInfo);
 
 
-    /**
-     * @return the key layout that should be drawn
-     */
+    /** Returns the concrete {@link Keyboard} that should be drawn right now. */
     Keyboard getKeyboard();
 
 
     /**
-     * @return the code/index of the current keyboard
+     * Returns the integer code identifying the active keyboard. Negative
+     * codes are the fixed Symbols/Punctuation boards; non-negative codes
+     * index into the languages list.
      */
     int getKeyboardCode();
 
 
     /**
-     * @param code key layout code
+     * Switches the active keyboard to {@code code} and refreshes the
+     * overlay element so the new layout starts drawing on the next
+     * frame.
      */
     void setKeyboard(int code);
 
 
-    /**
-     * @return the shift state of the keyboard
-     */
+    /** Returns the current shift state of the keyboard. */
     ShiftState getShiftState();
 
 
-    /**
-     * @param shiftState the shiftState to set the keyboard to
-     */
+    /** Replaces the current shift state (driven by shift actions). */
     void setShiftState(ShiftState shiftState);
 
 
     /**
-     * if cursor mode is 0 both the left and the right are moving,
-     * if cursor mode is -1 the left only is moving,
-     * if cursor mode is 1 the right only is moving
-     *
-     * @return cursor mode
+     * Returns the cursor-move mode: {@code 0} moves both caret endpoints
+     * together, {@code -1} moves only the left endpoint, {@code 1} moves
+     * only the right endpoint.
      */
     int getCursorMode();
 
 
     /**
-     * if cursor mode is 0 both the left and the right are moving,
-     * if cursor mode is -1 the left only is moving,
-     * if cursor mdoe is 1 the right only is moving
+     * Sets the cursor-move mode.
      *
-     * @param cursorMode cursor mode to set
-     * @throws IllegalArgumentException if the param is outside the range [-1, 1]
+     * @param cursorMode one of {@code -1}, {@code 0}, or {@code 1} —
+     *                   anything outside that range throws
+     *                   {@link IllegalArgumentException}
      */
     void setCursorMode(int cursorMode);
 
 
     /**
-     * Gets the current corrections logic of the model
-     *
-     * @return current correction method
+     * Returns the currently installed {@link Corrections} implementation,
+     * which is what consumes and mutates the composing-text buffer.
      */
     Corrections getCorrections();
 }

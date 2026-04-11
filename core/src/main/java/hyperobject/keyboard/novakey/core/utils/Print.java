@@ -27,10 +27,22 @@ import java.util.ArrayList;
 import java.util.Map;
 
 /**
- * Created by Viviano on 7/15/2015.
+ * Tiny collection of {@code System.out.println} shortcuts used as an
+ * ad-hoc debug log during development.
+ * <p>
+ * On Android these land in stdout rather than logcat, so they are mostly
+ * useful when running unit tests on the JVM or attaching through a host
+ * shell — production code should prefer {@code android.util.Log}.
+ * Every helper swallows exceptions by printing a fallback line instead
+ * of propagating, so {@code Print.*} calls can be sprinkled anywhere
+ * without try/catch noise.
  */
 public class Print {
 
+    /**
+     * Prints any object's {@code toString()} on its own line, falling
+     * back to a fixed error string if printing itself throws.
+     */
     public static void ln(Object o) {
         try {
             System.out.println(o);
@@ -40,16 +52,22 @@ public class Print {
     }
 
 
+    /** Prints a radian angle converted to degrees for human reading. */
     public static void angle(double a) {
         ln(Math.toDegrees(a));
     }
 
 
+    /** Prints an int as a zero-padded hex literal like {@code 0xff00aa}. */
     public static void hex(int i) {
         ln("0x" + Integer.toHexString(i));
     }
 
 
+    /**
+     * Prints an integer list as space-separated numbers on one line by
+     * concatenating each element followed by a space.
+     */
     public static void intList(ArrayList<Integer> l) {
         String s = "";
         for (int i : l) {
@@ -59,6 +77,10 @@ public class Print {
     }
 
 
+    /**
+     * Dumps every key/value pair in a {@link SharedPreferences} bundle
+     * under a "-----Shared Pref-----" header, one entry per line.
+     */
     public static void sharedPref(SharedPreferences pref) {
         Map<String, ?> keys = pref.getAll();
         ln("-----Shared Pref-----");
@@ -69,6 +91,7 @@ public class Print {
     }
 
 
+    /** Prints each element of a string array on its own line. */
     public static void stringArr(String[] arr) {
         for (String s : arr) {
             ln(s);
@@ -76,6 +99,12 @@ public class Print {
     }
 
 
+    /**
+     * Pretty-prints an {@link ExtractedText} showing the selection as
+     * pipe characters around the highlighted region, e.g.
+     * {@code "hello |world|!"}. Prints {@code "null"} if {@code et} is
+     * null. When the selection is empty only the caret pipe is drawn.
+     */
     public static void et(ExtractedText et) {
         if (et == null)
             ln("null");

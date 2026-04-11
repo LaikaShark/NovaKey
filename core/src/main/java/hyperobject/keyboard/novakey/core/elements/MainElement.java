@@ -32,25 +32,48 @@ import hyperobject.keyboard.novakey.core.utils.Util;
 import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 
 /**
- * Created by Viviano on 6/20/2016.
+ * The root element of the NovaKey wheel: draws the background and the
+ * circular board, then delegates to a single {@link OverlayElement} for
+ * the keys/menu layer on top.
  * <p>
- * Main keyboard element, must have an overlay
+ * Also hosts the static geometry helpers that map a raw touch coordinate
+ * onto a wheel "area" — the inner-circle center (area 0), one of the five
+ * outer sectors (areas 1–5), or nothing (-1). These helpers are used by
+ * touch handlers and elements that need to know which sector a gesture
+ * is currently over.
  */
 public class MainElement implements Element {
 
     private OverlayElement mOverlay;
 
 
+    /**
+     * Builds a main element with the given initial overlay.
+     *
+     * @param overlay the keys/menu layer drawn on top of the board
+     */
     public MainElement(OverlayElement overlay) {
         mOverlay = overlay;
     }
 
 
+    /**
+     * Swaps the active overlay, e.g. when entering a popup menu or
+     * switching between the typing overlay and the cursor/delete overlays.
+     *
+     * @param overlay the new overlay to draw and route touches through
+     */
     public void setOverlay(OverlayElement overlay) {
         mOverlay = overlay;
     }
 
 
+    /**
+     * Draws the full keyboard stack for one frame: first the background
+     * (sized to the canvas, not the model, so it also fills the insets
+     * edge-to-edge IMEs report on Android 15+), then the circular board,
+     * then the overlay on top.
+     */
     @Override
     public void draw(Model model, MasterTheme theme, Canvas canvas) {
         MainDimensions d = model.getMainDimensions();
@@ -71,12 +94,12 @@ public class MainElement implements Element {
 
 
     /**
-     * Handles the logic given a touch event and
-     * a view
+     * Forwards the touch event straight to the current overlay — the
+     * main element itself does not react to touches, only the overlay's
+     * keys/menus do.
      *
-     * @param event   current touch event
-     * @param control controller used for context
-     * @return true to continue action, false otherwise
+     * @return whatever the overlay returns: {@code true} to keep the
+     *         gesture alive, {@code false} to release it
      */
     @Override
     public boolean handle(MotionEvent event, Controller control) {
@@ -84,13 +107,15 @@ public class MainElement implements Element {
     }
 
 
-    //------------------------------------Static Helper Methods--------------------------------------
-
-
     /**
-     * @param x x position
-     * @param y y position
-     * @return returns the current area based on the given coordinates
+     * Classifies a touch point on the wheel.
+     * <p>
+     * How: measures the distance from the wheel center. Inside the inner
+     * radius → area 0 (center). Inside the outer radius but outside the
+     * center → one of the five sectors via {@link #getSector}. Beyond the
+     * outer radius → -1 (outside the wheel entirely).
+     *
+     * @return 0 for the center, 1–5 for a sector, or -1 if off-wheel
      */
     public static int getArea(float x, float y, Model model) {
         MainDimensions d = model.getMainDimensions();
@@ -103,9 +128,10 @@ public class MainElement implements Element {
 
 
     /**
-     * @param x x position
-     * @param y y position
-     * @return returns the current rotational sector based on the given coordinates
+     * Returns the sector index [1, 5] a point falls into, assuming the
+     * point is already known to lie inside the wheel's outer radius.
+     * Delegates to {@link #getSectorFromCenter} after pulling the wheel
+     * center out of the model.
      */
     public static int getSector(float x, float y, Model model) {
         MainDimensions d = model.getMainDimensions();
@@ -113,10 +139,16 @@ public class MainElement implements Element {
     }
 
 
-    /*
-     * Will return a number [1, 5]
-     * representing which sector, the x and y is in
-     * returns Keyboard.KEYCODE_CANCEL if invalid
+    /**
+     * Pure-geometry sector lookup.
+     * <p>
+     * How: translates (x,y) into a frame centered on the wheel (also
+     * flipping Y so "up" is positive), computes the angle, and normalizes
+     * it into [π/2, 5π/2) so sector 1 always starts at the top. Then
+     * walks the five equal wedges of 2π/5 radians each, returning i+1
+     * for the first wedge that contains the angle. Returns
+     * {@link Keyboard#KEYCODE_CANCEL} as a sentinel if the angle somehow
+     * falls outside every wedge (should only happen on degenerate input).
      */
     private static int getSectorFromCenter(float x, float y, float centX, float centY) {
         x -= centX;

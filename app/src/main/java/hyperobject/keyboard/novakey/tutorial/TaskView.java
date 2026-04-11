@@ -39,7 +39,21 @@ import hyperobject.keyboard.novakey.core.utils.drawing.Draw;
 import hyperobject.keyboard.novakey.core.utils.drawing.Font;
 
 /**
- * Created by Viviano on 7/31/2015.
+ * Custom view that hosts the tutorial's task panel: a Back/Next button
+ * row along the top, a dot "progress map" between them, and a
+ * horizontally-scrolling strip of task descriptions below. The strip is
+ * rendered by translating each task's text by its index times the view
+ * width plus a shared {@link #currX} offset; {@link #beginAnimation}
+ * animates {@code currX} to slide between tasks.
+ * <p>
+ * Click regions are hard-coded to the top strip
+ * ({@code event.getY() <= dimen * 1.5f}), split into left half (Back)
+ * and right half (Next). The Next button relabels to "Done" on the
+ * final task and, when pressed there, invokes {@link OnFinishListener}.
+ * <p>
+ * Note: uses a no-arg {@code new Handler()}-style pattern indirectly
+ * through {@link ValueAnimator}; no actual {@code new Handler()} leak
+ * lives here.
  */
 public class TaskView extends View {
 
@@ -58,7 +72,11 @@ public class TaskView extends View {
 
 
     /**
-     * Constructor also sets touch listener
+     * Inflation constructor. Reads the text and button dimensions from
+     * resources, builds placeholder Back/Next buttons (actual positions
+     * get recomputed in {@link #onMeasure}), and installs a touch
+     * listener that routes top-strip DOWN events into
+     * {@link #back()}/{@link #forward()}.
      *
      * @param context application context
      * @param attrs   XML attributes
@@ -100,7 +118,9 @@ public class TaskView extends View {
 
 
     /**
-     * Sets the forward button to DISABLED
+     * Disables the Next button. Called when the user moves forward to
+     * a task that isn't yet complete — Next re-enables once the task's
+     * {@link Task#isComplete(String)} returns true.
      */
     public void disableNext() {
         if (forward != null) {
@@ -110,9 +130,7 @@ public class TaskView extends View {
     }
 
 
-    /**
-     * Sets the forward button to ENABLED
-     */
+    /** Re-enables the Next button once the current task is satisfied. */
     public void enableNext() {
         if (forward != null) {
             forward.state = ENABLED;
@@ -122,10 +140,12 @@ public class TaskView extends View {
 
 
     /**
-     * Calls the isComplete() on the current task
+     * Polls the current task's {@link Task#isComplete(String)}. Safe
+     * to call before tasks are loaded; returns {@code false} in that
+     * case.
      *
-     * @param test String to test
-     * @return returns the result of the isComplete() method
+     * @param test current editor contents
+     * @return whatever the current task reports
      */
     public boolean isComplete(String test) {
         if (tasks != null) {
@@ -136,35 +156,28 @@ public class TaskView extends View {
 
 
     /**
-     * Sets the list of tasks
-     *
-     * @param tasks
+     * Installs the tutorial task list. Expected to be called once
+     * after inflation, before the view is drawn.
      */
     public void setTasks(ArrayList<Task> tasks) {
         this.tasks = tasks;
     }
 
 
-    /**
-     * @return returns current index
-     */
+    /** Returns the index of the currently active task. */
     public int getIndex() {
         return index;
     }
 
 
     /**
-     * Sets the size of the view & creates the buttons
-     *
-     * @param widthMeasureSpec
-     * @param heightMeasureSpec
+     * Measure pass: fixes the height at seven text lines
+     * ({@code dimen * 7}) and re-creates the Back/Next buttons now
+     * that {@link #getWidth()} is valid.
      */
     @Override
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         setMeasuredDimension(widthMeasureSpec, (int) dimen * 7);
-        //first line for buttons
-        //second line for space
-        //last 5 for text
         float dp = getResources().getDimension(R.dimen.tut_btn_dimen);
         back = new TextButton("Back", dp, dimen);
         forward = new TextButton("Next", getWidth() - dp, dimen);
@@ -173,9 +186,9 @@ public class TaskView extends View {
 
 
     /**
-     * Draws view on given canvas
-     *
-     * @param canvas canvas given
+     * Paint pass: draws every task's description at its horizontal
+     * offset (so sliding {@link #currX} pans the strip), then overlays
+     * the progress dots, Back button, and Next button.
      */
     @Override
     public void onDraw(Canvas canvas) {
@@ -192,11 +205,13 @@ public class TaskView extends View {
 
 
     /**
-     * Draws task at the given index, at the given x, on the vigen canvas
+     * Renders one task's instruction text, word-wrapped via
+     * {@link Util#toMultiline} to fit either the view width minus
+     * padding or a configured minimum, whichever is smaller.
      *
-     * @param index  index of task to draw
-     * @param x      Left position of task
-     * @param canvas canvas to draw on
+     * @param index  which task to draw
+     * @param x      left position of the task card
+     * @param canvas target canvas
      */
     private void drawTask(int index, float x, Canvas canvas) {
         float maxLength = Math.min(getWidth() - getPaddingRight() - getPaddingRight(),
@@ -208,9 +223,10 @@ public class TaskView extends View {
 
 
     /**
-     * Draws progress map on the top
-     *
-     * @param canvas canvas to draw on
+     * Draws the small progress indicator row at the top: one faint
+     * circle per task, plus one bright circle positioned according to
+     * {@link #currX} so it slides between task dots during the
+     * transition animation.
      */
     private void drawMap(Canvas canvas) {
         int count = tasks.size();
@@ -230,17 +246,24 @@ public class TaskView extends View {
     }
 
 
-    /**
-     * Private Text button class for the BACK & NEXT buttons
-     */
     private final static int ENABLED = 0, DISABLED = 1, INVISIBLE = 2;
 
+    /**
+     * Tiny inner value class for the Back/Next buttons. Holds a text
+     * label, position, and one of the {@link #ENABLED}/{@link #DISABLED}/
+     * {@link #INVISIBLE} state constants. The enclosing
+     * {@link TaskView} paints them directly in {@link #onDraw(Canvas)}.
+     */
     private class TextButton {
         public String text;
         private float x, y;
         public int state = ENABLED;
 
 
+        /**
+         * Builds a button with the given label and (x, y) position.
+         * State defaults to ENABLED.
+         */
         TextButton(String text, float x, float y) {
             this.x = x;
             this.y = y;
@@ -248,6 +271,10 @@ public class TaskView extends View {
         }
 
 
+        /**
+         * Paints this button unless INVISIBLE. DISABLED buttons use
+         * the dimmed grey color; ENABLED ones use the full white.
+         */
         void draw(Canvas canvas) {
             p.setColor(0xFFF0F0F0);
             if (state != INVISIBLE) {
@@ -260,10 +287,19 @@ public class TaskView extends View {
 
 
     /**
-     * Animates task to the given index
+     * Starts the horizontal slide animation to task {@code i}.
+     * <p>
+     * How: animates {@link #currX} from its current value to
+     * {@code -i * getWidth()} over 400 ms. The interpolator is chosen
+     * based on direction: moving forward uses
+     * {@link AnticipateOvershootInterpolator} (a pull-back before the
+     * slide), moving back uses plain {@link OvershootInterpolator}.
+     * On animation end the actual task index is swapped in and the
+     * {@link OnIndexChangeListener} is notified.
      *
-     * @param i        index to animate to
-     * @param complete whether the animation is being completed or starting from 0
+     * @param i        destination index
+     * @param complete if {@code true} uses the gentler "complete"
+     *                 interpolator (used by {@link #back()})
      */
     private void beginAnimation(final int i, boolean complete) {
         final ValueAnimator anim = ValueAnimator.ofFloat(currX, -i * getWidth())
@@ -308,7 +344,9 @@ public class TaskView extends View {
 
 
     /**
-     * Animates backward according to the current index
+     * Back button action: slides one task backward, or resets to task
+     * 0 if the user is already on it (which should be unreachable
+     * since the Back button is hidden at index 0).
      */
     private void back() {
         if (index > 0)
@@ -319,7 +357,9 @@ public class TaskView extends View {
 
 
     /**
-     * Animates forward according to the current index
+     * Next button action: slides one task forward when there is one.
+     * The final task's Next click is routed through
+     * {@link OnFinishListener#onFinish()} instead.
      */
     private void forward() {
         if (index < tasks.size() - 1)
@@ -327,18 +367,16 @@ public class TaskView extends View {
     }
 
 
-    /**
-     * Animates to the first task
-     */
+    /** Jumps back to the first task (used only by dead {@link #back()} path). */
     private void reset() {
         beginAnimation(0, false);
     }
 
 
     /**
-     * update button states to work correctly.
-     * Back button will be invisible at the first task
-     * Forward button will be "Done" at the last task
+     * Recomputes which buttons should show for the current task:
+     * Back becomes INVISIBLE on the first task, and Next relabels to
+     * "Done" (and forces itself ENABLED) on the last task.
      */
     private void updateButtonStates() {
         if (index == 0)
@@ -355,46 +393,39 @@ public class TaskView extends View {
 
 
     /**
-     * Sets the on index change listener
-     *
-     * @param listener
+     * Registers a listener called each time the active task index
+     * changes. Fires after the slide animation ends, not when it
+     * starts.
      */
     public void setOnIndexChangeListener(OnIndexChangeListener listener) {
         this.listener = listener;
     }
 
 
-    /**
-     * Interface listener that will call onNewIndex(int, int)
-     */
+    /** Index-change callback interface consumed by {@link TutorialActivity}. */
     public interface OnIndexChangeListener {
         /**
-         * Callback method that is called when the used changes to new task
+         * Called after a slide animation finishes.
          *
-         * @param index index it was changed to
-         * @param prev  index it was changed from
+         * @param index new active task index
+         * @param prev  previous active task index
          */
         void onNewIndex(int index, int prev);
     }
 
 
     /**
-     * Sets the onFinishListener
-     *
-     * @param listener
+     * Registers the listener fired when the user taps "Done" on the
+     * final task.
      */
     public void setOnFinishListener(OnFinishListener listener) {
         this.mOnFinishList = listener;
     }
 
 
-    /**
-     * Interface listener that will call onFinish()
-     */
+    /** Finish callback interface consumed by {@link TutorialActivity}. */
     public interface OnFinishListener {
-        /**
-         * called when the user presses Done
-         */
+        /** Called when the user presses Done on the final task. */
         void onFinish();
     }
 }

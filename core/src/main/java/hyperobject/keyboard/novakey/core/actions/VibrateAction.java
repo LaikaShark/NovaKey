@@ -25,24 +25,30 @@ import hyperobject.keyboard.novakey.core.NovaKeyService;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Created by vcantu on 9/22/16.
+ * Fires a short haptic buzz for the given duration by delegating to
+ * {@link NovaKeyService#vibrate(long)}. The service decides whether to
+ * actually vibrate based on the user's haptic-feedback preference — so
+ * firing this action when haptics are disabled is a no-op rather than
+ * an error.
+ * <p>
+ * Touches no model state; the side effect is entirely on the vibrator.
  */
 public class VibrateAction implements Action<Void> {
 
     private final long mTime;
 
 
+    /**
+     * @param vibrateLevel vibration duration in milliseconds, as stored
+     *                     in the vibrate-level preference
+     */
     public VibrateAction(int vibrateLevel) {
         mTime = vibrateLevel;
     }
 
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Asks the IME to vibrate for the stored duration.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

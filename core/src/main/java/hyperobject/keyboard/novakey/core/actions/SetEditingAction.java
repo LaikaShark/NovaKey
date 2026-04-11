@@ -26,7 +26,16 @@ import hyperobject.keyboard.novakey.core.model.Model;
 import hyperobject.keyboard.novakey.core.view.EditView;
 
 /**
- * Created by Viviano on 6/15/2016.
+ * Swaps the IME's displayed input view between the normal keyboard view
+ * and the in-keyboard layout editor ({@link EditView}). Used by the
+ * settings/tutorial flow to let the user tweak the wheel geometry from
+ * inside the IME itself.
+ * <p>
+ * On enter: builds a fresh {@link EditView} bound to the current theme
+ * and installs it via {@link NovaKeyService#setInputView}.
+ * On exit: re-syncs the model with SharedPreferences (so any dimension
+ * changes the edit view wrote are picked up) and restores the normal
+ * controller-owned view.
  */
 public class SetEditingAction implements Action<Void> {
 
@@ -34,9 +43,8 @@ public class SetEditingAction implements Action<Void> {
 
 
     /**
-     * Constructs the action
-     *
-     * @param editing true if setting to editing, false otherwise
+     * @param editing {@code true} to enter the editor, {@code false} to
+     *                leave it and return to the normal keyboard view
      */
     public SetEditingAction(boolean editing) {
         mEditing = editing;
@@ -44,11 +52,9 @@ public class SetEditingAction implements Action<Void> {
 
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Installs the correct view on the IME and, on exit, pulls any
+     * persisted dimension tweaks back into the model via
+     * {@link Model#syncWithPrefs()}.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {
@@ -57,13 +63,10 @@ public class SetEditingAction implements Action<Void> {
             EditView editView = new EditView(ime, control, model.getMainDimensions());
             editView.setTheme(model.getTheme());
             ime.setInputView(editView);
-            //main.setInputView(new ControlView(main));
-            //main.addWindow(editView, true);
             //TODO: floating view support with settings
         } else {
             //updates the main model
             model.syncWithPrefs();
-            //ime.clearWindows(); NOTE: this code was for a floating windows test
             ime.setInputView(control.getView());
         }
         return null;

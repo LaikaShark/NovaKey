@@ -28,10 +28,17 @@ import hyperobject.keyboard.novakey.core.utils.drawing.Draw;
 import hyperobject.keyboard.novakey.core.utils.drawing.drawables.Drawable;
 
 /**
- * Created by Viviano on 6/7/2015.
+ * Filled-disc board variant with prominent dividers: paints a solid
+ * accent-color circle for the wheel back and then overlays full-length
+ * sector radii in the primary color, making each sector read as a
+ * clearly separated pie slice.
  */
 public class SeparateSectionsTheme extends BaseTheme {
 
+    /**
+     * Paints the wheel back as a single filled circle in the accent
+     * color. Drops a soft shadow under it when 3D mode is on.
+     */
     @Override
     public void drawBoardBack(float x, float y, float r, float sr, Canvas canvas) {
         if (mParent.is3D())
@@ -45,6 +52,12 @@ public class SeparateSectionsTheme extends BaseTheme {
     }
 
 
+    /**
+     * Paints the inner circle and full-length sector radii in the
+     * primary color. The {@code -1} length argument to
+     * {@link Draw#lines} tells it to draw each divider all the way from
+     * the inner circle out to the rim.
+     */
     @Override
     public void drawLines(float x, float y, float r, float sr, float w, Canvas canvas) {
         //draw lines and circle
@@ -57,28 +70,23 @@ public class SeparateSectionsTheme extends BaseTheme {
     }
 
 
+    /**
+     * Currently falls through to the base implementation. The legacy
+     * commented-out code left by the original author sketches the same
+     * clip-and-recolor approach as the other donut variants; see the
+     * {@code TODO: multi color for donut themes} note.
+     */
     @Override
     public void drawItem(Drawable drawable, float x, float y, float size, Canvas canvas) {
-        //        menu.draw(view, this, canvas);
-//        if (outerColor() != textColors()[0]) {
-//            try {
-//                canvas.save();
-//                Path p = new Path();
-//                p.addCircle(x, y, sr + 2, Path.Direction.CW);
-//                canvas.clipPath(p);
-//
-//                pT.setColor(textColors()[0]);
-//                menu.draw(view, this, canvas);
-//                canvas.restore();
-//            } catch (IllegalStateException e) {
-//                e.printStackTrace();
-//            }
-//        }
         //TODO: multi color for donut themes
         super.drawItem(drawable, x, y, size, canvas);
     }
 
 
+    /**
+     * Picks the best-contrasting color for items drawn over the outer
+     * sectors (painted with the accent color).
+     */
     protected int outerColor() {
         return Util.bestColor(
                 mParent.getPrimaryColor(),
@@ -87,6 +95,11 @@ public class SeparateSectionsTheme extends BaseTheme {
     }
 
 
+    /**
+     * Picks the best-contrasting color for items drawn over the inner
+     * circle (also the accent color, but usable color ranking differs
+     * because the center has different decoration).
+     */
     protected int centerColor() {
         return Util.bestColor(
                 mParent.getContrastColor(),

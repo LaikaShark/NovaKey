@@ -30,15 +30,27 @@ import hyperobject.keyboard.novakey.core.NovaKeyService;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Created by Viviano on 6/20/2016.
+ * Handles the Enter/Return gesture in a way that does the right thing
+ * for both single-line action fields ("Send", "Search", "Done" …) and
+ * multi-line composers (chat boxes, notes). Single-line fields get the
+ * editor's declared IME action fired; multi-line fields get a literal
+ * newline committed so Enter inserts a line break instead of submitting
+ * the message.
+ * <p>
+ * After the insertion, fires an {@link UpdateShiftAction} so the next
+ * letter auto-capitalizes at the start of a new sentence/line.
  */
 public class EnterAction implements Action<Void> {
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Runs the enter logic described in the class doc.
+     * <p>
+     * How: inspects {@link EditorInfo#inputType} for either of the two
+     * multi-line flags ({@code TYPE_TEXT_FLAG_MULTI_LINE} and
+     * {@code TYPE_TEXT_FLAG_IME_MULTI_LINE}). If either is set, commits
+     * a "\n" through the input connection; otherwise falls back to
+     * {@link NovaKeyService#sendDefaultEditorAction(boolean)} which
+     * triggers whatever action the field declared. Either way, queues
+     * an {@link UpdateShiftAction} to refresh the shift state.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

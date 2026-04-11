@@ -24,10 +24,16 @@ import hyperobject.keyboard.novakey.core.model.MainDimensions;
 import hyperobject.keyboard.novakey.core.utils.Util;
 
 /**
- * Created by Viviano on 9/10/2016.
+ * A hybrid polar {@link RelativePosn}: angle is given, but the radial
+ * distance is {@code outerRadius + pixelDistance} rather than a fraction
+ * of a radius.
  * <p>
- * Takes in an angle and a distance(in pixels) and places
- * the coordinate at a the given distance from the radius + the radius
+ * Math: the point lies at
+ * {@code (d.getX() + cos(angle) * (d.getRadius() + distance),
+ *         d.getY() - sin(angle) * (d.getRadius() + distance))}.
+ * Useful for elements that want to sit a fixed pixel gap outside the
+ * wheel regardless of how the user has resized it — the offset is not
+ * scaled with the radius.
  */
 public class DeltaRadiusPosn extends RelativePosn {
 
@@ -35,6 +41,14 @@ public class DeltaRadiusPosn extends RelativePosn {
     private final double mAngle;
 
 
+    /**
+     * Builds a polar position at angle, a fixed pixel distance beyond
+     * the outer radius.
+     *
+     * @param distance pixel offset past the outer radius (may be
+     *                 negative to pull the point inside the ring)
+     * @param angle    angle in radians, measured in the wheel's frame
+     */
     public DeltaRadiusPosn(float distance, double angle) {
         mDistance = distance;
         mAngle = angle;
@@ -42,8 +56,8 @@ public class DeltaRadiusPosn extends RelativePosn {
 
 
     /**
-     * @param model model to base posn off
-     * @return x coordinate based on the model dimensions
+     * Resolves X at {@code (radius + distance)} pixels from the wheel
+     * center along {@code angle}.
      */
     @Override
     public float getX(MainDimensions model) {
@@ -52,8 +66,9 @@ public class DeltaRadiusPosn extends RelativePosn {
 
 
     /**
-     * @param model model to base posn off
-     * @return y coordinate based on the model dimensions
+     * Resolves Y at {@code (radius + distance)} pixels from the wheel
+     * center along {@code angle} (with the screen-space Y flip handled
+     * inside {@link Util#yFromAngle}).
      */
     @Override
     public float getY(MainDimensions model) {

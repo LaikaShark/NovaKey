@@ -29,28 +29,52 @@ import hyperobject.keyboard.novakey.core.R;
 import hyperobject.keyboard.novakey.core.model.MainDimensions;
 
 /**
- * Created by viviano on 11/26/2017.
+ * Loads and saves the NovaKey wheel's geometry — center, radii,
+ * padding, and view dimensions — from {@code SharedPreferences}.
+ * Portrait and landscape store independent copies of every value
+ * (landscape keys are suffixed {@code _land}) so rotating the device
+ * doesn't drag one orientation's layout into the other.
+ * <p>
+ * The stored "smallRadius" pref is a <em>divisor</em> of the main
+ * radius; the resolved pixel value lives on {@link MainDimensions}
+ * everywhere else in the codebase. {@link #load()} and {@link #save}
+ * do the conversion in both directions.
  */
-
 public class MainDimensionsLoader implements Loader<MainDimensions> {
 
-    //Shared preferences
     private final SharedPreferences mSharedPref;
     private final Context mContext;
 
 
+    /**
+     * Captures the context and the default {@code SharedPreferences}
+     * handle, so subsequent loads/saves can read orientation and the
+     * default-radius/default-padding dimens.
+     */
     public MainDimensionsLoader(Context context) {
         this.mContext = context;
         this.mSharedPref = PreferenceManager.getDefaultSharedPreferences(context);
     }
 
 
+    /**
+     * Returns whether the device is currently in landscape orientation,
+     * so the per-orientation pref key suffix can be picked.
+     */
     private boolean isLandscape() {
         return mContext.getResources().getConfiguration().orientation
                 == Configuration.ORIENTATION_LANDSCAPE;
     }
 
 
+    /**
+     * Reads every geometry value out of prefs and assembles a
+     * {@link MainDimensions}. Missing values fall back to the
+     * {@code R.dimen.default_*} resources, the display's full width,
+     * and reasonable defaults derived from the loaded radius/padding.
+     * Converts the divisor-shaped {@code smallRadius} pref into its
+     * pixel equivalent before stashing it on the result.
+     */
     @Override
     public MainDimensions load() {
         float r = mSharedPref.getFloat("size" + (isLandscape() ? "_land" : ""),
@@ -70,6 +94,12 @@ public class MainDimensionsLoader implements Loader<MainDimensions> {
     }
 
 
+    /**
+     * Writes {@code md} back into prefs. Mirrors {@link #load()}: the
+     * smallRadius divisor is reconstructed from the resolved pixel
+     * value, and every key gets the {@code _land} suffix in landscape.
+     * Uses {@code apply()} so the write is fire-and-forget.
+     */
     @Override
     public void save(MainDimensions md) {
         // The "smallRadius" pref stores a divisor (load() resolves the pixel

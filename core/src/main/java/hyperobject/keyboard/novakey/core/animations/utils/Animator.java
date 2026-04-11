@@ -21,18 +21,29 @@
 package hyperobject.keyboard.novakey.core.animations.utils;
 
 /**
- * Created by Viviano on 9/2/2016.
- * <p>
- * Animates a value based on a fraction
+ * Functional interface for the per-frame mutation an animation wants
+ * to apply to one target object. Implementations read the supplied
+ * fraction (0 = animation start, 1 = animation end), compute the
+ * corresponding value, and write it onto {@code t}. Used by
+ * {@link MultiValueAnimator}, {@link CombineAnimator}, and every
+ * subclass of {@code CharAnimation} as the strategy for actually
+ * mutating keys each frame — the base animator framework supplies
+ * the fraction, the {@code Animator} decides what that fraction
+ * means.
+ *
+ * @param <T> the type of object this animator mutates
  */
 public interface Animator<T> {
 
     /**
-     * Takes in a T and a fraction and updates the T according
-     * to the fraction
+     * Applies the interpolated state for {@code fraction} onto
+     * {@code t}. Called once per frame while the parent animation is
+     * running.
      *
-     * @param t        object to update
-     * @param fraction percentage of animation where 0 is the start & 1 is the end
+     * @param t        the target to mutate this frame
+     * @param fraction {@code [0, 1]} where 0 is the animation start
+     *                 and 1 is the end; may overshoot past 1 or under
+     *                 0 if the caller's interpolator does so
      */
     void update(T t, float fraction);
 }

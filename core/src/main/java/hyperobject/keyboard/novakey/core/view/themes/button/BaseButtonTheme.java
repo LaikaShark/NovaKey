@@ -29,7 +29,10 @@ import hyperobject.keyboard.novakey.core.utils.drawing.shapes.Shape;
 import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 
 /**
- * Created by Viviano on 9/10/2016.
+ * Default implementation of {@link ButtonTheme}: frameless buttons
+ * whose icons are painted straight onto whatever sits behind them.
+ * Suitable for variants where the button's meaning is obvious from
+ * its icon alone and a back-plate would just add visual noise.
  */
 public class BaseButtonTheme implements ButtonTheme {
 
@@ -37,6 +40,11 @@ public class BaseButtonTheme implements ButtonTheme {
     private final Paint p;
 
 
+    /**
+     * Builds the reusable paint with anti-aliasing on and the sans
+     * serif light typeface preloaded so any text-based icon renders
+     * in a consistent weight.
+     */
     public BaseButtonTheme() {
         p = new Paint();
         p.setFlags(Paint.ANTI_ALIAS_FLAG);//smooth edges and Never changes
@@ -45,14 +53,8 @@ public class BaseButtonTheme implements ButtonTheme {
 
 
     /**
-     * Draws an object, ensuring contrast, on top of the board.
-     * Use this to draw thngs like letters, text, icons bmps and such
-     *
-     * @param shape  drawable object to draw
-     * @param x      x position to draw
-     * @param y      y position to draw
-     * @param size   size of object to draw
-     * @param canvas canvas to draw on
+     * No-op: the base variant is frameless and draws nothing for the
+     * button back-plate. Subclasses override this to paint a shape.
      */
     @Override
     public void drawBack(Shape shape, float x, float y, float size, Canvas canvas) {
@@ -61,14 +63,10 @@ public class BaseButtonTheme implements ButtonTheme {
 
 
     /**
-     * Draws an object, ensuring contrast, on top of the board.
-     * Use this to draw thngs like letters, text, icons bmps and such
-     *
-     * @param drawable drawable object to draw
-     * @param x        x position to draw
-     * @param y        y position to draw
-     * @param size     size of object to draw
-     * @param canvas   canvas to draw on
+     * Paints the icon in the parent theme's contrast color. The 3D
+     * shadow branch is currently dead ({@code && false}) — a relic of
+     * a shadow experiment the author disabled but left readable; the
+     * {@code TODO: globalize shadow height} note tracks the intent.
      */
     @Override
     public void drawIcon(Drawable drawable, float x, float y, float size, Canvas canvas) {
@@ -81,11 +79,7 @@ public class BaseButtonTheme implements ButtonTheme {
     }
 
 
-    /**
-     * Sets this child's master theme for reference
-     *
-     * @param masterTheme this theme's parent
-     */
+    /** Stores the back-reference to the master theme. */
     @Override
     public void setParent(MasterTheme masterTheme) {
         mParent = masterTheme;

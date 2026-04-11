@@ -24,7 +24,11 @@ import hyperobject.keyboard.novakey.core.utils.drawing.shapes.Shape;
 import hyperobject.keyboard.novakey.core.view.posns.RelativePosn;
 
 /**
- * Created by Viviano on 6/22/2016.
+ * Mutable layout descriptor for a {@link Button}: its relative position
+ * on the wheel, its size, and the {@link Shape} used for both drawing
+ * and hit testing. Exposes chainable setters so {@code ElementsLoader}
+ * can build instances fluently, e.g.
+ * {@code new ButtonData().setPosn(p).setSize(s).setShape(sh)}.
  */
 public class ButtonData {
 
@@ -33,52 +37,40 @@ public class ButtonData {
     private Shape mShape;
 
 
-    /**
-     * @return this properties' posn
-     */
+    /** Returns the relative position used for drawing and hit testing. */
     public RelativePosn getPosn() {
         return mPosn;
     }
 
 
-    /**
-     * @param posn sets this posn to these properties
-     */
+    /** Sets the relative position; returns {@code this} for chaining. */
     public ButtonData setPosn(RelativePosn posn) {
         mPosn = posn;
         return this;
     }
 
 
-    /**
-     * @return this properties' current size
-     */
+    /** Returns the button size (units match whatever the shape expects). */
     public float getSize() {
         return mSize;
     }
 
 
-    /**
-     * @param size sets the size of these properties
-     */
+    /** Sets the button size; returns {@code this} for chaining. */
     public ButtonData setSize(float size) {
         mSize = size;
         return this;
     }
 
 
-    /**
-     * @param shape sets the shape of these properties
-     */
+    /** Sets the shape used for drawing and hit testing; returns {@code this} for chaining. */
     public ButtonData setShape(Shape shape) {
         mShape = shape;
         return this;
     }
 
 
-    /**
-     * @return the shape of these properties
-     */
+    /** Returns the shape used for drawing and hit testing. */
     public Shape getShape() {
         return mShape;
     }

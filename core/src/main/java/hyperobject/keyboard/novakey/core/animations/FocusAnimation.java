@@ -28,9 +28,16 @@ import hyperobject.keyboard.novakey.core.elements.keyboards.Key;
 import hyperobject.keyboard.novakey.core.elements.keyboards.KeySizeAnimator;
 
 /**
- * Created by Viviano on 10/25/2015.
+ * {@link CharAnimation} that hides every key whose character is not
+ * in the supplied allow-list by shrinking it from size {@code 1} down
+ * to {@code 0} using an {@link AnticipateInterpolator} (which briefly
+ * scales up before collapsing inward). Keys whose character IS in the
+ * allow-list are left alone — the animator lookup returns {@code null}
+ * for them so the underlying {@link CharAnimation} machinery simply
+ * skips them each frame.
  * <p>
- * This animator will hide all keys not in mLocs
+ * Used to "focus" the keyboard on a small subset of keys, e.g. when
+ * showing character variants or a letter-picker overlay.
  */
 public class FocusAnimation extends CharAnimation {
 
@@ -39,6 +46,10 @@ public class FocusAnimation extends CharAnimation {
     private Character[] mChars;
 
 
+    /**
+     * @param chars the characters that should remain visible; every
+     *              other key on the active keyboard will shrink out
+     */
     public FocusAnimation(Character[] chars) {
         super(1);
         mChars = chars;
@@ -46,11 +57,8 @@ public class FocusAnimation extends CharAnimation {
 
 
     /**
-     * Will be called when building the animation to set this particular key's
-     * interpolator
-     *
-     * @param k key whose interpolator you wish to set
-     * @return an interpolator to set
+     * Every key shares the same {@link AnticipateInterpolator} — only
+     * keys outside the allow-list will actually get animated.
      */
     @Override
     protected TimeInterpolator getInterpolatorFor(Key k) {
@@ -59,11 +67,9 @@ public class FocusAnimation extends CharAnimation {
 
 
     /**
-     * Called when building the animation to determine which animator to assign
-     * to which key
-     *
-     * @param k key whose animator you wish to set
-     * @return the animator to set
+     * Returns the shrink animator for any key whose character is NOT
+     * in the allow-list; returns {@code null} (which the base class
+     * treats as "no mutation") for keys that should stay visible.
      */
     @Override
     protected Animator<Key> getAnimatorFor(Key k) {

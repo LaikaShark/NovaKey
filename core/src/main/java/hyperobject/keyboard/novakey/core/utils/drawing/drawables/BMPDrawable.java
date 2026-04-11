@@ -29,18 +29,33 @@ import android.graphics.Paint;
 import hyperobject.keyboard.novakey.core.utils.drawing.Draw;
 
 /**
- * Created by Viviano on 12/26/2015.
+ * A {@link Drawable} backed by a decoded {@link Bitmap} resource. Used for
+ * the cursor icons in {@link hyperobject.keyboard.novakey.core.utils.drawing.Icons}
+ * and any other raster art that doesn't fit the font-icon pattern.
  */
 public class BMPDrawable implements Drawable {
 
     Bitmap bmp;
 
 
+    /**
+     * Decodes the drawable resource {@code id} via {@link BitmapFactory}
+     * and stores the bitmap for subsequent draws.
+     *
+     * @param res resources to decode through
+     * @param id  drawable resource id
+     */
     public BMPDrawable(Resources res, int id) {
         bmp = BitmapFactory.decodeResource(res, id);
     }
 
 
+    /**
+     * Draws the bitmap centered at (x, y), scaled so its width equals
+     * {@code size}. Delegates to {@link Draw#bitmap} which computes the
+     * scale factor as {@code size / bmp.getWidth()} and preserves the
+     * bitmap's aspect ratio.
+     */
     @Override
     public void draw(float x, float y, float size, Paint p, Canvas canvas) {
         Draw.bitmap(bmp, x, y, size / bmp.getWidth(), p, canvas);

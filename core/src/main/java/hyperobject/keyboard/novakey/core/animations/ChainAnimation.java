@@ -26,7 +26,15 @@ import java.util.List;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Created by Viviano on 9/2/2016.
+ * Composite {@link Animation} that plays a sequence of children
+ * strictly one after the other. The chain installs an end-listener on
+ * each child pointing at its successor, so once step {@code i}
+ * completes it triggers {@code i+1}'s {@link Animation#start}. The
+ * outer chain's own on-end listener is hung on the final child.
+ * <p>
+ * Update notifications from the currently-running child are forwarded
+ * to the chain's own update listener; the chain-level delay is applied
+ * to the first child only.
  */
 public class ChainAnimation implements Animation {
 
@@ -37,16 +45,22 @@ public class ChainAnimation implements Animation {
     private final List<Animation> mAnimations;
 
 
+    /** Creates an empty chain; build it up with {@link #add(Animation)}. */
     public ChainAnimation() {
         mAnimations = new ArrayList<>();
     }
 
 
+    /** Creates a chain pre-populated with the given ordered list of steps. */
     public ChainAnimation(List<Animation> animations) {
         mAnimations = animations;
     }
 
 
+    /**
+     * Appends a new step to the end of the chain. Returned for fluent
+     * building.
+     */
     public ChainAnimation add(Animation animation) {
         mAnimations.add(animation);
         return this;
@@ -54,11 +68,11 @@ public class ChainAnimation implements Animation {
 
 
     /**
-     * Should start the animation
-     * <p>
-     * Initialize the necessary data here
-     *
-     * @param model
+     * Wires every child up so each one kicks off the next when it
+     * ends, hangs the chain's own on-end listener on the final child,
+     * propagates the chain-level delay onto the first child, then
+     * starts that first child. All subsequent children will cascade
+     * from their predecessors' end callbacks.
      */
     @Override
     public void start(Model model) {
@@ -73,6 +87,10 @@ public class ChainAnimation implements Animation {
     }
 
 
+    /**
+     * Cancels every child in the chain. Children that have not yet
+     * started will simply be no-ops when their {@code cancel} fires.
+     */
     @Override
     public void cancel() {
         for (Animation a : mAnimations) {
@@ -82,10 +100,8 @@ public class ChainAnimation implements Animation {
 
 
     /**
-     * Set the start delay of this animation
-     *
-     * @param delay start delay in milliseconds
-     * @return this animation
+     * Stores the chain-level start delay. Applied to the first child
+     * at {@link #start(Model)} time.
      */
     @Override
     public Animation setDelay(long delay) {
@@ -95,7 +111,9 @@ public class ChainAnimation implements Animation {
 
 
     /**
-     * @param listener set this animation's on end listener
+     * Stores the chain-level end listener. Hooked onto the last child
+     * at {@link #start(Model)} time so it fires exactly when the whole
+     * sequence has finished.
      */
     @Override
     public Animation setOnEndListener(OnEndListener listener) {
@@ -105,7 +123,9 @@ public class ChainAnimation implements Animation {
 
 
     /**
-     * @param listener set this animation's on end listener
+     * Stores the chain-level update listener. Forwarded to every
+     * non-final child so the caller sees ticks while any step is
+     * running.
      */
     @Override
     public Animation setOnUpdateListener(OnUpdateListener listener) {

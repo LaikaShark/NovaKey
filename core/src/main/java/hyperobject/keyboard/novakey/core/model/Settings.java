@@ -27,11 +27,27 @@ import hyperobject.keyboard.novakey.core.model.factories.ThemeFactory;
 import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 
 /**
- * Created by Viviano on 6/22/2015.
+ * Global singleton for simple user preferences. Holds one static field
+ * per preference so hot paths can read them without a {@code SharedPreferences}
+ * lookup, plus the string keys used both to register
+ * listeners and to read the values back out.
+ * <p>
+ * The IME service calls {@link #setPrefs} once at startup, pointing this
+ * class at the host's {@code MY_PREFERENCES} file (MainNovaKeyService
+ * deliberately keeps that legacy key so existing installs don't lose
+ * their settings on upgrade — do not rename it). After that, the
+ * registered listener automatically re-runs {@link #update()} whenever
+ * any pref changes, so the static fields stay in sync.
+ * <p>
+ * Structured state (dimensions, theme, keyboard layouts) lives in
+ * {@link MainModel} loaders instead; this class is strictly for the
+ * boolean/int/String flags shown on the settings screen.
  */
 public class Settings {
 
-    //KEYS
+    // Preference keys. Entries flagged "(REMOVED)" / "(DEPRECATED)" are kept
+    // here for the legacy-pref migration in fixLegacyThemeing(); "INTENT"
+    // entries are action hooks wired up elsewhere, not raw values.
     public static String
             //NovaKey 0.1
             pref_hide_letters = "pref_hide_letters",
@@ -62,24 +78,42 @@ public class Settings {
             pref_subreddit = "pref_subreddit",//INTENT
             pref_auto_capitalize = "pref_auto_capitalize";
 
-    //Global Settings
+    /** Sentinel string used by theme prefs to mean "no user override, use the built-in default." */
     public static String DEFAULT = "DEFAULT";
+
+    // Global flag mirror of the boolean prefs, updated by update():
+    //   hideLetters   - hide letter labels on the wheel for a minimal look
+    //   hidePassword  - force-hide labels on password fields even if hideLetters is off
+    //   vibrate       - master toggle for haptic feedback on key press
+    //   quickInsert   - insert the first key in a sector on touch-down, not swipe decide
+    //   autoCorrect   - enable the on-the-fly word correction engine
+    //   quickClose    - auto-close brackets/quotes when the user types the opener
     public static boolean hideLetters, hidePassword, vibrate, quickInsert, autoCorrect, quickClose;
+    /** Whether the legacy space-bar button is shown instead of the gesture. */
     public static boolean hasSpaceBar;
+    /** Whether to honor EditorInfo's caps-mode hint at the start of each sentence. */
     public static boolean autoCapitalize;
 
+    // Integer settings:
+    //   startVersion  - BuildConfig.VERSION_CODE at first install, for upgrade detection
+    //   longPressTime - ms a touch must be held before it counts as a long press
+    //   vibrateLevel  - vibration intensity (ms duration) when `vibrate` is on
     public static int startVersion, longPressTime, vibrateLevel;
 
-    //Theme flag
+    /** Recolor the theme from the host app's accent color on every new session. */
     public static boolean autoColor;
 
-    /**
-     * Shared preferences
-     */
     private static SharedPreferences prefs;
     private static SharedPreferences.Editor edit;
 
 
+    /**
+     * Installs the {@code SharedPreferences} this class reads from and
+     * registers a change listener so {@link #update()} fires automatically
+     * whenever any pref value changes. Called once from the IME service
+     * at startup — passing in the service's deliberately-preserved
+     * {@code MY_PREFERENCES} handle.
+     */
     public static void setPrefs(SharedPreferences pref) {
         prefs = pref;
         edit = prefs.edit();
@@ -88,7 +122,10 @@ public class Settings {
 
 
     /**
-     * Pulls all values from the shared preferences & updates the static fields
+     * Re-reads every tracked preference out of the store and updates the
+     * static fields. Also stamps {@code pref_start_version} on the very
+     * first run (so upgrade detection has something to compare against),
+     * then runs the legacy-pref migration pass.
      */
     public static void update() {
         //Boolean Flag settings
@@ -123,11 +160,23 @@ public class Settings {
     }
 
 
+    /**
+     * One-shot migration entry point for prefs that changed shape
+     * between versions. Delegates to per-pref fixers; currently only
+     * the theme pref has a legacy format.
+     */
     private static void fixLegacyPrefs() {
         fixLegacyThemeing();
     }
 
 
+    /**
+     * Migrates pre-1.0 theme strings (see {@code ThemeFactory.themeFromLegacyString})
+     * into the new JSON blob stored under {@link #pref_theme}. Also lifts
+     * the legacy "auto color" flag out of the old comma-separated string
+     * into its own {@link #pref_auto_color} boolean, then deletes the old
+     * pref so the migration only runs once.
+     */
     private static void fixLegacyThemeing() {
         String str = prefs.getString(pref_theme_legacy, DEFAULT);
 

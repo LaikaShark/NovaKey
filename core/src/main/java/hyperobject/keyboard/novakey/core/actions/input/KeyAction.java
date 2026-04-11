@@ -35,7 +35,31 @@ import hyperobject.keyboard.novakey.core.model.ShiftState;
 import hyperobject.keyboard.novakey.core.utils.Util;
 
 /**
- * Created by Viviano on 9/15/2016.
+ * The "a user pressed a letter-or-symbol key" action. Takes the
+ * character the key represents and figures out exactly how to insert
+ * it given the current shift state, auto-correct/auto-capitalize
+ * settings, and a few character-specific auto-behaviors:
+ * <ul>
+ *   <li><b>Auto-correct:</b> regular letters/digits go through the
+ *       IME's correction pipeline (composing text) instead of being
+ *       hard-committed.</li>
+ *   <li><b>Quick-insert pairs:</b> typing an opener from {@code ¿¡⌊⌈}
+ *       automatically types the matching closer and leaves the caret
+ *       between them.</li>
+ *   <li><b>Quick-close pairs:</b> typing {@code ( [ { < > | "} cycles
+ *       through three states on repeated taps — just the opener, then
+ *       also the closer with the caret moved back, then replace with
+ *       a doubled opener (for unusual inputs that need the raw char).</li>
+ *   <li><b>Return-after-space:</b> certain punctuation characters
+ *       ({@code . , ; & ! ?}) flag the input state so that the next
+ *       space press automatically returns to the default alphabet
+ *       keyboard.</li>
+ *   <li><b>Quote/inverted-punctuation shortcut:</b> on a first press
+ *       of {@code ' " ¿ ¡}, the keyboard snaps back to the default
+ *       alphabet layout on the spot.</li>
+ * </ul>
+ * Always fires an {@link UpdateShiftAction} at the end so the shift
+ * state can advance (e.g. drop out of UPPERCASE after one character).
  */
 public class KeyAction implements Action<Void> {
 
@@ -44,6 +68,11 @@ public class KeyAction implements Action<Void> {
             {'.', ',', ';', '&', '!', '?'};
 
 
+    /**
+     * Membership test: is {@code c} in the {@code returnAfterSpace}
+     * whitelist of punctuation that should switch the keyboard back to
+     * the alphabet after the next space?
+     */
     public boolean shouldReturnAfterSpace(Character c) {
         for (Character C : returnAfterSpace) {
             if (C == c)
@@ -57,6 +86,10 @@ public class KeyAction implements Action<Void> {
             closers = new char[]{'?', '!', '⌋', '⌉'};
 
 
+    /**
+     * Maps a quick-insert opener to its matching closer, or returns 0
+     * if {@code c} is not a known opener.
+     */
     private static char getCloser(int c) {
         for (int i = 0; i < openers.length; i++) {
             if (openers[i] == c)
@@ -66,6 +99,10 @@ public class KeyAction implements Action<Void> {
     }
 
 
+    /**
+     * True if {@code c} is one of the quick-insert openers
+     * ({@code ¿ ¡ ⌊ ⌈}).
+     */
     private static boolean isOpener(int c) {
         for (int i : openers) {
             if (i == c)
@@ -79,6 +116,10 @@ public class KeyAction implements Action<Void> {
             quickClosers = new char[]{')', ']', '}', '>', '<', '|', '\"'};//  value so its in
 
 
+    /**
+     * Maps a quick-close opener to its matching closer, or returns 0
+     * if {@code c} is not a quick-close opener.
+     */
     private static char getQuickCloser(int c) {
         for (int i = 0; i < quickOpeners.length; i++) {
             if (quickOpeners[i] == c)
@@ -88,6 +129,10 @@ public class KeyAction implements Action<Void> {
     }
 
 
+    /**
+     * True if {@code c} is one of the quick-close openers
+     * ({@code ( [ { < > | "}).
+     */
     private static boolean isQuickOpener(int c) {
         for (int i : quickOpeners) {
             if (i == c)
@@ -100,17 +145,27 @@ public class KeyAction implements Action<Void> {
     private final Character mChar;
 
 
+    /**
+     * @param character the character this key represents (in its
+     *                  canonical / uppercase form; shift state is
+     *                  applied at fire time)
+     */
     public KeyAction(Character character) {
         mChar = character;
     }
 
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Inserts the key's character using the appropriate pathway.
+     * <p>
+     * How: branches on auto-correct eligibility, then quick-insert,
+     * then quick-close, then a plain insert. In every branch the
+     * character is first cased according to the current
+     * {@link ShiftState} (LOWERCASE → lowercase, UPPERCASE/CAPS_LOCKED
+     * → uppercase). After insertion, updates
+     * {@link InputState#setReturnAfterSpace} for the return-after-space
+     * whitelist, fires a keyboard-reset on the quote/inverted-punctuation
+     * shortcut, and fires an {@link UpdateShiftAction}.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

@@ -27,7 +27,16 @@ import android.graphics.Typeface;
 import hyperobject.keyboard.novakey.core.utils.drawing.Draw;
 
 /**
- * Created by Viviano on 6/21/2016.
+ * A mutable text {@link Drawable} with vertical centering. Used by
+ * {@link hyperobject.keyboard.novakey.core.elements.keyboards.Key} to
+ * render each letter on the wheel — the key caches a single instance
+ * and swaps its text/font in place every frame based on shift state,
+ * which is why this class exposes {@link #setText} and {@link #setFont}
+ * rather than being immutable.
+ * <p>
+ * Unlike {@link FlatTextDrawable}, draws use {@link Draw#text} which
+ * shifts the glyph box by {@code (ascent + descent) / 2} so that y
+ * denotes the visual center of the glyphs, not the baseline.
  */
 public class TextDrawable implements Drawable {
 
@@ -35,25 +44,30 @@ public class TextDrawable implements Drawable {
     private Typeface mFont;
 
 
+    /**
+     * Builds a text drawable with an explicit typeface. The typeface
+     * will be installed on the paint immediately before drawing.
+     */
     public TextDrawable(String text, Typeface font) {
         mText = text;
         mFont = font;
     }
 
 
+    /**
+     * Builds a text drawable that inherits whatever typeface the paint
+     * already has at draw time.
+     */
     public TextDrawable(String text) {
         this(text, null);
     }
 
 
     /**
-     * Interface for any kind of drawable
-     *
-     * @param x      x position
-     * @param y      y position
-     * @param size   size of icon
-     * @param p      paint to use
-     * @param canvas canvas to draw on
+     * Draws the text centered at (x, y) at the given pixel text size.
+     * If a typeface was set, it is applied to the paint before the
+     * delegate call (and never restored — callers are expected to use
+     * {@link #setFont} deliberately rather than lean on paint state).
      */
     @Override
     public void draw(float x, float y, float size, Paint p, Canvas canvas) {
@@ -64,9 +78,10 @@ public class TextDrawable implements Drawable {
 
 
     /**
-     * Sets this drawables font
+     * Replaces the typeface used for future draws.
      *
-     * @param font null will use the font given by the paint
+     * @param font a {@link Typeface}, or {@code null} to fall back to
+     *             whatever typeface the paint carries at draw time
      */
     public void setFont(Typeface font) {
         mFont = font;
@@ -74,9 +89,10 @@ public class TextDrawable implements Drawable {
 
 
     /**
-     * Sets this drawables text
+     * Replaces the text rendered by this drawable.
      *
-     * @param text cannot be null
+     * @param text new text; must not be null ({@link NullPointerException}
+     *             is thrown to catch accidental resets)
      */
     public void setText(String text) {
         if (text == null)

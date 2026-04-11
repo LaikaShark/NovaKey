@@ -34,20 +34,33 @@ import hyperobject.keyboard.novakey.core.model.ShiftState;
 import hyperobject.keyboard.novakey.core.utils.Util;
 
 /**
- * Performs the desired action of the user performing
- * the shift gesture. Which is, switch ShiftState & UserState
- * accordingly, and update the selected text
- * <p>
- * Created by Viviano on 6/15/2016.
+ * The "user swiped up / pressed shift" action. Does one of two things
+ * depending on which keyboard is currently active:
+ * <ul>
+ *   <li>On PUNCTUATION or SYMBOLS: flips to the opposite of the pair
+ *       ({@code PUNCTUATION ↔ SYMBOLS}). Shift is the paging gesture
+ *       between the two symbol pages.</li>
+ *   <li>On any alphabet keyboard: cycles the {@link ShiftState} through
+ *       {@code LOWERCASE → UPPERCASE → CAPS_LOCKED → LOWERCASE} and,
+ *       if there is a text selection, re-cases the selection to match
+ *       the new state (title-case for UPPERCASE, ALL CAPS for
+ *       CAPS_LOCKED, lowercase for LOWERCASE) while preserving the
+ *       selection bounds.</li>
+ * </ul>
  */
 public class ShiftAction implements Action<Void> {
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Runs the two-mode dispatch described in the class doc.
+     * <p>
+     * How: first snapshots the selection (start/end and the selected
+     * text), then switches on the current keyboard code. On symbol
+     * layouts it fires a {@link SetKeyboardAction}. On alphabet layouts
+     * it switches on the current shift state, fires a
+     * {@link SetShiftStateAction} for the next state, and — if there
+     * was a selection — fires an {@link InputAction} containing the
+     * re-cased text and restores the selection bounds via
+     * {@link NovaKeyService#setSelection}.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

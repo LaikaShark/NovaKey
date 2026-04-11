@@ -39,32 +39,35 @@ import hyperobject.keyboard.novakey.core.view.themes.board.MulticolorTheme;
 import hyperobject.keyboard.novakey.core.view.themes.board.SeparateSectionsTheme;
 
 /**
- * Created by Viviano on 2/4/2016.
- * <p>
- * Static Methods for generating Themes
+ * Serializes and deserializes {@link MasterTheme}s for the theme
+ * preference. Themes round-trip through a JSON blob of the shape
+ * <pre>
+ * {
+ *   "colors": [primary, accent, contrast],
+ *   "is3D":   bool,
+ *   "board":  { "class": int },
+ *   "background": { ... },
+ *   "button":     { ... }
+ * }
+ * </pre>
+ * The integer {@code class} lives in the {@link Boards} registry below,
+ * so prefs can reference a board theme stably without storing a Java
+ * class name. Also ships a legacy-string parser used by
+ * {@code Settings.fixLegacyThemeing}.
  */
 public class ThemeFactory {
 
+    /** Registry of numbered board-theme implementations used for JSON serialization. */
     public static Boards BOARDS = new Boards();
 
 
-    /*
-        Creates a theme from the following the JSON string format format:
-        {
-            "master" {
-                "colors" : [ xxx, xxx, xxx ]
-                "is3D" : true/false
-                "board" : {
-                    "class" : xxx
-                }
-                "background" : {
-                    "class" : xxx
-                }
-                "button" : {
-                    "class" : xxx
-                }
-            }
-        }
+    /**
+     * Parses a JSON theme blob (see class docs for the schema) into a
+     * {@link MasterTheme}. Returns a fresh {@link BaseMasterTheme} if
+     * {@code str} is the "DEFAULT" sentinel or if parsing fails.
+     * Background/button sections are parsed but currently unused —
+     * they're parsed defensively so future writes won't break the
+     * current reader.
      */
     public static MasterTheme themeFromString(String str) {
         if (str.equals(Settings.DEFAULT)) {
@@ -95,23 +98,11 @@ public class ThemeFactory {
     }
 
 
-    /*
-        Creates a JSON string of the theme following the format:
-        {
-            "master" {
-                "colors" : [ xxx, xxx, xxx ]
-                "is3D" : true/false
-                "board" : {
-                    "class" : xxx
-                }
-                "background" : {
-                    "class" : xxx
-                }
-                "button" : {
-                    "class" : xxx
-                }
-            }
-        }
+    /**
+     * Opposite of {@link #themeFromString}: walks a live
+     * {@link MasterTheme} and produces the JSON blob that will be
+     * written to {@code Settings.pref_theme}. Returns the {@code DEFAULT}
+     * sentinel on any JSON error so the next read round-trips safely.
      */
     public static String stringFromTheme(MasterTheme theme) {
         try {
@@ -145,24 +136,15 @@ public class ThemeFactory {
     }
 
 
-    /*
-     * Builds a theme from the sharedPref string
-     *
-     * theme will be a String that can be translated into a BoardTheme, with colors and other data
-     * it will have the following format:
-     *
-     * t = the number theme id
-     *
-     * numbers represent the color so that:
-     * c1 = primaryColor, c2 = accentColor, c3 = contrastColor
-     *
-     * 'A' or 'X' if theme has auto color enabled
-     *
-     * '3d' or 'X' if the theme has 3d enabled
-     *
-     * format:
-     *     t,c1,c2,c3,A,3d
-     *
+    /**
+     * Parses the pre-1.0 comma-separated theme string into a
+     * {@link MasterTheme}. The legacy format is
+     * {@code t,c1,c2,c3,A,3d} where {@code t} is the board id,
+     * {@code c1/c2/c3} are primary/accent/contrast colors, and
+     * {@code A}/{@code 3d} are text flags for auto-color and 3D mode.
+     * Auto-color is intentionally dropped here because it's lifted into
+     * its own pref by the migration caller; 3D and board id are
+     * applied directly.
      */
     public static MasterTheme themeFromLegacyString(String str) {
         if (str.equals(Settings.DEFAULT)) {
@@ -181,22 +163,30 @@ public class ThemeFactory {
     }
 
 
+    /** Shortcut: returns the numeric id for the given {@link BoardTheme}'s class. */
     public static int getBoardNum(BoardTheme theme) {
         return BOARDS.getKey(theme.getClass());
     }
 
 
+    /** Shortcut: returns a fresh {@link BoardTheme} instance for the given numeric id. */
     public static BoardTheme getBoard(int num) {
         return BOARDS.getValue(num);
     }
 
 
+    /**
+     * Numbered catalog of every shipped {@link BoardTheme}. The integer
+     * id is the over-the-wire identifier stashed in the theme JSON blob,
+     * so <strong>reorder with care</strong> — changing an existing id
+     * silently remaps every user's current theme.
+     */
     public static class Boards extends InstanceList<BoardTheme> {
 
         /**
-         * Called when constructing, use this to build the
-         *
-         * @param map
+         * Registers the seven built-in board themes by fixed id. Adding
+         * a new theme: append it with the next unused integer; do not
+         * renumber the existing entries.
          */
         @Override
         protected void build(Map<Integer, Class> map) {

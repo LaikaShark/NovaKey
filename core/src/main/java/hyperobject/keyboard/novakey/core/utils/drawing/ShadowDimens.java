@@ -23,10 +23,29 @@ package hyperobject.keyboard.novakey.core.utils.drawing;
 import hyperobject.keyboard.novakey.core.utils.Util;
 
 /**
- * Created by Viviano on 3/11/2016.
+ * Immutable bundle describing a drop-shadow's geometry: its blur
+ * radius {@code r} and its offset {@code (x, y)} in pixels. Used by
+ * the drawing layer to feed {@link android.graphics.Paint#setShadowLayer}
+ * with consistent values derived from a light-source angle.
+ * <p>
+ * The constructor is private — instances are built via
+ * {@link #fromAngle(float, float)}, which projects the light-source
+ * angle into an (x, y) offset proportional to the blur radius. The
+ * resulting shadow is 2r offset at the given angle, producing a softer
+ * drop as r increases.
  */
 public class ShadowDimens {
 
+    /**
+     * Builds a shadow with blur radius {@code r} whose offset is the
+     * unit vector at {@code degrees} scaled by {@code 2r} (pixels).
+     * <p>
+     * How: converts degrees to radians and calls
+     * {@link Util#xFromAngle} / {@link Util#yFromAngle} with a "length"
+     * of {@code 2r} to compute the offset from the origin. Larger
+     * blurs therefore land proportionally farther from their owner,
+     * which matches how real light scatters.
+     */
     public static ShadowDimens fromAngle(float degrees, float r) {
         float d = r * 2;
         double a = Math.toRadians(degrees);
@@ -37,6 +56,12 @@ public class ShadowDimens {
     public final float x, y, r;
 
 
+    /**
+     * Private constructor; callers use {@link #fromAngle(float, float)}
+     * or the instance method {@link #fromAngle(float)} to build
+     * instances so that the {@code (x, y)} invariant (an offset at the
+     * requested angle scaled by {@code 2r}) always holds.
+     */
     private ShadowDimens(float r, float x, float y) {
         this.r = r;
         this.x = x;
@@ -44,6 +69,11 @@ public class ShadowDimens {
     }
 
 
+    /**
+     * Convenience overload: builds a new shadow with the same radius
+     * as this one but a different light-source angle. Useful when the
+     * caller already has a reference shadow and wants to rotate it.
+     */
     public ShadowDimens fromAngle(float degrees) {
         return fromAngle(degrees, this.r);
     }

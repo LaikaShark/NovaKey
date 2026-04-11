@@ -21,11 +21,17 @@
 package hyperobject.keyboard.novakey.core.model;
 
 /**
- * Created by viviano on 11/26/2017.
+ * Concrete {@link Dimensions} bag for the root NovaKey wheel: its center
+ * {@code (x,y)}, outer/inner radii, surrounding padding, and the total
+ * view width/height. Populated by {@link hyperobject.keyboard.novakey.core.model.loaders.MainDimensionsLoader}
+ * from {@code SharedPreferences} on each prefs sync and mutated live by
+ * the resize gesture; read every frame by {@link hyperobject.keyboard.novakey.core.elements.MainElement}
+ * and friends to lay out and draw the board.
  * <p>
- * Main dimensions of the keyboard
+ * The string keys are exposed as {@code public static} so the backing
+ * {@code HashMap} stays shareable with test/setup tooling, but day-to-day
+ * code should use the typed getters below.
  */
-
 public class MainDimensions extends Dimensions {
 
     public static String
@@ -38,6 +44,13 @@ public class MainDimensions extends Dimensions {
             HEIGHT = "height";
 
 
+    /**
+     * Stores every dimension in the base map up front so later
+     * {@code getF}/{@code getI} calls always see a non-null value.
+     * {@code smallRadius} here is the resolved pixel value, not the
+     * divisor stored in prefs — see {@code MainDimensionsLoader} for
+     * the conversion.
+     */
     public MainDimensions(float x, float y, float radius, float smallRadius,
                           float padding, int width, int height) {
         set(X, x);
@@ -50,71 +63,89 @@ public class MainDimensions extends Dimensions {
     }
 
 
+    /** Wheel center X in view pixels. */
     public float getX() {
         return getF(X);
     }
 
 
+    /** Updates the wheel center X (used by the live resize gesture). */
     public void setX(float x) {
         set(X, x);
     }
 
 
+    /** Wheel center Y in view pixels. */
     public float getY() {
         return getF(Y);
     }
 
 
+    /** Updates the wheel center Y (used by the live resize gesture). */
     public void setY(float y) {
         set(Y, y);
     }
 
 
+    /** Outer radius of the wheel in pixels. */
     public float getRadius() {
         return getF(RADIUS);
     }
 
 
+    /** Updates the outer radius (used by the live resize gesture). */
     public void setRadius(float radius) {
         set(RADIUS, radius);
     }
 
 
+    /**
+     * Inner-circle radius in pixels (the hub that maps to area 0). Stored
+     * here as the already-resolved pixel value; prefs stash it as a
+     * divisor of {@link #getRadius()}.
+     */
     public float getSmallRadius() {
         return getF(SMALL_RADIUS);
     }
 
 
+    /** Updates the inner-circle radius (used by the live resize gesture). */
     public void setSmallRadius(float smallRadius) {
         set(SMALL_RADIUS, smallRadius);
     }
 
 
+    /** Padding between the wheel edge and the view bounds, in pixels. */
     public float getPadding() {
         return getF(PADDING);
     }
 
 
+    /** Updates the wheel padding (used by the live resize gesture). */
     public void setPadding(float padding) {
         set(PADDING, padding);
     }
 
 
+    /** Current view width in pixels — set from the display metrics on load. */
     public int getWidth() {
         return getI(WIDTH);
     }
 
 
+    /** Updates the view width (used when the view is relaid out). */
     public void setWidth(int width) {
         set(WIDTH, width);
     }
 
 
+    /** Current view height in pixels — influences the IME's reported height. */
     public int getHeight() {
         return getI(HEIGHT);
     }
 
 
+    /** Updates the view height (used by the live resize gesture). */
     public void setHeight(int height) {
         set(HEIGHT, height);
     }

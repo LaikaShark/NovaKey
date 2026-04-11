@@ -30,10 +30,27 @@ import hyperobject.keyboard.novakey.core.utils.Util;
 import hyperobject.keyboard.novakey.core.utils.drawing.ShadowDimens;
 
 /**
- * Created by Viviano on 3/11/2016.
+ * App-icon-style board variant: the wheel is split vertically in half
+ * with the two halves filled in slightly different shades of the primary
+ * color (so the wheel reads as a two-tone circular app icon) and the
+ * divider lines are drawn as thick lozenge-shaped pills instead of plain
+ * strokes. Uses {@link ShadowDimens} to offset the drop shadows on each
+ * divider so the shadow direction rotates around the wheel.
  */
 public class IconTheme extends BaseTheme {
 
+    /**
+     * Fills the two semicircular halves of the wheel with shaded
+     * variants of the primary color.
+     * <p>
+     * How: shades the primary by +4 (lighter) for the right half and
+     * uses the plain primary for the left. If the shade helper clamped
+     * to white (i.e. the primary was already near-white) it flips
+     * direction, shading by -4 for the right half instead and swapping
+     * the halves so the darker side is on the left. Both halves are
+     * drawn as {@link Path#addArc} calls over the wheel's bounding
+     * rectangle.
+     */
     @Override
     public void drawBoardBack(float x, float y, float r, float sr, Canvas canvas) {
         pB.setStyle(Paint.Style.FILL);
@@ -61,14 +78,24 @@ public class IconTheme extends BaseTheme {
     }
 
 
+    /**
+     * Paints thick rounded-end divider "pills" and the inner and outer
+     * circles of the wheel in the accent color.
+     * <p>
+     * How: builds one oval path stretched between the inner and outer
+     * radius at the 12 o'clock position, then walks around the wheel
+     * rotating the canvas by {@code 360/5} degrees per step and
+     * stamping the path four more times. When 3D mode is on, the drop
+     * shadow is recomputed per tick via
+     * {@link ShadowDimens#fromAngle(float, float)} so each pill appears
+     * lit from the same virtual light source regardless of its angle.
+     */
     @Override
     public void drawLines(float x, float y, float r, float sr, float w, Canvas canvas) {
         float sw = r * w * 4;
         ShadowDimens sd = ShadowDimens.fromAngle(270, sw / 4);
 
         if (mParent.is3D()) {
-            //pB.setStrokeWidth(sw);
-            //Draw.shadedLines(x, y + sw * 2 / 3f, r - (sr * 0.1f), sr * 1.1f, 0x80000000, pB, canvas);
             pB.setShadowLayer(sd.r, sd.x, sd.y, 0x80000000);
         }
         //draw lines and circle

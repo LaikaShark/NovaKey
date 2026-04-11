@@ -24,10 +24,18 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 /**
- * Created by Viviano on 6/14/2015.
+ * Filled-disc variant of {@link MulticolorDonutTheme}: draws the same
+ * five colored sectors around the outside, then fills the inner circle
+ * with a solid disc in the accent color so the wheel reads as a single
+ * piece instead of a donut.
  */
 public class MulticolorTheme extends MulticolorDonutTheme {
 
+    /**
+     * Chains to the multicolor donut renderer for the outer sectors
+     * and then drops a solid accent-color disc on top of the inner
+     * circle, covering the donut's hole.
+     */
     @Override
     public void drawBoardBack(float x, float y, float r, float sr, Canvas canvas) {
         super.drawBoardBack(x, y, r, sr, canvas);

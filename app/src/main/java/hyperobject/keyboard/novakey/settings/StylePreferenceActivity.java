@@ -40,10 +40,21 @@ import hyperobject.keyboard.novakey.widgets.pickers.ThemePicker;
 import hyperobject.keyboard.novakey.core.view.themes.board.BoardTheme;
 
 /**
- * Created by Viviano on 1/5/2016.
+ * Theme / style editor screen. Shows a {@link NovaKeyPreview} at the top
+ * and wires a {@link ThemePicker}, three {@link ColorPicker}s (primary /
+ * accent / contrast), plus two checkboxes (auto-color and 3D) to the
+ * preview's live {@link Model}. Each picker change updates the model's
+ * {@link hyperobject.keyboard.novakey.core.view.themes.MasterTheme} in
+ * place and triggers an {@code invalidate()} so the preview redraws.
  * <p>
- * TODO: once model can properly update the view(even when the theme updates)
- * remove any invalidate calls
+ * Extends {@link AbstractPreferenceActivity}, which supplies the FAB
+ * "done" button — clicking it routes through
+ * {@link #onActivityClosed(boolean)} to persist the new theme via
+ * {@link ThemeLoader}.
+ * <p>
+ * TODO on the original author: once the model can properly notify the
+ * view on theme updates, the explicit {@code invalidate} calls below can
+ * be removed.
  */
 public class StylePreferenceActivity extends AbstractPreferenceActivity {
 
@@ -52,6 +63,19 @@ public class StylePreferenceActivity extends AbstractPreferenceActivity {
     private Model mModel;
 
 
+    /**
+     * Builds the live preview model, looks up each picker widget in
+     * the inflated layout, and attaches selection listeners so that
+     * choosing a board theme or color writes straight back into
+     * {@code mModel.getTheme()} and refreshes the preview.
+     * <p>
+     * The auto-color checkbox doesn't affect the preview — it's a raw
+     * boolean that gets written to {@link Settings#pref_auto_color} on
+     * save. The 3D checkbox toggles
+     * {@link hyperobject.keyboard.novakey.core.view.themes.MasterTheme#set3D(boolean)}
+     * and has a leftover {@code System.out.println} debug line that
+     * fires on toggle.
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,6 +131,7 @@ public class StylePreferenceActivity extends AbstractPreferenceActivity {
     }
 
 
+    /** Returns the layout resource inflated by the base class. */
     @Override
     int getLayoutId() {
         return R.layout.style_preference_layout;
@@ -114,10 +139,13 @@ public class StylePreferenceActivity extends AbstractPreferenceActivity {
 
 
     /**
-     * Will save the preference pref_theme, as a String so that the keyboard can
-     * generate a theme from it if positiveResult is true
+     * Save hook fired by {@link AbstractPreferenceActivity} — commits
+     * the in-memory theme to disk via {@link ThemeLoader#save} and
+     * writes the auto-color flag to the default SharedPreferences.
+     * Only runs on positive exit (FAB click); cancel paths leave the
+     * persisted theme untouched.
      *
-     * @param positiveResult whether to save it or not
+     * @param positiveResult {@code true} to save the edited theme
      */
     @Override
     void onActivityClosed(boolean positiveResult) {

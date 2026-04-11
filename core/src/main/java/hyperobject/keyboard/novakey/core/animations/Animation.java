@@ -23,58 +23,77 @@ package hyperobject.keyboard.novakey.core.animations;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Created by Viviano on 6/20/2016.
+ * Base contract for every animation in the keyboard. An animation is a
+ * stateful object that, once {@link #start} is called, drives per-frame
+ * mutations on the {@link Model} (or on objects owned by it) until it
+ * either completes or is cancelled.
+ * <p>
+ * Concrete implementations include {@link BaseAnimation} (a single
+ * {@link android.animation.ValueAnimator}-backed pass) and
+ * {@link ChainAnimation} (sequences several animations one after the
+ * other). Animations expose fluent setters for start delay and
+ * begin/update/end callbacks so they can be composed by the elements
+ * that kick them off during their draw pass.
  */
 public interface Animation {
 
     /**
-     * Should start the animation
-     * <p>
-     * Initialize the necessary data here
+     * Begins playback. Implementations initialize any per-run state
+     * (the backing {@code ValueAnimator}, target snapshots, etc.) here
+     * and register whatever listeners are needed to tick the model
+     * forward each frame.
      */
     void start(Model model);
 
 
     /**
-     * Cancels the animation
+     * Aborts an in-flight animation. No-op if the animation never
+     * started or has already finished.
      */
     void cancel();
 
 
     /**
-     * Set the start delay of this animation
-     *
-     * @param delay start delay in milliseconds
-     * @return this animation
+     * Sets the delay applied before the animation actually begins
+     * ticking, in milliseconds. Returned for fluent chaining.
      */
     Animation setDelay(long delay);
 
 
     /**
-     * @param listener set this animation's on end listener
-     * @return this Animation
+     * Installs a listener fired exactly once when the animation
+     * completes (or is short-circuited because there is nothing to do).
+     * Returned for fluent chaining.
      */
     Animation setOnEndListener(OnEndListener listener);
 
 
+    /**
+     * Callback for end-of-animation notifications.
+     */
     interface OnEndListener {
         /**
-         * Called when this animation ends
+         * Invoked after the final frame has been applied, or
+         * immediately if the animation produces no work.
          */
         void onEnd();
     }
 
 
     /**
-     * @param listener set this animation's on end listener
-     * @return this Animation
+     * Installs a listener fired on every animation tick, so callers
+     * can invalidate the view or react to in-progress state changes.
+     * Returned for fluent chaining.
      */
     Animation setOnUpdateListener(OnUpdateListener listener);
 
 
+    /**
+     * Callback for per-frame update notifications.
+     */
     interface OnUpdateListener {
         /**
-         * Called when this animation updates
+         * Invoked on every frame the animation produces a new value.
          */
         void onUpdate();
     }

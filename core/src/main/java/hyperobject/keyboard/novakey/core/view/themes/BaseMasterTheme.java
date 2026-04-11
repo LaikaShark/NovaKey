@@ -28,7 +28,14 @@ import hyperobject.keyboard.novakey.core.view.themes.button.BaseButtonTheme;
 import hyperobject.keyboard.novakey.core.view.themes.button.ButtonTheme;
 
 /**
- * Created by Viviano on 8/14/2016.
+ * Default implementation of {@link MasterTheme}. Wires up a sensible set
+ * of sub-themes on construction — {@link BaseTheme} for the board,
+ * {@link FlatBackgroundTheme} for the area behind the wheel, and
+ * {@link BaseButtonTheme} for the fixed buttons — and seeds the three
+ * color slots with neutral gray/white values. Callers then swap in
+ * concrete board/button/background variants (e.g. {@link DonutTheme},
+ * {@link MulticolorTheme}, …) and override the colors via
+ * {@link #setColors} or {@link #setPackage}.
  */
 public class BaseMasterTheme implements MasterTheme {
 
@@ -40,6 +47,11 @@ public class BaseMasterTheme implements MasterTheme {
     private ButtonTheme mButton;
 
 
+    /**
+     * Builds a default master theme: base board/background/button
+     * children, 3D off, and a neutral gray primary with near-white
+     * accent and contrast.
+     */
     public BaseMasterTheme() {
         setBoardTheme(new BaseTheme());
         setBackgroundTheme(new FlatBackgroundTheme());
@@ -53,9 +65,8 @@ public class BaseMasterTheme implements MasterTheme {
 
 
     /**
-     * sets whether theme should use shadows to appear 3D
-     *
-     * @param is3D true if theme should appear 3D
+     * Stores the 3D flag. Children read this back on each draw, so the
+     * change takes effect on the next frame.
      */
     @Override
     public MasterTheme set3D(boolean is3D) {
@@ -64,9 +75,7 @@ public class BaseMasterTheme implements MasterTheme {
     }
 
 
-    /**
-     * @returns whether this theme has 3d mode set
-     */
+    /** @return the currently stored 3D flag */
     @Override
     public boolean is3D() {
         return mIs3d;
@@ -74,11 +83,8 @@ public class BaseMasterTheme implements MasterTheme {
 
 
     /**
-     * Sets the colors of this theme given an array of colors
-     *
-     * @param primary  primary color of the theme
-     * @param accent   accent color of the theme
-     * @param contrast contrast color of the theme
+     * Writes all three color slots at once. Returns {@code this} so the
+     * caller can chain further setup calls.
      */
     @Override
     public MasterTheme setColors(int primary, int accent, int contrast) {
@@ -90,10 +96,10 @@ public class BaseMasterTheme implements MasterTheme {
 
 
     /**
-     * Sets the colors of this theme given an app package.
-     * This method gets the colors of the app using the package and sets them.
-     *
-     * @param appPackage app to get colors from
+     * Looks up an {@link AppTheme} by package name and copies its
+     * {@code color1/color2/color3} triplet into this theme's primary,
+     * accent, and contrast slots. Silently returns {@code this} if the
+     * package is not in the app-color table.
      */
     @Override
     public MasterTheme setPackage(String appPackage) {
@@ -109,45 +115,42 @@ public class BaseMasterTheme implements MasterTheme {
     }
 
 
-    /**
-     * @return primary color of this theme
-     */
+    /** @return the primary color slot */
     @Override
     public int getPrimaryColor() {
         return mPrimiary;
     }
 
 
+    /** Overwrites just the primary color slot. */
     @Override
     public void setPrimaryColor(int color) {
         mPrimiary = color;
     }
 
 
-    /**
-     * @return accent color of this theme
-     */
+    /** @return the accent color slot */
     @Override
     public int getAccentColor() {
         return mAccent;
     }
 
 
+    /** Overwrites just the accent color slot. */
     @Override
     public void setAccentColor(int color) {
         mAccent = color;
     }
 
 
-    /**
-     * @return contrast color of this theme
-     */
+    /** @return the contrast color slot */
     @Override
     public int getContrastColor() {
         return mContrast;
     }
 
 
+    /** Overwrites just the contrast color slot. */
     @Override
     public void setContrastColor(int color) {
         mContrast = color;
@@ -155,9 +158,8 @@ public class BaseMasterTheme implements MasterTheme {
 
 
     /**
-     * Set the board theme
-     *
-     * @param boardTheme board theme to set
+     * Stores the new board sub-theme and wires {@code this} as its
+     * parent so the child can read colors back during draw.
      */
     @Override
     public MasterTheme setBoardTheme(BoardTheme boardTheme) {
@@ -167,9 +169,7 @@ public class BaseMasterTheme implements MasterTheme {
     }
 
 
-    /**
-     * @return this master theme's board theme
-     */
+    /** @return the currently installed board sub-theme */
     @Override
     public BoardTheme getBoardTheme() {
         return mBoard;
@@ -177,9 +177,8 @@ public class BaseMasterTheme implements MasterTheme {
 
 
     /**
-     * Sets the button theme
-     *
-     * @param buttonTheme button theme to set
+     * Stores the new button sub-theme and wires {@code this} as its
+     * parent so the child can read colors back during draw.
      */
     @Override
     public MasterTheme setButtonTheme(ButtonTheme buttonTheme) {
@@ -189,9 +188,7 @@ public class BaseMasterTheme implements MasterTheme {
     }
 
 
-    /**
-     * @return this master theme's button theme
-     */
+    /** @return the currently installed button sub-theme */
     @Override
     public ButtonTheme getButtonTheme() {
         return mButton;
@@ -199,9 +196,8 @@ public class BaseMasterTheme implements MasterTheme {
 
 
     /**
-     * Sets the background theme
-     *
-     * @param backgroundTheme background theme to set
+     * Stores the new background sub-theme and wires {@code this} as its
+     * parent so the child can read colors back during draw.
      */
     @Override
     public MasterTheme setBackgroundTheme(BackgroundTheme backgroundTheme) {
@@ -211,9 +207,7 @@ public class BaseMasterTheme implements MasterTheme {
     }
 
 
-    /**
-     * @return this master theme's background theme
-     */
+    /** @return the currently installed background sub-theme */
     @Override
     public BackgroundTheme getBackgroundTheme() {
         return mBackground;

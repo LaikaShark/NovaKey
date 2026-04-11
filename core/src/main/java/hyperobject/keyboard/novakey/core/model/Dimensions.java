@@ -24,16 +24,25 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by viviano on 11/26/2017.
+ * Base bag for geometric values an {@link hyperobject.keyboard.novakey.core.elements.Element}
+ * needs to draw itself. Concrete subclasses (e.g. {@link MainDimensions})
+ * define the key constants and the typed getters/setters; this class just
+ * backs them with a lazy {@link HashMap} so keys only allocate storage
+ * when something is actually written.
  * <p>
- * Dimensions used by an element to draw
+ * Written by dimension loaders during a prefs sync and by live resize
+ * interactions; read by elements and themes every draw frame.
  */
-
 public abstract class Dimensions {
 
     private Map<String, Object> mValues;
 
 
+    /**
+     * Stores {@code o} under {@code key}, lazily allocating the backing
+     * map on the first write. Null keys or values are silently dropped so
+     * callers don't need to null-check before stashing optional values.
+     */
     public void set(String key, Object o) {
         if (key == null || o == null)
             return;
@@ -43,6 +52,11 @@ public abstract class Dimensions {
     }
 
 
+    /**
+     * Returns the raw object stored under {@code key}, or {@code null} if
+     * nothing has been written yet or the key is missing. Callers usually
+     * reach for the typed variants {@link #getI} / {@link #getF} instead.
+     */
     public Object get(String key) {
         if (mValues == null || key == null)
             return null;
@@ -50,6 +64,11 @@ public abstract class Dimensions {
     }
 
 
+    /**
+     * Typed accessor for int-valued entries. Returns 0 when nothing has
+     * been written yet; casts unconditionally once the map exists, so
+     * callers are responsible for matching the type they set.
+     */
     public int getI(String key) {
         if (mValues == null || key == null)
             return 0;
@@ -57,6 +76,11 @@ public abstract class Dimensions {
     }
 
 
+    /**
+     * Typed accessor for float-valued entries. Returns 0 when nothing has
+     * been written yet; casts unconditionally once the map exists, so
+     * callers are responsible for matching the type they set.
+     */
     public float getF(String key) {
         if (mValues == null || key == null)
             return 0;

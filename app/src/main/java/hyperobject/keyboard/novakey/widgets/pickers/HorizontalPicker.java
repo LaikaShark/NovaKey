@@ -35,7 +35,23 @@ import hyperobject.keyboard.novakey.core.utils.PickerItem;
 import hyperobject.keyboard.novakey.widgets.ObservableHorizontalScrollView;
 
 /**
- * Created by Viviano on 1/5/2016.
+ * Abstract base for the style picker widgets. Renders a row of
+ * {@link PickerItem}s laid out horizontally inside an
+ * {@link ObservableHorizontalScrollView}, and translates touches into
+ * three distinct outcomes:
+ * <ul>
+ *   <li>A short tap selects the tapped item and fires
+ *       {@link OnItemSelectedListener#onItemSelected(PickerItem, int)}.</li>
+ *   <li>A long press triggers {@link #onItemLongPress(int, float, float)},
+ *       which subclasses can use to open the linked {@link ReleasePicker}
+ *       for sub-index selection.</li>
+ *   <li>Scroll events on the wrapping horizontal scroll view cancel
+ *       both the long-press timer and any open release picker.</li>
+ * </ul>
+ * Subclasses supply the concrete item set through
+ * {@link #initializeItems()} (called from this constructor) and
+ * implement {@link #onItemLongPress(int, float, float)} to wire long
+ * presses to whatever secondary picker they want.
  */
 public abstract class HorizontalPicker extends View implements View.OnTouchListener {
 
@@ -60,10 +76,11 @@ public abstract class HorizontalPicker extends View implements View.OnTouchListe
 
 
     /**
-     * Constructor used by XML layout.
-     *
-     * @param context
-     * @param attrs
+     * XML-inflation constructor. Invokes {@link #initializeItems()}
+     * (which subclasses override), seeds all sub-indexes to zero,
+     * caches the configured item dimension, switches the view to
+     * software rendering (so SVG drawables render correctly), and
+     * installs this instance as its own touch listener.
      */
     public HorizontalPicker(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -84,11 +101,12 @@ public abstract class HorizontalPicker extends View implements View.OnTouchListe
 
 
     /**
-     * Will set the size of the picker accordingly
-     * also sets its parent to mScrollView
-     *
-     * @param w width measure spec
-     * @param h height measure spec
+     * Measure pass: captures the parent {@link ObservableHorizontalScrollView}
+     * and attaches a listener that dismisses the release picker and
+     * cancels the long-press timer whenever the user scrolls. Then
+     * sizes this view to {@code dimen * itemCount} wide by {@code dimen}
+     * tall, or defers to the superclass if items haven't been
+     * initialized yet.
      */
     @Override
     public void onMeasure(int w, int h) {
@@ -109,6 +127,17 @@ public abstract class HorizontalPicker extends View implements View.OnTouchListe
     }
 
 
+    /**
+     * Touch handler for the picker row.
+     * <p>
+     * How: on DOWN, starts a click-window timer and (if a release
+     * picker is attached) a long-press timer for the pressed item.
+     * While the release picker is active, subsequent MOVE/UP events
+     * are translated into its coordinate space and forwarded to it.
+     * Otherwise, MOVE outside the view cancels the long-press; UP
+     * within the click window selects the tapped item and fires the
+     * listener.
+     */
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         ScrollView sView = ((ScrollView) getParent().getParent().getParent());
@@ -154,7 +183,9 @@ public abstract class HorizontalPicker extends View implements View.OnTouchListe
 
 
     /**
-     * Starts click timer to determine whether user clicked
+     * Starts a 200 ms countdown that flips {@link #isClick} to
+     * {@code false}. The ACTION_UP handler consults this flag to
+     * decide whether to treat the gesture as a click or a drag.
      */
     private void startClickTimer() {
         isClick = true;
@@ -173,8 +204,10 @@ public abstract class HorizontalPicker extends View implements View.OnTouchListe
 
 
     /**
-     * Starts a CountDownTimer, that will call the onItemLongPress method
-     * and activate the release picker if any
+     * Starts a 400 ms long-press countdown. When it fires without
+     * being cancelled (by scroll or ACTION_UP), it stores the pressed
+     * index in {@link #mTempIndex}, installs the release-picker
+     * listener, and dispatches to {@link #onItemLongPress(int, float, float)}.
      */
     private void startLongPressTimer(final int currIndex) {
         mLongPressTimer = new CountDownTimer(400, 400) {
@@ -194,9 +227,7 @@ public abstract class HorizontalPicker extends View implements View.OnTouchListe
     }
 
 
-    /**
-     * Will cancel the mLongPressTimer if its not null
-     */
+    /** Null-safe cancel for {@link #mLongPressTimer}. */
     private void cancelLongPressTimer() {
         if (mLongPressTimer != null) {
             mLongPressTimer.cancel();
@@ -204,6 +235,11 @@ public abstract class HorizontalPicker extends View implements View.OnTouchListe
     }
 
 
+    /**
+     * Paint pass: asks each {@link PickerItem} to render itself at
+     * its slot center, passing along the currently selected item
+     * index so the item can highlight itself if chosen.
+     */
     @Override
     public void onDraw(Canvas canvas) {
         for (int i = 0; i < mItems.length; i++) {
@@ -213,6 +249,18 @@ public abstract class HorizontalPicker extends View implements View.OnTouchListe
     }
 
 
+    /**
+     * Installs the inner listener that bridges {@link ReleasePicker}
+     * selection events back into the picker's own
+     * {@link OnItemSelectedListener}:
+     * <ul>
+     *   <li>onItemUpdated — live update during the drag.</li>
+     *   <li>onItemSelected — finalize the selection and commit
+     *       {@link #mIndex} to the temp index.</li>
+     *   <li>onCancel — refire the previous selection so listeners
+     *       always see a definitive state.</li>
+     * </ul>
+     */
     private void setItemListener() {
         mReleasePicker.setOnItemListener(new ReleasePicker.OnItemListener() {
             @Override
@@ -242,11 +290,22 @@ public abstract class HorizontalPicker extends View implements View.OnTouchListe
     }
 
 
+    /**
+     * Attaches the release picker the long-press handler should
+     * activate. Must be set before the picker is touched or
+     * long-press will be a no-op.
+     */
     public void setReleasePicker(ReleasePicker releasePicker) {
         mReleasePicker = releasePicker;
     }
 
 
+    /**
+     * Programmatically selects an item and scrolls the parent
+     * {@link HorizontalScrollView} so the selection lands roughly
+     * centered. The smooth-scroll is posted to the parent's handler
+     * to wait for the next layout pass.
+     */
     public void setItem(final int index) {
         mIndex = index;
         invalidate();
@@ -260,12 +319,13 @@ public abstract class HorizontalPicker extends View implements View.OnTouchListe
 
 
     /**
-     * Takes the desired index & the width of the view and returns the
-     * x position it is at minus half of the width
+     * Converts an item index into the horizontal scroll position
+     * that centers that item within the visible window, clamping to
+     * the scrollable range.
      *
-     * @param index index of item
-     * @param width
-     * @return x position at the given index
+     * @param index item index
+     * @param width viewport width
+     * @return desired scroll X
      */
     private int getDesiredX(int index, float width) {
         float indexX = index * dimen + dimen / 2;
@@ -279,44 +339,38 @@ public abstract class HorizontalPicker extends View implements View.OnTouchListe
 
 
     /**
-     * Will be called during the constructor to start the picker items
-     *
-     * @return the array that will be set to the pickerItems
+     * Subclass hook: builds the array of {@link PickerItem}s the
+     * picker displays. Called once from the constructor, so it must
+     * not depend on any subclass state initialized later.
      */
     protected abstract PickerItem[] initializeItems();
 
 
     /**
-     * Will be called when the given item is long pressed. Used to communicate,
-     * with the ReleasePicker. This must set mOnReleasePicker to true for the
-     * release picker to be activated
+     * Subclass hook fired when an item is long-pressed. Must set
+     * {@link #mOnReleasePicker} to {@code true} and start
+     * {@link ReleasePicker#onStart(float, float, PickerItem, int[])}
+     * if it wants the release picker to take over touches.
      *
-     * @param index  index of item which has been long pressed
-     * @param startX corrected finger X position
-     * @param startY corrected finger Y position
+     * @param index  long-pressed item index
+     * @param startX finger X in picker-local coordinates
+     * @param startY finger Y in parent-scroll-view coordinates
      */
     protected abstract void onItemLongPress(int index, float startX, float startY);
 
 
-    /**
-     * Sets the on item selected listener
-     *
-     * @param listener OnItemSelectedListener to set
-     */
+    /** Registers the listener called when an item is selected. */
     public void setOnItemSelectedListener(OnItemSelectedListener listener) {
         mListener = listener;
     }
 
 
-    /**
-     * Listener that is called when an item is selected
-     */
+    /** Callback fired when the user picks an item (with optional sub-index). */
     public interface OnItemSelectedListener {
         /**
-         * Callback method that will be called when an item is selected
-         *
-         * @param item     item which has been selected
-         * @param subIndex subIndex of the item
+         * @param item     the selected item
+         * @param subIndex shade / sub-index within the item (0 for
+         *                 items that don't expose sub-indexes)
          */
         void onItemSelected(PickerItem item, int subIndex);
     }

@@ -26,7 +26,9 @@ import android.graphics.Paint;
 import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 
 /**
- * Created by Viviano on 8/14/2016.
+ * Default background: a solid rectangle filled with the parent master
+ * theme's primary color. This is the flat, opaque "wallpaper" behind
+ * the wheel — no gradient, no pattern, no concentric decoration.
  */
 public class FlatBackgroundTheme implements BackgroundTheme {
 
@@ -34,6 +36,10 @@ public class FlatBackgroundTheme implements BackgroundTheme {
     private MasterTheme mParent;
 
 
+    /**
+     * Builds the reusable paint used by {@link #drawBackground} with
+     * anti-aliasing enabled. Color and style are set per draw.
+     */
     public FlatBackgroundTheme() {
         p = new Paint();
         p.setFlags(Paint.ANTI_ALIAS_FLAG);//smooth edges and Never changes
@@ -41,17 +47,9 @@ public class FlatBackgroundTheme implements BackgroundTheme {
 
 
     /**
-     * Draw background of keyboard
-     *
-     * @param l      left position
-     * @param t      top position
-     * @param rt     right position
-     * @param b      bottom position
-     * @param x      center X position
-     * @param y      center Y position
-     * @param r      radius of keyboard
-     * @param sr     small radius of keyboard
-     * @param canvas canvas to draw on
+     * Fills the supplied rectangle with the parent theme's primary
+     * color. Ignores the wheel-geometry arguments — this variant draws
+     * the same flat fill regardless of where the board sits.
      */
     @Override
     public void drawBackground(float l, float t, float rt, float b,
@@ -62,11 +60,7 @@ public class FlatBackgroundTheme implements BackgroundTheme {
     }
 
 
-    /**
-     * Sets this child's master theme for reference
-     *
-     * @param masterTheme this theme's parent
-     */
+    /** Stores the back-reference to the master theme. */
     @Override
     public void setParent(MasterTheme masterTheme) {
         mParent = masterTheme;

@@ -27,22 +27,30 @@ import hyperobject.keyboard.novakey.core.model.Model;
 import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 
 /**
- * An element is anything that can be drawn on the view.
- * Note: for the element to perform any real changes
- * it must fire an action.
+ * Anything drawable on the keyboard view that can also claim touch gestures.
  * <p>
- * Created by Viviano on 6/17/2016.
+ * Elements are the leaves of the render/input tree: {@code NovaKeyView.onDraw}
+ * walks the model's element list and calls {@link #draw} on each, and the
+ * {@code Controller} routes {@code MotionEvent}s through them via the
+ * inherited {@link TouchHandler#handle} method.
+ * <p>
+ * Elements never mutate the {@code Model} directly — any state change must
+ * be expressed by firing an {@code Action} through the {@code Controller}.
  */
 public interface Element extends TouchHandler {
 
     /**
-     * Draws the element.
-     * Never call this method directly unless inside of a
-     * View's onDraw() method
+     * Renders this element onto {@code canvas} using the current {@code model}
+     * state and {@code theme} styling.
+     * <p>
+     * How: implementations read positioning/state from {@code model}, pull
+     * colors/fonts/shapes from {@code theme}, and issue the corresponding
+     * {@code Canvas} draw calls. Must only be invoked from inside a
+     * {@code View.onDraw} pass so the canvas is valid.
      *
-     * @param model
-     * @param theme  theme for drawing properties
-     * @param canvas canvas to draw on
+     * @param model  current keyboard model (dimensions, shift state, etc.)
+     * @param theme  master theme supplying colors, fonts, and sub-themes
+     * @param canvas the live canvas provided by the view's draw pass
      */
     void draw(Model model, MasterTheme theme, Canvas canvas);
 

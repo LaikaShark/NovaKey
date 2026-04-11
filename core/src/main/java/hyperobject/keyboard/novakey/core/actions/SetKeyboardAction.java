@@ -25,24 +25,32 @@ import hyperobject.keyboard.novakey.core.NovaKeyService;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Created by Viviano on 6/15/2016.
+ * Switches the active keyboard layout (alphabet, punctuation, symbols,
+ * emoji, etc.) to a specific keyboard code. The code is one of the
+ * constants in {@code Keyboards}; the model resolves it to the actual
+ * {@code Keyboard} instance during {@link Model#setKeyboard(int)}.
+ * <p>
+ * User-visible effect: the next frame draws a different set of keys
+ * over the wheel. Paired with {@link ToggleKeyboardAction} when the
+ * direction is implicit.
  */
 public class SetKeyboardAction implements Action<Void> {
 
     private final int mKeyboardCode;
 
 
+    /**
+     * @param keyboardCode one of the {@code Keyboards} constants
+     *                     identifying the layout to switch to
+     */
     public SetKeyboardAction(int keyboardCode) {
         mKeyboardCode = keyboardCode;
     }
 
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Writes the new keyboard code into the model and invalidates the
+     * view so the new layout gets drawn on the next frame.
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {

@@ -25,16 +25,35 @@ import hyperobject.keyboard.novakey.core.NovaKeyService;
 import hyperobject.keyboard.novakey.core.model.Model;
 
 /**
- * Created by Viviano on 6/10/2016.
+ * Single-method strategy interface for everything that mutates state
+ * in response to a user gesture. In the Element/Action/TouchHandler
+ * triad, Actions are the <em>only</em> sanctioned way for Elements and
+ * TouchHandlers to change the Model or talk to the {@link NovaKeyService}
+ * — they never poke the model directly.
+ * <p>
+ * Actions are fired through {@link Controller#fire(Action)}, which hands
+ * them the live IME service, controller, and model references and then
+ * invalidates the view so any state change is repainted next frame.
+ * Concrete implementations live alongside this interface (shift/delete/
+ * enter/space/key/input under {@code .input}, plus mode-change and
+ * clipboard actions at this package level).
+ *
+ * @param <T> the value the action returns — most actions return
+ *            {@link Void}, but some (e.g. {@code DeleteAction},
+ *            {@code ClipboardAction}) return the text they acted on
  */
 public interface Action<T> {
 
     /**
-     * Called when the action is triggered
-     * Actual logic for the action goes here
-     *  @param ime
-     * @param control
-     * @param model
+     * Runs the action against the live IME context.
+     *
+     * @param ime     the running {@link NovaKeyService} — used for
+     *                input-connection access, text commits, vibrate, etc.
+     * @param control the controller, for firing follow-up actions and
+     *                invalidating the view
+     * @param model   the mutable keyboard model
+     * @return an action-specific result, or {@code null} for actions
+     *         parameterized as {@code Action<Void>}
      */
     T trigger(NovaKeyService ime, Controller control, Model model);
 }

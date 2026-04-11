@@ -22,12 +22,24 @@ package hyperobject.keyboard.novakey;
 
 import android.os.Bundle;
 
-// Migrated from android.support.v7.app.AppCompatActivity during the AndroidX
-// modernization pass. The class is otherwise unchanged.
 import androidx.appcompat.app.AppCompatActivity;
 
+/**
+ * A tiny host activity that simply inflates {@code R.layout.activity_demo}.
+ * Used as a sandbox screen for trying out the IME against a real
+ * {@link android.widget.EditText}/text field target outside of the
+ * settings or tutorial flows.
+ * <p>
+ * Extends {@link AppCompatActivity} post-AndroidX migration; prior to the
+ * 2026 modernization pass this was {@code android.support.v7.app.AppCompatActivity}.
+ */
 public class DemoActivity extends AppCompatActivity {
 
+    /**
+     * Standard activity create hook: defers to the superclass and then
+     * installs the demo layout. No further wiring is needed — the layout
+     * itself carries whatever input fields the demo exercises.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
