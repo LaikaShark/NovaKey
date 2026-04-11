@@ -26,6 +26,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowInsets;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 
@@ -34,6 +35,7 @@ import viviano.cantu.novakey.core.controller.Gun;
 import viviano.cantu.novakey.core.actions.SetEditingAction;
 import viviano.cantu.novakey.core.FloatingButton;
 import viviano.cantu.novakey.core.IconView;
+import viviano.cantu.novakey.core.model.MainDimensions;
 import viviano.cantu.novakey.core.utils.drawing.Icons;
 import viviano.cantu.novakey.core.view.themes.MasterTheme;
 import viviano.cantu.novakey.core.view.themes.Themeable;
@@ -49,11 +51,13 @@ public class EditView extends RelativeLayout implements Themeable {
     private final SeekBar mSeekBar;
     private final int MIN = 20, MAX = 35, DEFAULT = 3;
     private final Gun mGun;
+    private final MainDimensions mDimens;
 
 
-    public EditView(Context context, Gun gun) {
+    public EditView(Context context, Gun gun, MainDimensions dimens) {
         super(context);
         mGun = gun;
+        mDimens = dimens;
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
         LayoutInflater inflater = LayoutInflater.from(context);
@@ -154,5 +158,36 @@ public class EditView extends RelativeLayout implements Themeable {
     private int srToProgress(float sr) {
         sr *= 10;
         return (int) (MAX - sr);
+    }
+
+
+    /**
+     * The IME framework adds the input view to its {@code mInputFrame}, which
+     * is a {@code wrap_content} FrameLayout. A {@code match_parent} child
+     * inside a {@code wrap_content} parent gets {@code MeasureSpec.UNSPECIFIED}
+     * with a size of 0, so the default RelativeLayout measure pass would
+     * collapse the edit UI to nothing and the keyboard would vanish as soon
+     * as edit mode engaged.
+     *
+     * Force concrete dimensions matching the current keyboard (plus the
+     * Android 15+ bottom navbar inset) so the input view reports a real
+     * size regardless of the parent spec.
+     */
+    @Override
+    public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int w = mDimens.getWidth();
+        int h = mDimens.getHeight() + MainView.bottomNavInset(this);
+        super.onMeasure(
+                MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY));
+    }
+
+
+    // Insets can arrive after the first measure pass; re-measure when they
+    // change so the reserved navbar area tracks the live inset.
+    @Override
+    public WindowInsets onApplyWindowInsets(WindowInsets insets) {
+        requestLayout();
+        return super.onApplyWindowInsets(insets);
     }
 }

@@ -23,6 +23,7 @@ package viviano.cantu.novakey.core.view;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.view.View;
 import android.view.WindowInsets;
 
 public class MainView extends NovaKeyView {
@@ -58,15 +59,24 @@ public class MainView extends NovaKeyView {
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         setMeasuredDimension(
                 mModel.getMainDimensions().getWidth(),
-                mModel.getMainDimensions().getHeight() + bottomNavInset());
+                mModel.getMainDimensions().getHeight() + bottomNavInset(this));
     }
 
 
-    private int bottomNavInset() {
+    /**
+     * Reads the bottom navigation-bar inset from the given view's root window
+     * insets. Intended for IME input views that need to reserve space under
+     * the navbar on Android 15+ edge-to-edge IME windows.
+     *
+     * Returns 0 on API &lt; 30 (where the legacy IME layout already keeps the
+     * input view above the navbar) and 0 if the view isn't yet attached
+     * (insets arrive shortly after, and the caller should re-measure then).
+     */
+    public static int bottomNavInset(View view) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             return 0;
         }
-        WindowInsets insets = getRootWindowInsets();
+        WindowInsets insets = view.getRootWindowInsets();
         if (insets == null) {
             return 0;
         }
