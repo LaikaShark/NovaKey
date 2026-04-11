@@ -22,7 +22,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="viviano.cantu.novakey.EmojiSettingActivity">
+    tools:context="hyperobject.keyboard.novakey.EmojiSettingActivity">
 
 
     <LinearLayout
@@ -30,12 +30,12 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <viviano.cantu.novakey.HexGridView
+        <hyperobject.keyboard.novakey.HexGridView
             android:id="@+id/hex"
             android:layout_width="match_parent"
             android:layout_height="200dp" />
 
-        <viviano.cantu.novakey.core.utils.drawing.emoji.ThrowAwayView
+        <hyperobject.keyboard.novakey.core.utils.drawing.emoji.ThrowAwayView
             android:layout_width="match_parent"
             android:layout_height="300dp"
             android:id="@+id/throaway" />

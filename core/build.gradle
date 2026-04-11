@@ -18,41 +18,61 @@
  * Any questions about the program or source may be directed to <strellastudios@gmail.com>
  */
 
-apply plugin: 'com.android.library'
+plugins {
+    id 'com.android.library'
+}
 
 android {
-    compileSdkVersion 28
+    // AGP 7+ requires `namespace` instead of the manifest's package= attribute.
+    // It must match the package the generated R class lives in.
+    namespace 'hyperobject.keyboard.novakey.core'
 
-
+    compileSdk 35
 
     defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
+        // minSdk 21 is the AGP 8 floor (the project used to declare 14, which
+        // is no longer accepted by the toolchain).
+        minSdk 21
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles 'proguard-rules.pro'
 
+        // Settings.java reads BuildConfig.VERSION_CODE from this module to
+        // detect first-install vs upgrade. AGP 4.1 dropped VERSION_CODE from
+        // library BuildConfig classes, so we re-inject it manually from the
+        // shared project property in gradle.properties.
+        buildConfigField "int", "VERSION_CODE",
+                "${project.findProperty('novakeyVersionCode') ?: 1}"
+    }
+
+    buildFeatures {
+        // AGP 8 disables BuildConfig generation by default; :core needs it
+        // because of the buildConfigField above.
+        buildConfig true
     }
 
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
     compileOptions {
-        targetCompatibility JavaVersion.VERSION_1_8
-        sourceCompatibility JavaVersion.VERSION_1_8
+        // Java 17 is required by AGP 8.
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    // :core only needs appcompat for the AppTheme parent and a handful of
+    // utility classes. Everything else (the keyboard logic) uses bare framework
+    // APIs and intentionally has no androidx dependency.
+    implementation 'androidx.appcompat:appcompat:1.7.0'
 
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
 }

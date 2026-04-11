@@ -22,26 +22,26 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <viviano.cantu.novakey.core.view.NovaKeyEditView
+    <hyperobject.keyboard.novakey.core.view.NovaKeyEditView
         android:id="@+id/resize_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <viviano.cantu.novakey.core.FloatingButton
+    <hyperobject.keyboard.novakey.core.FloatingButton
         android:id="@+id/cancel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/activity_horizontal_margin"
         android:layout_marginTop="@dimen/activity_vertical_margin" />
 
-    <viviano.cantu.novakey.core.FloatingButton
+    <hyperobject.keyboard.novakey.core.FloatingButton
         android:id="@+id/refresh"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="@dimen/activity_vertical_margin" />
 
-    <viviano.cantu.novakey.core.FloatingButton
+    <hyperobject.keyboard.novakey.core.FloatingButton
         android:id="@+id/accept"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -62,7 +62,7 @@
         android:paddingRight="64dp"
         android:paddingTop="30dp" />
 
-    <viviano.cantu.novakey.core.IconView
+    <hyperobject.keyboard.novakey.core.IconView
         android:id="@+id/reset_sr"
         android:layout_width="32dp"
         android:layout_height="32dp"

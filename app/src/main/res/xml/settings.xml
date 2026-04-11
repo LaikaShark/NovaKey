@@ -95,7 +95,7 @@
             android:title="Style your keyboard"
             android:summary="Edit the color and shape of your keyboard"
             android:key="pref_style" />
-        <!--<viviano.cantu.novakey.settings.ButtonPreference-->
+        <!--<hyperobject.keyboard.novakey.settings.ButtonPreference-->
         <!--android:title="Customize Functionality"-->
         <!--android:summary="Add buttons to add functionality" />-->
         <CheckBoxPreference

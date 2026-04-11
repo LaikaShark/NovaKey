@@ -25,12 +25,12 @@ plugins {
 android {
     // Must match the manifest's old package= attribute and the package the
     // generated R class is rooted at.
-    namespace 'viviano.cantu.novakey'
+    namespace 'hyperobject.keyboard.novakey'
 
     compileSdk 35
 
     defaultConfig {
-        applicationId "viviano.cantu.novakey"
+        applicationId "hyperobject.keyboard.novakey"
         minSdk 21
         targetSdk 35
 
