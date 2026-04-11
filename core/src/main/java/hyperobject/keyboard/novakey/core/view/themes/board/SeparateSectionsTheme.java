@@ -70,15 +70,9 @@ public class SeparateSectionsTheme extends BaseTheme {
     }
 
 
-    /**
-     * Currently falls through to the base implementation. The legacy
-     * commented-out code left by the original author sketches the same
-     * clip-and-recolor approach as the other donut variants; see the
-     * {@code TODO: multi color for donut themes} note.
-     */
+    /** Falls through to the base implementation. */
     @Override
     public void drawItem(Drawable drawable, float x, float y, float size, Canvas canvas) {
-        //TODO: multi color for donut themes
         super.drawItem(drawable, x, y, size, canvas);
     }
 

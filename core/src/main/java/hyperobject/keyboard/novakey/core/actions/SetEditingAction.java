@@ -59,11 +59,9 @@ public class SetEditingAction implements Action<Void> {
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {
         if (mEditing) {
-            //TODO: haptic feedback
             EditView editView = new EditView(ime, control, model.getMainDimensions());
             editView.setTheme(model.getTheme());
             ime.setInputView(editView);
-            //TODO: floating view support with settings
         } else {
             //updates the main model
             model.syncWithPrefs();

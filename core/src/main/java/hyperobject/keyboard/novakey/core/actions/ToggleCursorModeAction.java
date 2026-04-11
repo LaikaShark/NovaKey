@@ -56,7 +56,6 @@ public class ToggleCursorModeAction implements Action<Void> {
             case -1:
                 res = 1;
         }
-        //TODO: Animations
         model.setCursorMode(res);
         return null;
     }

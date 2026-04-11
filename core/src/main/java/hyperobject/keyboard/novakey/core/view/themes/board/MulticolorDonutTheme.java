@@ -138,16 +138,9 @@ public class MulticolorDonutTheme extends BaseTheme {
     }
 
 
-    /**
-     * Currently falls through to the base implementation. The legacy
-     * commented-out code left by the original author sketches a future
-     * path-clipped two-color render so items over the center hole can
-     * use a different color than items over the ring; see the
-     * {@code TODO: multi color for donut themes} note.
-     */
+    /** Falls through to the base implementation. */
     @Override
     public void drawItem(Drawable drawable, float x, float y, float size, Canvas canvas) {
-        //TODO: multi color for donut themes
         super.drawItem(drawable, x, y, size, canvas);
     }
 

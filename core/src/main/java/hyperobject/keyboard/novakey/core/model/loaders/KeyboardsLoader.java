@@ -53,12 +53,10 @@ public class KeyboardsLoader implements Loader<Keyboards> {
 
 
     /**
-     * No-op pending a future user-defined layouts feature — keyboard
-     * layouts are currently built from string-array resources, with
-     * nothing to persist.
+     * No-op: keyboard layouts are built from string-array resources,
+     * so there's nothing to persist.
      */
     @Override
     public void save(Keyboards keyboards) {
-        //TODO
     }
 }

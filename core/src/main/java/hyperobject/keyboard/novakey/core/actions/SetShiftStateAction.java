@@ -56,7 +56,6 @@ public class SetShiftStateAction implements Action<Void> {
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {
-        //TODO: ANIMATIONS
         model.setShiftState(mSetTo);
         control.invalidate();
         return null;

@@ -53,7 +53,6 @@ public class SetOverlayAction implements Action<Void> {
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {
-        //TODO: animation
         model.setOverlayElement(mElement);
         control.invalidate();
         return null;

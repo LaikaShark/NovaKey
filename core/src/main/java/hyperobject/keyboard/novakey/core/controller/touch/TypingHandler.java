@@ -205,7 +205,6 @@ public class TypingHandler extends AreaCrossedHandler {
         controller.fire(new VibrateAction(Settings.vibrateLevel));
         cancel();
         mAreas.add(event.newArea);
-        //TODO: validate
         //no need to start long press for non-keys
         if (mAreas.size() <= 3 && !mRepeating)
             start(controller);

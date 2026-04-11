@@ -51,10 +51,6 @@ import hyperobject.keyboard.novakey.core.view.themes.board.BoardTheme;
  * "done" button — clicking it routes through
  * {@link #onActivityClosed(boolean)} to persist the new theme via
  * {@link ThemeLoader}.
- * <p>
- * TODO on the original author: once the model can properly notify the
- * view on theme updates, the explicit {@code invalidate} calls below can
- * be removed.
  */
 public class StylePreferenceActivity extends AbstractPreferenceActivity {
 

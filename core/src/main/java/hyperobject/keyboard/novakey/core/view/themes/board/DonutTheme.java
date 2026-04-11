@@ -73,16 +73,9 @@ public class DonutTheme extends BaseTheme {
     }
 
 
-    /**
-     * Currently falls through to the base implementation. The legacy
-     * commented-out code (intentionally left in place by the original
-     * author) sketches how a future multi-color variant could clip
-     * the item inside the inner circle and redraw it in a second color;
-     * see the {@code TODO: multi color for donut themes} note.
-     */
+    /** Falls through to the base implementation. */
     @Override
     public void drawItem(Drawable drawable, float x, float y, float size, Canvas canvas) {
-        //TODO: multi color for donut themes
         super.drawItem(drawable, x, y, size, canvas);
     }
 

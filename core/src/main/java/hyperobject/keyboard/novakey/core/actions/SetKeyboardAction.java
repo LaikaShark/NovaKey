@@ -54,7 +54,6 @@ public class SetKeyboardAction implements Action<Void> {
      */
     @Override
     public Void trigger(NovaKeyService ime, Controller control, Model model) {
-        //TODO: Animations
         model.setKeyboard(mKeyboardCode);
         control.invalidate();
         return null;

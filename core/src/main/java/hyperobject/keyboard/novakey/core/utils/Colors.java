@@ -119,7 +119,6 @@ public class Colors implements PickerItem {
      * already populated at class load so calling this is only needed if
      * code ever stomped on them at runtime.
      */
-    //TODO: maybe read off file
     public static void initialize() {
         REDS = new Colors(new int[]{0xffFFCDD2, 0xffEF9A9A, 0xffE57373, 0xffEF5350, 0xffF44336, 0xffE53935, 0xffD32F2F, 0xffC62828, 0xffB71C1C});
         PINKS = new Colors(new int[]{0xffF8BBD0, 0xffF48FB1, 0xffF06292, 0xffEC407A, 0xffE91E63, 0xffD81B60, 0xffC2185B, 0xffAD1457, 0xff880E4F});

@@ -114,7 +114,6 @@ public abstract class CharAnimation extends BaseAnimation {
 
             @Override
             public void onAllUpdate(ValueAnimator animator, float value) {
-                //TODO: need way to update
             }
         });
 

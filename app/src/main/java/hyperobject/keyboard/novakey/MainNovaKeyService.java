@@ -101,8 +101,7 @@ public class MainNovaKeyService extends NovaKeyService {
      *       handlers.</li>
      *   <li>Mark {@code has_setup=true} in {@link #MY_PREFERENCES} so
      *       subsequent cold-starts of {@code SettingsActivity} skip the
-     *       setup wizard. TODO on the original author: move this flag
-     *       management elsewhere.</li>
+     *       setup wizard.</li>
      * </ul>
      */
     @Override
@@ -128,7 +127,6 @@ public class MainNovaKeyService extends NovaKeyService {
 
         mController = new Controller(this);
 
-        //TODO: change this
         Editor temp = getApplicationContext().getSharedPreferences(MainNovaKeyService.MY_PREFERENCES, MODE_PRIVATE).edit();
         temp.putBoolean("has_setup", true);
         temp.commit();
@@ -280,8 +278,7 @@ public class MainNovaKeyService extends NovaKeyService {
     /**
      * Fired when the IME disconnects from the editor (user dismisses
      * the keyboard or moves to a field that hides it). Redraws so any
-     * per-field UI state is cleared on the next show. TODO on the
-     * original author: fire an actual ResetState action here.
+     * per-field UI state is cleared on the next show.
      */
     @Override
     public void onFinishInput() {
@@ -530,7 +527,6 @@ public class MainNovaKeyService extends NovaKeyService {
      * {@code if (false)} guard; the original intent was to close the
      * floating window on BACK/HOME/APP_SWITCH once the IME had been
      * undocked from its normal position.
-     * TODO: more sophisticated floating view lifecycle.
      */
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
