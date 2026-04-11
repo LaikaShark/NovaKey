@@ -24,6 +24,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 import hyperobject.keyboard.novakey.core.utils.drawing.Draw;
+import hyperobject.keyboard.novakey.core.utils.drawing.ShadowDimens;
 import hyperobject.keyboard.novakey.core.utils.drawing.drawables.Drawable;
 import hyperobject.keyboard.novakey.core.view.themes.MasterTheme;
 
@@ -123,7 +124,8 @@ public class BaseTheme implements BoardTheme {
     @Override
     public void drawItem(Drawable drawable, float x, float y, float size, Canvas canvas) {
         if (mParent.is3D())
-            pT.setShadowLayer(100, 0, 100, 0x80000000);//TODO: globalize shadow height
+            pT.setShadowLayer(ShadowDimens.BOARD_SHADOW_RADIUS, 0,
+                    ShadowDimens.BOARD_SHADOW_RADIUS, ShadowDimens.SHADOW_COLOR);
         pT.setStyle(Paint.Style.FILL);
         pT.setColor(mParent.getContrastColor());
         drawable.draw(x, y, size, pT, canvas);

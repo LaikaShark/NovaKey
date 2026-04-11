@@ -62,20 +62,12 @@ public class BaseButtonTheme implements ButtonTheme {
     }
 
 
-    /**
-     * Paints the icon in the parent theme's contrast color. The 3D
-     * shadow branch is currently dead ({@code && false}) — a relic of
-     * a shadow experiment the author disabled but left readable; the
-     * {@code TODO: globalize shadow height} note tracks the intent.
-     */
+    /** Paints the icon in the parent theme's contrast color. */
     @Override
     public void drawIcon(Drawable drawable, float x, float y, float size, Canvas canvas) {
-        if (mParent.is3D() && false)
-            p.setShadowLayer(50, 0, 50, 0x80000000);//TODO: globalize shadow height
         p.setStyle(Paint.Style.FILL);
         p.setColor(mParent.getContrastColor());
         drawable.draw(x, y, size, p, canvas);
-        p.clearShadowLayer();
     }
 
 

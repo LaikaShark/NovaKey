@@ -33,8 +33,19 @@ import hyperobject.keyboard.novakey.core.utils.Util;
  * angle into an (x, y) offset proportional to the blur radius. The
  * resulting shadow is 2r offset at the given angle, producing a softer
  * drop as r increases.
+ * <p>
+ * Also hosts the project-wide raw-shadow constants that the 3D theme
+ * mode feeds straight into {@link android.graphics.Paint#setShadowLayer}
+ * without going through the angle-projection path.
  */
 public class ShadowDimens {
+
+    /** Blur radius used for the board-theme drop shadow in 3D mode. */
+    public static final float BOARD_SHADOW_RADIUS = 100f;
+
+    /** 50%-opaque black used as the shadow color in every 3D shadow. */
+    public static final int SHADOW_COLOR = 0x80000000;
+
 
     /**
      * Builds a shadow with blur radius {@code r} whose offset is the
