@@ -25,6 +25,7 @@ import android.os.Bundle;
 import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import hyperobject.keyboard.novakey.R;
@@ -39,10 +40,6 @@ import hyperobject.keyboard.novakey.R;
  * and finishes the activity. Any other exit path (back button, process
  * death) runs {@code onActivityClosed(false)} from {@link #onDestroy()} so
  * subclasses can distinguish a confirmed save from a cancel.
- * <p>
- * Note: {@code getResources().getColor(int)} is deprecated on API 23+ but
- * left in place during the modernization pass (warning only, not fatal on
- * API 35).
  */
 public abstract class AbstractPreferenceActivity extends AppCompatActivity {
 
@@ -63,7 +60,7 @@ public abstract class AbstractPreferenceActivity extends AppCompatActivity {
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setBackgroundTintList(ColorStateList.valueOf(
-                getResources().getColor(R.color.novakey_blue)));
+                ContextCompat.getColor(this, R.color.novakey_blue)));
         fab.setColorFilter(0xFFffffff);//icon color
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
