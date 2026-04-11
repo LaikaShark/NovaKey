@@ -268,41 +268,9 @@ public class Util {
     }
 
 
-    /**
-     * Dead code — intended to split a string into a sequence of
-     * grapheme-ish runs around emoji code points, but the loop body
-     * never populates its accumulator list and {@link #isEmoji} is a
-     * stub that always returns {@code false}, so this currently returns
-     * an empty array cast from an empty list. Left in place; a later
-     * dead-code sweep will remove it.
-     */
-    public static String[] splitEmoji(String str) {
-        ArrayList<String> list = new ArrayList<>();
-        int s = 0;
-        for (int e = 0; e < str.length(); e++) {
-            if (isEmoji(str.codePointAt(e))) {
-                if (s == e) {
-                    //TODO
-                }
-            }
-            String curr = str.substring(s, e);
-        }
-        return (String[]) list.toArray();
-    }
-
-
     /** True if {@code keyCode} is an ASCII digit 0–9. */
     public static boolean isNumber(int keyCode) {
         return keyCode >= '0' && keyCode <= '9';
-    }
-
-
-    /**
-     * Stub emoji check — always returns {@code false}. Companion to
-     * {@link #splitEmoji} which was never finished.
-     */
-    public static boolean isEmoji(int codePoint) {
-        return false;
     }
 
 
