@@ -20,8 +20,9 @@
 
 package hyperobject.keyboard.novakey;
 
-import android.app.Activity;
 import android.os.Bundle;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import hyperobject.keyboard.novakey.HexGridView;
 import hyperobject.keyboard.novakey.R;
@@ -39,7 +40,7 @@ import hyperobject.keyboard.novakey.core.utils.drawing.emoji.ThrowAwayView;
  * drops it into the next slot, advancing the insertion cursor row-major
  * and wrapping back to (0,0) when both dimensions are exhausted.
  */
-public class EmojiSettingActivity extends Activity {
+public class EmojiSettingActivity extends AppCompatActivity {
 
     int x = 0, y = 0;
 
