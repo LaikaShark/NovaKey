@@ -55,7 +55,11 @@ public class MainElement implements Element {
     public void draw(Model model, MasterTheme theme, Canvas canvas) {
         MainDimensions d = model.getMainDimensions();
 
-        theme.getBackgroundTheme().drawBackground(0, 0, d.getWidth(), d.getHeight(),
+        // Use the canvas extents rather than the model's width/height so the
+        // background fills any extra space the view reports beyond the
+        // drawn keyboard — e.g. the bottom navbar inset MainView appends on
+        // Android 15+ edge-to-edge IMEs.
+        theme.getBackgroundTheme().drawBackground(0, 0, canvas.getWidth(), canvas.getHeight(),
                 d.getX(), d.getY(), d.getRadius(), d.getSmallRadius(), canvas);
 
         theme.getBoardTheme().drawBoard(d.getX(), d.getY(),
