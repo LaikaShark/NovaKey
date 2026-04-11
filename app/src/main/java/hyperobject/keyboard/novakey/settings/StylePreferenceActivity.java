@@ -73,8 +73,7 @@ public class StylePreferenceActivity extends AbstractPreferenceActivity {
      * boolean that gets written to {@link Settings#pref_auto_color} on
      * save. The 3D checkbox toggles
      * {@link hyperobject.keyboard.novakey.core.view.themes.MasterTheme#set3D(boolean)}
-     * and has a leftover {@code System.out.println} debug line that
-     * fires on toggle.
+     * and invalidates the preview.
      */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -93,7 +92,6 @@ public class StylePreferenceActivity extends AbstractPreferenceActivity {
         final CheckBox _3dCheck = (CheckBox) findViewById(R.id.threeDee);
         _3dCheck.setChecked(mModel.getTheme().is3D());
         _3dCheck.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            System.out.println("3d triggered");
             mModel.getTheme().set3D(isChecked);
             mPreview.invalidate();
         });

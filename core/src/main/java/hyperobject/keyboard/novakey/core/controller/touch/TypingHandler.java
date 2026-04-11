@@ -152,7 +152,6 @@ public class TypingHandler extends AreaCrossedHandler {
         if (area != -1)
             mAreas.add(area);
         start(controller);
-        System.out.println("on down " + mAreas);
         return true;
     }
 

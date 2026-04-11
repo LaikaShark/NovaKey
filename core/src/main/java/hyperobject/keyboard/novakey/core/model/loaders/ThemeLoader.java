@@ -46,20 +46,15 @@ public class ThemeLoader implements Loader<MasterTheme> {
      */
     public ThemeLoader(Context context) {
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(context);
-        ;
     }
 
 
     /**
      * Reads the stored theme blob and asks {@link ThemeFactory} to
-     * parse it. Prints the raw string to stdout for debugging —
-     * XXX pre-existing {@code System.out.println} calls, left intact.
+     * parse it.
      */
     @Override
     public MasterTheme load() {
-        System.out.println("loading...");
-        System.out.println(mSharedPref.getString(
-                Settings.pref_theme, Settings.DEFAULT));
         return ThemeFactory.themeFromString(mSharedPref.getString(
                 Settings.pref_theme, Settings.DEFAULT));
     }

@@ -437,9 +437,7 @@ public class MainNovaKeyService extends NovaKeyService {
     /**
      * Replaces the current composing text with the best-guess
      * correction returned by {@link Corrections}, then finalizes the
-     * composing region. Note: contains a leftover
-     * {@code System.out.println} debug log that should eventually be
-     * removed or routed through {@link Print}.
+     * composing region.
      */
     public void commitCorrection() {
         InputConnection ic = getCurrentInputConnection();
@@ -448,8 +446,6 @@ public class MainNovaKeyService extends NovaKeyService {
 
         String text = corrections.correction(is.getComposingText());
         // not calling commitReplacementText(text) in case the logic changes later
-
-        System.out.println("new text: " + text);
 
         is.setComposingText(text);
         ic.setComposingText(text, 1);

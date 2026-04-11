@@ -81,7 +81,6 @@ public class SelectingHandler extends RotatingHandler {
     @Override
     protected boolean onRotate(boolean clockwise, boolean inCenter,
                                Controller controller) {
-        System.out.println("Rotating: " + clockwise);
         if (!inCenter)
             controller.fire(clockwise ? mRight : mLeft);
         return true;
