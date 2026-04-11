@@ -72,12 +72,21 @@ public class MainDimensionsLoader implements Loader<MainDimensions> {
 
     @Override
     public void save(MainDimensions md) {
+        // The "smallRadius" pref stores a divisor (load() resolves the pixel
+        // value as r / divisor), but MainDimensions.smallRadius is the
+        // resolved pixel value everywhere else in the codebase. Convert back
+        // to a divisor here so the round-trip is symmetric. Fall back to the
+        // default of 3 if smallRadius is zero/negative to avoid writing
+        // Infinity into the pref.
+        float divisor = md.getSmallRadius() > 0
+                ? md.getRadius() / md.getSmallRadius()
+                : 3f;
         // W - //TODO: for now it's based on the width of the screen
         mSharedPref.edit()
                 .putFloat("x" + (isLandscape() ? "_land" : ""), md.getX())
                 .putFloat("y" + (isLandscape() ? "_land" : ""), md.getY())
                 .putFloat("size" + (isLandscape() ? "_land" : ""), md.getRadius())
-                .putFloat("smallRadius", md.getSmallRadius())
+                .putFloat("smallRadius", divisor)
                 .putFloat("padd" + (isLandscape() ? "_land" : ""), md.getPadding())
                 .putFloat("height" + (isLandscape() ? "_land" : ""), md.getHeight())
                 .apply();

@@ -134,7 +134,12 @@ public class NovaKeyEditView extends View implements View.OnTouchListener, Theme
 
     public void saveDimens() {
         mDimens.setRadius(radius);
-        mDimens.setSmallRadius(smallRadius);
+        // The local `smallRadius` field holds the divisor used by the resize
+        // UI (3 = "third the radius"); MainDimensions stores the resolved
+        // pixel value to match the renderer's convention. Convert before
+        // handing it off so MainDimensionsLoader.save() sees the same unit
+        // as the rest of the codebase.
+        mDimens.setSmallRadius(smallRadius > 0 ? radius / smallRadius : radius / 3f);
         mDimens.setX(centerX);
         mDimens.setY(radius + padding);
         mDimens.setHeight((int) (viewHeight - (centerY - radius - padding)));
