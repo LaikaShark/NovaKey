@@ -116,7 +116,6 @@ public class TypingHandler extends AreaCrossedHandler {
 
             @Override
             public void onFinish() {
-                //TODO: fix getting of hidden keys...make shift state aware
                 Action a = mKeyboard.getKey(mAreas);
                 if (a instanceof Key) {
                     InfiniteMenu newMenu = ((Key) a).getHiddenKeys(
