@@ -116,6 +116,7 @@ public class SetupView extends View {
                             invalidate();
                             parent.startActivity(new Intent(parent, TutorialActivity.class));
                         }
+                        v.performClick();
                         break;
                 }
                 return false;

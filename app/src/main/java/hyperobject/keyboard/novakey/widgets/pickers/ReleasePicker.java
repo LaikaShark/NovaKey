@@ -112,6 +112,18 @@ public class ReleasePicker extends View {
 
 
     /**
+     * Accessibility click hook. Delegates to super because this view
+     * is driven by long-press-and-drag, not by discrete clicks; the
+     * override exists so accessibility services have a callable entry
+     * point alongside {@link #onTouchEvent}.
+     */
+    @Override
+    public boolean performClick() {
+        return super.performClick();
+    }
+
+
+    /**
      * Draws every item in order, but paints the active item last so
      * its scale-up isn't clipped by neighbours.
      */

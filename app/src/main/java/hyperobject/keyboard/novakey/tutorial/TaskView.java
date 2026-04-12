@@ -108,6 +108,7 @@ public class TaskView extends View {
                                 }
                             }
                         }
+                        v.performClick();
                     }
                     invalidate();
                 }
