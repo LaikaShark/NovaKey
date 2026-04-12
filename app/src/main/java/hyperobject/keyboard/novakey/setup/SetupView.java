@@ -89,7 +89,7 @@ public class SetupView extends View {
 
         SharedPreferences pref = parent.getApplicationContext().getSharedPreferences(MainNovaKeyService.MY_PREFERENCES, parent.MODE_PRIVATE);
         final Editor editor = pref.edit();
-        editor.commit();
+        editor.apply();
         progress = pref.getInt("progress", 0);
 
         setOnTouchListener(new View.OnTouchListener() {
@@ -100,19 +100,19 @@ public class SetupView extends View {
                         if (progress == 0) {
                             progress = 1;
                             editor.putInt("progress", 1);
-                            editor.commit();
+                            editor.apply();
                             invalidate();
                             parent.startActivity(new Intent(android.provider.Settings.ACTION_INPUT_METHOD_SETTINGS));
                         } else if (progress == 1) {
                             progress = 2;
                             editor.putInt("progress", 2);
-                            editor.commit();
+                            editor.apply();
                             invalidate();
                             InputMethodManager im = (InputMethodManager) parent.getSystemService(parent.INPUT_METHOD_SERVICE);
                             im.showInputMethodPicker();
                         } else if (progress == 2) {
                             editor.putBoolean("has_setup", true);
-                            editor.commit();
+                            editor.apply();
                             invalidate();
                             parent.startActivity(new Intent(parent, TutorialActivity.class));
                         }

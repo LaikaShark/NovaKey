@@ -129,7 +129,7 @@ public class MainNovaKeyService extends NovaKeyService {
 
         Editor temp = getApplicationContext().getSharedPreferences(MainNovaKeyService.MY_PREFERENCES, MODE_PRIVATE).edit();
         temp.putBoolean("has_setup", true);
-        temp.commit();
+        temp.apply();
 
     }
 

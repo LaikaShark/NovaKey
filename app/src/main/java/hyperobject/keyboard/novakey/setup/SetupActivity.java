@@ -51,7 +51,7 @@ public class SetupActivity extends Activity {
         SharedPreferences pref = getApplicationContext().getSharedPreferences(MainNovaKeyService.MY_PREFERENCES, MODE_PRIVATE);
         Editor editor = pref.edit();
         editor.putBoolean("has_setup", false);
-        editor.commit();
+        editor.apply();
 
         setContentView(new SetupView(this));
     }

@@ -148,7 +148,7 @@ public class StylePreferenceActivity extends AbstractPreferenceActivity {
             SharedPreferences.Editor editor = sharedPref.edit();
 
             editor.putBoolean(Settings.pref_auto_color, mIsAuto);
-            editor.commit();
+            editor.apply();
 
             new ThemeLoader(this).save(mModel.getTheme());
 
