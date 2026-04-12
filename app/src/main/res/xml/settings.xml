@@ -51,8 +51,8 @@
             android:title="Vibrate Level"
             android:summary="Set the level of haptic feedback (milliseconds)"
             android:defaultValue="50"
-            android:min="10"
             android:max="200"
+            app:min="10"
             app:seekBarIncrement="10"
             app:showSeekBarValue="true" />
 
@@ -83,8 +83,8 @@
             android:title="Long Press Time"
             android:summary="Set the time it takes to long press (milliseconds)"
             android:defaultValue="500"
-            android:min="200"
             android:max="2000"
+            app:min="200"
             app:seekBarIncrement="50"
             app:showSeekBarValue="true" />
 

@@ -18,28 +18,21 @@
   ~ Any questions about the program or source may be directed to <strellastudios@gmail.com>
   -->
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context="hyperobject.keyboard.novakey.EmojiSettingActivity">
 
-
-    <LinearLayout
+    <hyperobject.keyboard.novakey.HexGridView
+        android:id="@+id/hex"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="200dp" />
 
-        <hyperobject.keyboard.novakey.HexGridView
-            android:id="@+id/hex"
-            android:layout_width="match_parent"
-            android:layout_height="200dp" />
+    <hyperobject.keyboard.novakey.core.utils.drawing.emoji.ThrowAwayView
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:id="@+id/throaway" />
 
-        <hyperobject.keyboard.novakey.core.utils.drawing.emoji.ThrowAwayView
-            android:layout_width="match_parent"
-            android:layout_height="300dp"
-            android:id="@+id/throaway" />
-
-    </LinearLayout>
-
-</RelativeLayout>
+</LinearLayout>

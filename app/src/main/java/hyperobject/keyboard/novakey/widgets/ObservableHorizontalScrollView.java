@@ -20,9 +20,7 @@
 
 package hyperobject.keyboard.novakey.widgets;
 
-import android.annotation.TargetApi;
 import android.content.Context;
-import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.HorizontalScrollView;
@@ -57,12 +55,7 @@ public class ObservableHorizontalScrollView extends HorizontalScrollView {
     }
 
 
-    /**
-     * Four-arg constructor; API 21+. Kept under a
-     * {@link TargetApi} annotation from before the module's
-     * {@code minSdk} was bumped to 21 in the 2026 modernization pass.
-     */
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    /** Four-arg constructor for styled inflation with a default style resource. */
     public ObservableHorizontalScrollView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
     }

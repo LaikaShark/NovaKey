@@ -66,14 +66,14 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Auto Color"
+                        android:text="@string/cb_auto_color"
                         android:id="@+id/autoColor" />
 
                     <CheckBox
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="3D"
+                        android:text="@string/cb_three_dee"
                         android:id="@+id/threeDee" />
                 </LinearLayout>
 
@@ -107,9 +107,9 @@
                         android:id="@+id/ternaryColor" />
                 </hyperobject.keyboard.novakey.widgets.ObservableHorizontalScrollView>
 
-                <RelativeLayout
+                <Space
                     android:layout_width="match_parent"
-                    android:layout_height="110dp"></RelativeLayout>
+                    android:layout_height="110dp" />
             </LinearLayout>
         </ScrollView>
 
