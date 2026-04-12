@@ -150,6 +150,18 @@ public class Controller implements Gun, View.OnTouchListener {
 
 
     /**
+     * Releases the active {@link TouchHandler} so the next touch event
+     * starts a fresh routing pass through the model's element list.
+     * Used by {@link hyperobject.keyboard.novakey.core.actions.ResetStateAction}
+     * on session end so a gesture in flight when one editor field
+     * disconnects cannot leak into the next field.
+     */
+    public void releaseTouchHandler() {
+        mHandler = null;
+    }
+
+
+    /**
      * The single mutation entry point. Calls {@code action.trigger(ime,
      * this, model)} if the action is non-null, then invalidates the view
      * so the effect is visible on the next frame. Returns whatever the

@@ -21,6 +21,7 @@
 package hyperobject.keyboard.novakey.core.model;
 
 import android.content.Context;
+import android.text.InputType;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 
@@ -170,10 +171,10 @@ public class MainModel implements Model {
 
     /**
      * Begins a typing session: refreshes the input state from
-     * {@code editorInfo}, re-syncs prefs, optionally recolors the theme
-     * from the host package when auto-color is on, and picks a starting
-     * keyboard for the field type (text → alphabet, everything else →
-     * punctuation). TODO below is pre-existing.
+     * {@code editorInfo}, re-syncs prefs, picks a starting keyboard
+     * for the field type (text → alphabet, everything else →
+     * punctuation), and seeds the shift state from the editor's
+     * autocap flags via {@link #initialShiftState}.
      */
     @Override
     public void onStart(EditorInfo editorInfo) {
@@ -196,7 +197,30 @@ public class MainModel implements Model {
                 break;
         }
 
-        //TODO: update shiftstate
+        setShiftState(initialShiftState(editorInfo));
+    }
+
+
+    /**
+     * Maps an {@link EditorInfo}'s autocap flags to the starting
+     * {@link ShiftState} for a fresh session: TYPE_TEXT_FLAG_CAP_CHARACTERS
+     * → {@link ShiftState#CAPS_LOCKED}, TYPE_TEXT_FLAG_CAP_SENTENCES or
+     * TYPE_TEXT_FLAG_CAP_WORDS → {@link ShiftState#UPPERCASE} (a
+     * one-shot shift; the existing space-action path re-triggers it
+     * after each space for the WORDS variant), and otherwise
+     * {@link ShiftState#LOWERCASE}. Non-text fields force LOWERCASE
+     * since shift has no meaning on the punctuation/symbols keyboards.
+     */
+    private ShiftState initialShiftState(EditorInfo editorInfo) {
+        if (mInputState.getType() != InputState.Type.TEXT)
+            return ShiftState.LOWERCASE;
+        int it = editorInfo.inputType;
+        if ((it & InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS) != 0)
+            return ShiftState.CAPS_LOCKED;
+        if ((it & (InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+                | InputType.TYPE_TEXT_FLAG_CAP_WORDS)) != 0)
+            return ShiftState.UPPERCASE;
+        return ShiftState.LOWERCASE;
     }
 
 

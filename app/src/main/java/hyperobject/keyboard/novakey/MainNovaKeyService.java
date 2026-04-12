@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hyperobject.keyboard.novakey.core.Clipboard;
+import hyperobject.keyboard.novakey.core.actions.ResetStateAction;
 import hyperobject.keyboard.novakey.core.controller.Controller;
 import hyperobject.keyboard.novakey.core.controller.Corrections;
 import hyperobject.keyboard.novakey.core.NovaKeyService;
@@ -272,14 +273,16 @@ public class MainNovaKeyService extends NovaKeyService {
 
     /**
      * Fired when the IME disconnects from the editor (user dismisses
-     * the keyboard or moves to a field that hides it). Redraws so any
-     * per-field UI state is cleared on the next show.
+     * the keyboard or moves to a field that hides it). Fires a
+     * {@link ResetStateAction} so the next session starts clean —
+     * shift state, overlay, in-flight touch handler, and composing
+     * text are all reset — then invalidates the view so the redraw
+     * picks up the cleared state.
      */
     @Override
     public void onFinishInput() {
         super.onFinishInput();
-        //TODO: reset state
-        mController.invalidate();
+        mController.fire(new ResetStateAction());
     }
 
 
