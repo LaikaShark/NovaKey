@@ -100,11 +100,6 @@
             android:hardwareAccelerated="true"
             android:label="@string/title_style_preference" />
 
-        <activity
-            android:name=".EmojiSettingActivity"
-            android:exported="false"
-            android:hardwareAccelerated="false" />
-
     </application>
 
 </manifest>

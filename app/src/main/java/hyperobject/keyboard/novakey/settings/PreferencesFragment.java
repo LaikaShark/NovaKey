@@ -27,7 +27,6 @@ import android.os.Bundle;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
-import hyperobject.keyboard.novakey.EmojiSettingActivity;
 import hyperobject.keyboard.novakey.R;
 import hyperobject.keyboard.novakey.core.model.Settings;
 import hyperobject.keyboard.novakey.tutorial.TutorialActivity;
@@ -35,8 +34,8 @@ import hyperobject.keyboard.novakey.tutorial.TutorialActivity;
 /**
  * Main settings screen content. Hosts the preference tree defined by
  * {@code res/xml/settings.xml} and wires the non-persistent entries
- * (style picker, tutorial, market link, reddit link, beta-test link,
- * hidden emoji test screen) to their respective activity launches.
+ * (style picker, tutorial, market link, reddit link, beta-test link)
+ * to their respective activity launches.
  * <p>
  * Post-modernization this is an AndroidX {@link PreferenceFragmentCompat}
  * hosted by {@link SettingsActivity} (which is itself an
@@ -59,7 +58,7 @@ public class PreferencesFragment extends PreferenceFragmentCompat {
      * AndroidX preference-tree setup hook. Inflates the XML into the
      * fragment's preference hierarchy and attaches click listeners to
      * the entries that launch other activities (style picker, tutorial,
-     * Play Store rating, beta program, subreddit, hidden emoji test).
+     * Play Store rating, beta program, subreddit).
      * <p>
      * Each click listener is guarded by a null check so that a
      * preference missing from the XML (e.g. a build variant that drops
@@ -112,18 +111,6 @@ public class PreferencesFragment extends PreferenceFragmentCompat {
             subredditPref.setOnPreferenceClickListener(preference -> {
                 startActivity(new Intent(Intent.ACTION_VIEW,
                         Uri.parse("https://www.reddit.com/r/NovaKey/")));
-                return true;
-            });
-        }
-
-        // The legacy code wrapped this lookup in a try/catch because the
-        // "pref_test" key sometimes wasn't present. The AndroidX
-        // findPreference() simply returns null in that case, so we just
-        // null-check like every other branch above.
-        Preference testPref = findPreference("pref_test");
-        if (testPref != null) {
-            testPref.setOnPreferenceClickListener(preference -> {
-                startActivity(new Intent(requireContext(), EmojiSettingActivity.class));
                 return true;
             });
         }

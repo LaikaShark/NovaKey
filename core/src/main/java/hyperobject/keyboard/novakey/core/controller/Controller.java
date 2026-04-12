@@ -112,8 +112,6 @@ public class Controller implements Gun, View.OnTouchListener {
         Font.create(ime);
         //load icons
         Icons.load(ime);
-        //load emojis
-//		Emoji.load(this);
         //Create Hidden Keys
         InfiniteMenu.setHiddenKeys(ime.getResources().getStringArray(R.array.hidden_keys));
         //Create Clipboard Menu

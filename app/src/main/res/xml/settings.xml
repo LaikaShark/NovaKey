@@ -123,9 +123,6 @@
         <Preference
             android:title="Join our beta test"
             android:key="pref_beta_test" />
-        <Preference
-            android:title="Test"
-            android:key="pref_test" />
     </PreferenceCategory>
 
 </PreferenceScreen>
