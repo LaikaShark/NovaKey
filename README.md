@@ -1,6 +1,6 @@
-# NovaKey
-> An alternative input method. 
+# this is a fork of NovaKey
 
+# NovaKey
 The intent of NovaKey is to create an open platform for alternative input methods.
 You are free to (and encouraged!) to contribute to this project with new languages, layouts, themes or whatever!
 
@@ -15,16 +15,7 @@ If you would like to contribute to this project we ask you follow these simple s
 If you would like to contribute a design or an idea you can by submitting an issue to this repository labeled with `design request`. Or create a post in [our subreddit](https://www.reddit.com/r/NovaKey) tagged with [design request], someone will then create an issue in this repo to turn it into reality.
 
 ### Bugs
-If you would like to report a bug or crash you can by submitting an issue to this repository labeled with `bug`. Or create a post in [our subreddit](https://www.reddit.com/r/NovaKey) tagged with [bug], someone will then create an issue in this repo in order to fix it.
-
-# Architecture
-At a high level NovaKey uses the [Model-View-Controller(MVC)](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller) pattern. Taking a closer look though the logic is centered around `Elements` and `Actions`. The diagram below shows the architecture with more detail:
-
-![architecturediagram](https://user-images.githubusercontent.com/13156162/51805618-c7af1380-223d-11e9-9eb9-55aeae3253df.png)
-
-As shown by the diagram above `Elements` have three inputs and 2 outputs. `Elements` use the `User Input`, `State` & `Themes` to output to the `View` and to perform `Actions` which update the text & the `Model`.
-
-This causes the app to behave like a [Finite State Machine](https://en.wikipedia.org/wiki/Finite-state_machine). For example, if the app is in the `Default` state and the user performs a shift action, the state will become `Shift`. Then if the user performs a shift action again the state will become `Caps Lock`. 
+If you would like to report a bug or crash you can by submitting an issue to this repository labeled with `bug`.
 
 # Licence
 
