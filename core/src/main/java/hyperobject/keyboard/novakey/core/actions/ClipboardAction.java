@@ -101,8 +101,8 @@ public class ClipboardAction implements Action<String> {
         }
         // paste
         else if (mAction == Clipboard.PASTE) {
-            String text = ime.getClipboard().getPrimaryClip()
-                    .getItemAt(ime.getClipboard().getPrimaryClip().getItemCount() - 1)
+            ClipData clip = ime.getClipboard().getPrimaryClip();
+            String text = clip.getItemAt(clip.getItemCount() - 1)
                     .getText().toString();
             if (text != null)
                 control.fire(new InputAction(text));

@@ -23,7 +23,6 @@ package hyperobject.keyboard.novakey.core.view;
 import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowInsets;
@@ -138,9 +137,7 @@ public class EditView extends RelativeLayout implements Themeable {
      * Propagates the theme to every child that knows how to be themed:
      * the resize preview, the three floating buttons, the reset icon,
      * and the seekbar's background, progress and thumb drawables (tinted
-     * via {@link PorterDuff} color filters). Thumb tinting is gated on
-     * API &gt;= Jelly Bean since {@link SeekBar#getThumb()} didn't exist
-     * before that.
+     * via {@link PorterDuff} color filters).
      *
      * @param theme theme to apply; must not be {@code null}
      * @throws IllegalArgumentException if {@code theme} is null
@@ -160,10 +157,8 @@ public class EditView extends RelativeLayout implements Themeable {
         d = mSeekBar.getProgressDrawable();
         if (d != null)
             d.setColorFilter(theme.getContrastColor(), PorterDuff.Mode.MULTIPLY);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            d = mSeekBar.getThumb();
-            d.setColorFilter(theme.getContrastColor(), PorterDuff.Mode.SRC_ATOP);
-        }
+        d = mSeekBar.getThumb();
+        d.setColorFilter(theme.getContrastColor(), PorterDuff.Mode.SRC_ATOP);
     }
 
 

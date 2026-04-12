@@ -53,10 +53,6 @@ public class Circle implements Shape {
      * {@code (x, y)} using the supplied paint. The paint's color,
      * style, and shadow layer are assumed to have been configured by
      * the caller (typically the button theme).
-     * <p>
-     * Callers that want null-safe icon draws should route through
-     * {@code Icons.draw()} — this method itself assumes a non-null
-     * canvas and paint.
      */
     @Override
     public void draw(float x, float y, float size, Paint p, Canvas canvas) {

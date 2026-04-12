@@ -86,24 +86,4 @@ public class HintAnimation extends CharAnimation {
         }
         return new KeySizeAnimator(k.getSize(), 0);
     }
-
-
-    /**
-     * Helper that picks the "last" area index adjacent to the given
-     * group/loc pair — walks forward, back, or to the center depending
-     * on the {@code loc}. Currently only referenced by the commented-out
-     * initial-state override that was removed during cleanup, so it is
-     * effectively dead code kept for future use.
-     */
-    private static int lastArea(int group, int loc) {
-        if (loc == 0)
-            return group;
-        if (group == 0)
-            return loc;
-        if (loc == 2)
-            return 0;
-        if (loc == 1)
-            return (group + 1) == 6 ? 1 : (group + 1);
-        return (group - 1) == 0 ? 5 : (group - 1);
-    }
 }

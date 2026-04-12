@@ -86,7 +86,7 @@ public class BasicCorrections implements Corrections {
     private int contractionIndex(String text) {
         for (int i = 0; i < mContractions.length; i++) {
             String check = mContractions[i].replace("\'", "");
-            if (check.equalsIgnoreCase(text.toString()))
+            if (check.equalsIgnoreCase(text))
                 return i;
         }
         return -1;

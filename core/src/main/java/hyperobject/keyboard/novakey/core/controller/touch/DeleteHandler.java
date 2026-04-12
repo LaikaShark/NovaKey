@@ -50,23 +50,18 @@ import hyperobject.keyboard.novakey.core.actions.input.InputAction;
 public class DeleteHandler extends RotatingHandler {
 
     private final Action<String> mDelete, mBackspace;
-    private final Action<String> mFastDelete, mFastBackspace;//TODO: fast delete
     private final Stack<String> mStack;
     private boolean mBackspacing = true;//false if deleting
     private boolean mGoingFast = false;
 
 
     /**
-     * Pre-allocates the four delete-action variants (slow/fast ×
-     * backspace/forward-delete) and the undo stack so the rotate tick
-     * path is allocation-free.
+     * Pre-allocates the slow forward-delete and backspace actions plus
+     * the undo stack so the rotate tick path is allocation-free.
      */
     public DeleteHandler() {
         mDelete = new DeleteAction(true);
         mBackspace = new DeleteAction();
-
-        mFastDelete = new DeleteAction(true, true);
-        mFastBackspace = new DeleteAction(false, true);
 
         mStack = new Stack<>();
     }

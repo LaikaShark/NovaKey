@@ -277,22 +277,6 @@ public class TypingHandler extends AreaCrossedHandler {
 
 
     /**
-     * Scans the area list for an A-?-A pattern — any area whose duplicate
-     * sits exactly two positions later, signifying the user swiped back
-     * and forth across two sectors.
-     *
-     * @return the index of the first such area, or -1 if none found
-     */
-    private int repeatingIndex() {
-        for (int i = 0; i < mAreas.size() - 2; i++) {
-            if (mAreas.get(i) == mAreas.get(i + 2))
-                return i;
-        }
-        return -1;
-    }
-
-
-    /**
      * Classifies an area list as "rotating" or not.
      * <p>
      * How: skips an initial off-wheel (-1) entry if present so the same

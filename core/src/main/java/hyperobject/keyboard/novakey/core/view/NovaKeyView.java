@@ -43,7 +43,6 @@ import hyperobject.keyboard.novakey.core.view.themes.Themeable;
 public abstract class NovaKeyView extends View implements Themeable {
 
     protected Model mModel;
-    protected MasterTheme mTheme;
 
 
     /** Simple constructor; delegates to the (Context, AttributeSet) form. */
@@ -60,8 +59,7 @@ public abstract class NovaKeyView extends View implements Themeable {
 
     /**
      * Full constructor — just forwards to the Android {@link View}
-     * superclass. Model and theme are injected later via
-     * {@link #setModel} and {@link #setTheme}.
+     * superclass. The model is injected later via {@link #setModel}.
      */
     public NovaKeyView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
@@ -79,13 +77,13 @@ public abstract class NovaKeyView extends View implements Themeable {
 
 
     /**
-     * Caches the current theme. The draw pass reads the theme straight
-     * off the model rather than this field, so this setter is mostly for
-     * {@link Themeable} contract uniformity.
+     * {@link Themeable} contract stub. The draw pass reads the theme
+     * straight off the model rather than caching it on this view, so
+     * the override exists only to satisfy the interface and discards
+     * the argument.
      */
     @Override
     public void setTheme(MasterTheme theme) {
-        mTheme = theme;
     }
 
 
