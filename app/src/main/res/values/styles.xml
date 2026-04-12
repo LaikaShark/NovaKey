@@ -34,6 +34,7 @@
 
     <style name="TutorialTheme" parent="AppTheme">
         <item name="colorAccent">#F0F0F0</item>
+        <item name="android:windowBackground">#616161</item>
     </style>
 
 </resources>
