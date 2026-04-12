@@ -12,7 +12,7 @@ If you would like to contribute to this project we ask you follow these simple s
 2. Once you have implemented your feature create a pull request referncing the issue number. 
     e.g `[#002] Adds new French language layout`
 ### Designers
-If you would like to contribute a design or an idea you can by submitting an issue to this repository labeled with `design request`. Or create a post in [our subreddit](https://www.reddit.com/r/NovaKey) tagged with [design request], someone will then create an issue in this repo to turn it into reality.
+If you would like to contribute a design or an idea you can by submitting an issue to this repository labeled with `design request`.
 
 ### Bugs
 If you would like to report a bug or crash you can by submitting an issue to this repository labeled with `bug`.
