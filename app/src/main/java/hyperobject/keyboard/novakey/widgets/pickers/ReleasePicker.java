@@ -97,6 +97,7 @@ public class ReleasePicker extends View {
                 updateData();
                 break;
             case MotionEvent.ACTION_UP:
+                performClick();
                 if (mListener != null) {
                     if (mIndex == -1)
                         mListener.onCancel();
