@@ -26,8 +26,6 @@
     <dimen name="hex_grid_dimen">48dp</dimen>
 
     <dimen name="picker_dimen">56dp</dimen>
-    <dimen name="btn_preview_rad">45dp</dimen>
-    <dimen name="btn_preview_height">206dp</dimen>
 
     <dimen name="tut_text_size">32dp</dimen>
     <dimen name="tut_btn_dimen">50dp</dimen>
