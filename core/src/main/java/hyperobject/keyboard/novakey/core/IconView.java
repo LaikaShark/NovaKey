@@ -27,6 +27,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import hyperobject.keyboard.novakey.core.utils.Util;
 import hyperobject.keyboard.novakey.core.utils.drawing.drawables.Drawable;
 
 /**
@@ -42,9 +43,8 @@ import hyperobject.keyboard.novakey.core.utils.drawing.drawables.Drawable;
  * wouldn't otherwise support.
  * <p>
  * The {@code touched} flag is flipped on down/up and the view
- * invalidates, but the current {@link #onDraw} paints the same colour
- * either way — a future visual press state is stubbed out via the
- * {@code TODO} below.
+ * invalidates so {@link #onDraw} can lighten the icon tint while
+ * the user is pressing.
  */
 public class IconView extends View implements View.OnTouchListener {
 
@@ -93,14 +93,14 @@ public class IconView extends View implements View.OnTouchListener {
 
 
     /**
-     * Draws the icon centred in the view. The paint colour is the
-     * plain {@code mColor} regardless of touched state — a lighter
-     * pressed variant is noted as a TODO but not implemented.
+     * Draws the icon centred in the view, lightening the tint by two
+     * shade steps via {@link Util#colorShade} while the view is being
+     * pressed so the user gets visible press feedback.
      */
     @Override
     public void onDraw(Canvas canvas) {
         float w = getWidth(), h = getHeight();
-        p.setColor(touched ? mColor : mColor);//TODO: make color lighter
+        p.setColor(touched ? Util.colorShade(mColor, 2) : mColor);
         icon.draw(w / 2, h / 2, w * size, p, canvas);
     }
 
