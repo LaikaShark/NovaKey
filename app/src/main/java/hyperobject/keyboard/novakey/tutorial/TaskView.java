@@ -172,15 +172,19 @@ public class TaskView extends View {
 
     /**
      * Measure pass: fixes the height at seven text lines
-     * ({@code dimen * 7}) and re-creates the Back/Next buttons now
-     * that {@link #getWidth()} is valid.
+     * ({@code dimen * 7}) and repositions the Back/Next buttons
+     * (constructed as placeholders before {@link #getWidth()} was
+     * valid) by mutating their fields in place rather than allocating
+     * a fresh pair on every measure cycle.
      */
     @Override
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         setMeasuredDimension(widthMeasureSpec, (int) dimen * 7);
         float dp = getResources().getDimension(R.dimen.tut_btn_dimen);
-        back = new TextButton("Back", dp, dimen);
-        forward = new TextButton("Next", getWidth() - dp, dimen);
+        back.x = dp;
+        back.y = dimen;
+        forward.x = getWidth() - dp;
+        forward.y = dimen;
         updateButtonStates();
     }
 
