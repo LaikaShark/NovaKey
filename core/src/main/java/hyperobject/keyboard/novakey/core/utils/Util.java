@@ -20,8 +20,6 @@
 
 package hyperobject.keyboard.novakey.core.utils;
 
-import android.animation.Animator;
-import android.animation.AnimatorSet;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
@@ -362,43 +360,6 @@ public class Util {
             float r2 = contrastRatio(secondary, background);
             return r2 > r1 ? secondary : preferred;
         }
-    }
-
-
-    /**
-     * Overload that sequences animators with a uniform delay between
-     * each. Equivalent to {@code sequence(anims, delay, null)}; see
-     * the three-arg version — note that a {@code null} skip list will
-     * NPE the 3-arg implementation.
-     */
-    public static AnimatorSet sequence(Animator[] anims, long delay) {
-        return sequence(anims, delay, null);
-    }
-
-
-    /**
-     * Builds an {@link AnimatorSet} that plays {@code anims} back to
-     * back with {@code delay} ms between most steps. Indices listed in
-     * {@code skipDelayAt} have their delay suppressed so the next
-     * animator starts immediately after the previous one instead of
-     * waiting. If there's only one animator the set just plays it.
-     */
-    public static AnimatorSet sequence(Animator[] anims, long delay, int[] skipDelayAt) {
-        AnimatorSet set = new AnimatorSet();
-        if (anims.length == 1) {
-            set.play(anims[0]);
-            return set;
-        }
-        int skipMax = skipDelayAt.length;
-        int skip = 0;
-        for (int i = 0; i < anims.length - 1; i++) {
-            if (skip < skipMax && skipDelayAt[skip] == i) {
-            } else {
-                anims[i + 1].setStartDelay(delay);
-            }
-            set.play(anims[i]).before(anims[i + 1]);
-        }
-        return set;
     }
 
 
