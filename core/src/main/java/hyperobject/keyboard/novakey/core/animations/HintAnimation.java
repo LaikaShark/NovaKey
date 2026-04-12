@@ -72,17 +72,15 @@ public class HintAnimation extends CharAnimation {
 
 
     /**
-     * Returns a size animator from the key's current size down to
-     * {@code 0} for keys outside the highlighted area. Keys inside
-     * the highlighted area construct a grow-to-{@code 1.2f} animator
-     * but fall through to the shrink animator — note that the branch
-     * creates the grow animator as an unused expression, so in its
-     * present form every key ends up shrinking.
+     * Returns a size animator for the given key: keys inside the
+     * highlighted area grow from their current size to {@code 1.2f},
+     * and every other key shrinks from its current size toward
+     * {@code 0}.
      */
     @Override
     protected Animator<Key> getAnimatorFor(Key k) {
         if (k.group == mArea) {
-            new KeySizeAnimator(k.getSize(), 1.2f);
+            return new KeySizeAnimator(k.getSize(), 1.2f);
         }
         return new KeySizeAnimator(k.getSize(), 0);
     }
