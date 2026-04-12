@@ -27,12 +27,12 @@ android {
     // generated R class is rooted at.
     namespace 'hyperobject.keyboard.novakey'
 
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId "hyperobject.keyboard.novakey"
         minSdk 21
-        targetSdk 35
+        targetSdk 36
 
         // 2026 modernization pass: bumped from 24 / 0.3.9. The version is
         // read from gradle.properties so that :core/build.gradle can inject
@@ -72,12 +72,12 @@ dependencies {
     implementation project(':core')
 
     // AndroidX replacements for the old com.android.support:* artifacts.
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
 
     // Material Components hosts the new homes for TextInputLayout and
     // FloatingActionButton, both of which the tutorial / settings screens use.
-    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'com.google.android.material:material:1.13.0'
 
     // androidx.preference replaces both the framework PreferenceFragment and
     // the abandoned com.pavelsikun:material-seekbar-preference dep. Its

@@ -27,7 +27,7 @@ android {
     // It must match the package the generated R class lives in.
     namespace 'hyperobject.keyboard.novakey.core'
 
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         // minSdk 21 is the AGP 8 floor (the project used to declare 14, which
@@ -69,7 +69,7 @@ dependencies {
     // :core only needs appcompat for the AppTheme parent and a handful of
     // utility classes. Everything else (the keyboard logic) uses bare framework
     // APIs and intentionally has no androidx dependency.
-    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test:runner:1.5.2'
