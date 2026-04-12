@@ -126,8 +126,7 @@ public class TypingHandler extends AreaCrossedHandler {
                 }
             }
         };
-        if (true)//TODO: make this flag a in tutorial and longpress is disabled
-            mTimer.start();
+        mTimer.start();
     }
 
 
