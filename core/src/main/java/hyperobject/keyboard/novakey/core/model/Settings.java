@@ -61,13 +61,10 @@ public class Settings {
     //NovaKey 0.3
     pref_theme_legacy = "pref_theme",//(DEPRECATED)
     //pref_btns = "pref_btns",//(REMOVED)
-    pref_rate = "pref_rate",//INTENT
-            pref_tut = "pref_tut",//INTENT
+    pref_tut = "pref_tut",//INTENT
             pref_style = "pref_style",//INTENT
             pref_space_bar = "pref_space_bar",//(DEPRECATED)
             pref_start_version = "pref_start_version",
-    //NovaKey 0.3.4
-    pref_beta_test = "pref_beta_test",//INTENT
     //NovaKey 0.3.5
     pref_long_press_time = "pref_long_press_time",
     //Novakey 0.3.7
@@ -75,7 +72,6 @@ public class Settings {
     //NovaKey 1.0
     pref_auto_color = "pref_auto_color",
             pref_theme = "pref_master_theme",
-            pref_subreddit = "pref_subreddit",//INTENT
             pref_auto_capitalize = "pref_auto_capitalize";
 
     /** Sentinel string used by theme prefs to mean "no user override, use the built-in default." */

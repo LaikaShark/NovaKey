@@ -114,15 +114,6 @@
         <Preference
             android:title="Tutorial"
             android:key="pref_tut" />
-        <Preference
-            android:title="Rate NovaKey"
-            android:key="pref_rate" />
-        <Preference
-            android:title="Join our Reddit community"
-            android:key="pref_subreddit" />
-        <Preference
-            android:title="Join our beta test"
-            android:key="pref_beta_test" />
     </PreferenceCategory>
 
 </PreferenceScreen>

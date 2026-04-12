@@ -21,7 +21,6 @@
 package hyperobject.keyboard.novakey.settings;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.preference.Preference;
@@ -34,8 +33,7 @@ import hyperobject.keyboard.novakey.tutorial.TutorialActivity;
 /**
  * Main settings screen content. Hosts the preference tree defined by
  * {@code res/xml/settings.xml} and wires the non-persistent entries
- * (style picker, tutorial, market link, reddit link, beta-test link)
- * to their respective activity launches.
+ * (style picker, tutorial) to their respective activity launches.
  * <p>
  * Post-modernization this is an AndroidX {@link PreferenceFragmentCompat}
  * hosted by {@link SettingsActivity} (which is itself an
@@ -57,8 +55,7 @@ public class PreferencesFragment extends PreferenceFragmentCompat {
     /**
      * AndroidX preference-tree setup hook. Inflates the XML into the
      * fragment's preference hierarchy and attaches click listeners to
-     * the entries that launch other activities (style picker, tutorial,
-     * Play Store rating, beta program, subreddit).
+     * the entries that launch other activities (style picker, tutorial).
      * <p>
      * Each click listener is guarded by a null check so that a
      * preference missing from the XML (e.g. a build variant that drops
@@ -79,38 +76,10 @@ public class PreferencesFragment extends PreferenceFragmentCompat {
             });
         }
 
-        Preference ratePref = findPreference(Settings.pref_rate);
-        if (ratePref != null) {
-            ratePref.setOnPreferenceClickListener(preference -> {
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse("market://details?id=hyperobject.keyboard.novakey"));
-                startActivity(intent);
-                return true;
-            });
-        }
-
         Preference tutPref = findPreference(Settings.pref_tut);
         if (tutPref != null) {
             tutPref.setOnPreferenceClickListener(preference -> {
                 startActivity(new Intent(requireContext(), TutorialActivity.class));
-                return true;
-            });
-        }
-
-        Preference betaTestPref = findPreference(Settings.pref_beta_test);
-        if (betaTestPref != null) {
-            betaTestPref.setOnPreferenceClickListener(preference -> {
-                startActivity(new Intent(Intent.ACTION_VIEW,
-                        Uri.parse("https://play.google.com/apps/testing/hyperobject.keyboard.novakey")));
-                return true;
-            });
-        }
-
-        Preference subredditPref = findPreference(Settings.pref_subreddit);
-        if (subredditPref != null) {
-            subredditPref.setOnPreferenceClickListener(preference -> {
-                startActivity(new Intent(Intent.ACTION_VIEW,
-                        Uri.parse("https://www.reddit.com/r/NovaKey/")));
                 return true;
             });
         }
