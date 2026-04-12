@@ -143,21 +143,30 @@ public class BaseTheme implements BoardTheme {
     /**
      * Renders a thumbnail of this board variant for the theme picker.
      * <p>
-     * How: fits the wheel inside {@code dimen}, swaps the parent
-     * theme's colors to a neutral gray-on-light palette so the preview
-     * is legible regardless of the current live theme, then draws the
-     * back and divider lines via the same helpers used at runtime. If
-     * {@code selected} is true, stamps a blue outline around the
-     * preview.
+     * How: fits the wheel inside {@code dimen}, snapshots the parent
+     * theme's three colors, swaps in a neutral gray-on-light preview
+     * palette, draws the back and divider lines via the same helpers
+     * used at runtime, then restores the snapshot in a finally block
+     * so the live theme isn't corrupted (the picker draws thumbnails
+     * via the same {@code mParent} reference the live keyboard reads
+     * its colors from). If {@code selected} is true, stamps a blue
+     * outline around the preview.
      */
     @Override
     public void drawPickerItem(float x, float y, float dimen, boolean selected,
                                int index, Paint p, Canvas canvas) {
         float r = dimen / 2 * .8f;
         float sr = (dimen / 2 * .8f) / 3;
+        int origPrimary = mParent.getPrimaryColor();
+        int origAccent = mParent.getAccentColor();
+        int origContrast = mParent.getContrastColor();
         mParent.setColors(0xFFF0F0F0, 0xFF616161, 0xFF616161);
-        drawBoardBack(x, y, r, sr, canvas);
-        drawLines(x, y, r, sr, 1 / 30f, canvas);
+        try {
+            drawBoardBack(x, y, r, sr, canvas);
+            drawLines(x, y, r, sr, 1 / 30f, canvas);
+        } finally {
+            mParent.setColors(origPrimary, origAccent, origContrast);
+        }
 
         if (selected) {
             p.clearShadowLayer();
