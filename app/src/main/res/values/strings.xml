@@ -22,7 +22,6 @@
 
     <string name="app_name">NovaKey</string>
     <string name="title_style_preference">Style Your Keyboard</string>
-    <string name="cb_auto_color">Auto Color</string>
     <string name="cb_three_dee">3D</string>
     <string name="cd_done">Done</string>
     <string name="tutorial_edit_hint">Type here…</string>

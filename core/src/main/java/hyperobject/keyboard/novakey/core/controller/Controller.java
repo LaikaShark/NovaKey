@@ -43,7 +43,6 @@ import hyperobject.keyboard.novakey.core.view.MainView;
 import hyperobject.keyboard.novakey.core.view.NovaKeyView;
 import hyperobject.keyboard.novakey.core.utils.drawing.Font;
 import hyperobject.keyboard.novakey.core.utils.drawing.Icons;
-import hyperobject.keyboard.novakey.core.view.themes.AppTheme;
 
 /**
  * Central orchestrator of the keyboard runtime. Owns the {@link Model},
@@ -106,8 +105,6 @@ public class Controller implements Gun, View.OnTouchListener {
 
         //create colors
         Colors.initialize();
-        //load app themes
-        AppTheme.load(ime, ime.getResources());
         //create fonts
         Font.create(ime);
         //load icons

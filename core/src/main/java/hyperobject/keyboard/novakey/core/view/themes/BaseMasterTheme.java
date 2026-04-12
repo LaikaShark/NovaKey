@@ -35,7 +35,7 @@ import hyperobject.keyboard.novakey.core.view.themes.button.ButtonTheme;
  * color slots with neutral gray/white values. Callers then swap in
  * concrete board/button/background variants (e.g. {@link DonutTheme},
  * {@link MulticolorTheme}, …) and override the colors via
- * {@link #setColors} or {@link #setPackage}.
+ * {@link #setColors}.
  */
 public class BaseMasterTheme implements MasterTheme {
 
@@ -91,26 +91,6 @@ public class BaseMasterTheme implements MasterTheme {
         mPrimiary = primary;
         mAccent = accent;
         mContrast = contrast;
-        return this;
-    }
-
-
-    /**
-     * Looks up an {@link AppTheme} by package name and copies its
-     * {@code color1/color2/color3} triplet into this theme's primary,
-     * accent, and contrast slots. Silently returns {@code this} if the
-     * package is not in the app-color table.
-     */
-    @Override
-    public MasterTheme setPackage(String appPackage) {
-        AppTheme app = AppTheme.fromPk(appPackage);
-        if (app == null) {
-            //App not supported
-            //maybe ask user to support this app
-            //TODO: AppTheme.promptUser()
-            return this;
-        }
-        setColors(app.color1, app.color2, app.color3);
         return this;
     }
 

@@ -34,7 +34,6 @@ import hyperobject.keyboard.novakey.core.model.Settings;
 import hyperobject.keyboard.novakey.setup.SetupActivity;
 import hyperobject.keyboard.novakey.core.utils.drawing.Font;
 import hyperobject.keyboard.novakey.core.utils.drawing.Icons;
-import hyperobject.keyboard.novakey.core.view.themes.AppTheme;
 
 /**
  * Launcher activity of the app and host for {@link PreferencesFragment}.
@@ -74,7 +73,6 @@ public class SettingsActivity extends AppCompatActivity {
         // does this on its own create-path, but launching settings cold
         // (without the IME being active) means none of these have run yet.
         Colors.initialize();
-        AppTheme.load(this, getResources());
         Font.create(getApplicationContext());
         Icons.load(getApplicationContext());
 

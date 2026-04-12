@@ -66,16 +66,6 @@ public interface MasterTheme {
 
 
     /**
-     * Looks up an {@link AppTheme} by package name and copies its three
-     * colors into this master theme. No-op if the package is unknown.
-     *
-     * @param appPackage Android package name of the foreground app
-     * @return this master theme, for chaining
-     */
-    MasterTheme setPackage(String appPackage);
-
-
-    /**
      * @return the primary color currently installed on this theme
      */
     int getPrimaryColor();

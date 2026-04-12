@@ -53,29 +53,15 @@
                         android:id="@+id/themePicker" />
                 </hyperobject.keyboard.novakey.widgets.ObservableHorizontalScrollView>
 
-                <LinearLayout
+                <CheckBox
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
                     android:layout_marginLeft="10dp"
                     android:layout_marginRight="10dp"
                     android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp">
-
-                    <CheckBox
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/cb_auto_color"
-                        android:id="@+id/autoColor" />
-
-                    <CheckBox
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/cb_three_dee"
-                        android:id="@+id/threeDee" />
-                </LinearLayout>
+                    android:layout_marginBottom="10dp"
+                    android:text="@string/cb_three_dee"
+                    android:id="@+id/threeDee" />
 
                 <hyperobject.keyboard.novakey.widgets.ObservableHorizontalScrollView
                     android:layout_width="match_parent"

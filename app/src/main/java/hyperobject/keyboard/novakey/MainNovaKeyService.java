@@ -47,7 +47,6 @@ import hyperobject.keyboard.novakey.core.model.InputState;
 import hyperobject.keyboard.novakey.core.model.Settings;
 import hyperobject.keyboard.novakey.core.utils.Print;
 import hyperobject.keyboard.novakey.core.utils.Util;
-import hyperobject.keyboard.novakey.core.view.themes.AppTheme;
 
 /**
  * Concrete phone/tablet IME — the entry point declared in
@@ -136,16 +135,12 @@ public class MainNovaKeyService extends NovaKeyService {
 
     /**
      * Returns the view that the framework should render as the
-     * keyboard. Reloads {@link AppTheme} against the current resources
-     * (picks up night-mode / config changes), then detaches the
-     * controller's view from any previous parent — the framework may
-     * call this multiple times and Android forbids a view having two
-     * parents.
+     * keyboard. Detaches the controller's view from any previous parent
+     * first — the framework may call this multiple times and Android
+     * forbids a view having two parents.
      */
     @Override
     public View onCreateInputView() {
-        AppTheme.load(this, getResources());
-
         View v = mController.getView();
         if (v.getParent() != null)
             ((ViewGroup) v.getParent()).removeView(v);

@@ -70,7 +70,6 @@ public class Settings {
     //Novakey 0.3.7
     pref_vibrate_level = "pref_vibrate_level",
     //NovaKey 1.0
-    pref_auto_color = "pref_auto_color",
             pref_theme = "pref_master_theme",
             pref_auto_capitalize = "pref_auto_capitalize";
 
@@ -95,9 +94,6 @@ public class Settings {
     //   longPressTime - ms a touch must be held before it counts as a long press
     //   vibrateLevel  - vibration intensity (ms duration) when `vibrate` is on
     public static int startVersion, longPressTime, vibrateLevel;
-
-    /** Recolor the theme from the host app's accent color on every new session. */
-    public static boolean autoColor;
 
     private static SharedPreferences prefs;
     private static SharedPreferences.Editor edit;
@@ -140,8 +136,6 @@ public class Settings {
         // this preference existed).
         autoCapitalize = prefs.getBoolean(pref_auto_capitalize, true);
 
-        autoColor = prefs.getBoolean(pref_auto_color, false);
-
         //Integer settings
         //this will only default to the given number if the person has never had this preference
         startVersion = prefs.getInt(pref_start_version, BuildConfig.VERSION_CODE);
@@ -168,10 +162,8 @@ public class Settings {
 
     /**
      * Migrates pre-1.0 theme strings (see {@code ThemeFactory.themeFromLegacyString})
-     * into the new JSON blob stored under {@link #pref_theme}. Also lifts
-     * the legacy "auto color" flag out of the old comma-separated string
-     * into its own {@link #pref_auto_color} boolean, then deletes the old
-     * pref so the migration only runs once.
+     * into the new JSON blob stored under {@link #pref_theme}, then
+     * deletes the old pref so the migration only runs once.
      */
     private static void fixLegacyThemeing() {
         String str = prefs.getString(pref_theme_legacy, DEFAULT);
@@ -183,9 +175,6 @@ public class Settings {
                 MasterTheme theme = ThemeFactory.themeFromLegacyString(str);
                 edit.putString(pref_theme, ThemeFactory.stringFromTheme(theme));
             }
-            //set auto color
-            autoColor = str.split(",")[4].equalsIgnoreCase("A");
-            edit.putBoolean(pref_auto_color, autoColor);
             //delete old
             edit.remove(pref_theme_legacy);
         }

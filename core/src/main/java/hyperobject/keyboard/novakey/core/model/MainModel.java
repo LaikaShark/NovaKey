@@ -180,10 +180,6 @@ public class MainModel implements Model {
         mInputState.updateEditorInfo(editorInfo);
         syncWithPrefs();
 
-        //reads theme from preferences & colors according to the app
-        if (Settings.autoColor)
-            mTheme.setPackage(editorInfo.packageName);
-
         switch (mInputState.getType()) {
             default:
             case TEXT:

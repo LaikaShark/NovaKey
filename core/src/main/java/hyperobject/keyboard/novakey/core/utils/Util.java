@@ -238,17 +238,6 @@ public class Util {
 
 
     /**
-     * Parses a web-style hex colour string (e.g. {@code "#aabbcc"} or
-     * {@code "aabbcc"}) into an opaque ARGB int by reading the last six
-     * characters and OR-ing in full alpha.
-     */
-    public static int webToColor(String webColor) {
-        String s = webColor.substring(webColor.length() - 6, webColor.length());
-        return Integer.valueOf(s, 16) + 0xFF000000;
-    }
-
-
-    /**
      * Number of non-overlapping occurrences of {@code match} inside
      * {@code str}, counted by sliding a fixed-width window across the
      * haystack. Special-cases an exact equality so identical strings
