@@ -29,18 +29,9 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Storage perms are capped at API 32 because the IME does not actually
-         touch shared storage; on API 33+ these permissions are scoped/no-ops
-         and Play Console flags them as misuse if they appear unconditionally. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
-    <uses-permission
-        android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
 
     <application
         android:allowBackup="true"
