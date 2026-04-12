@@ -167,7 +167,7 @@ public abstract class CharAnimation extends BaseAnimation {
             y += d.getRadius() * (((mStyle & FLIP_Y) == FLIP_Y) ? -1 : 1);
         ;
 
-        float dist = Util.distance(x, y, k.getPosn().getX(d), k.getPosn().getX(d));
+        float dist = Util.distance(x, y, k.getPosn().getX(d), k.getPosn().getY(d));
         float ratio = dist / (d.getRadius() * 2);
         return (long) (max * ratio);
     }
