@@ -108,7 +108,7 @@ public class Util {
      * substring call blows up.
      */
     public static String capsFirst(String text) {
-        if (text.length() < 0)
+        if (text.isEmpty())
             return text;
         Character first = text.charAt(0);
         first = Character.toUpperCase(first);
