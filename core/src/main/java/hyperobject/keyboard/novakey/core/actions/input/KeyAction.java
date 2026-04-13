@@ -175,7 +175,7 @@ public class KeyAction implements Action<Void> {
 
         //TODO: insert keys normally
         // Regular text with autocorrecting
-        if (!regText && Settings.autoCorrect && (Character.isLetter(mChar) || Util.isNumber(mChar))) {
+        if (regText && Settings.autoCorrect && (Character.isLetter(mChar) || Util.isNumber(mChar))) {
             char c;
             if (model.getShiftState() == ShiftState.LOWERCASE) {
                 c = Character.toLowerCase(mChar);
@@ -185,12 +185,12 @@ public class KeyAction implements Action<Void> {
             ime.inputText(Character.toString(c), 1);
         }
         // Quick Insert
-        else if (!regText && Settings.quickInsert && isOpener(mChar)) {
+        else if (regText && Settings.quickInsert && isOpener(mChar)) {
             ime.inputText(mChar.toString(), 1);
             ime.inputText(String.valueOf(getCloser(mChar)), -1);
         }
         // Quick Close
-        else if (!regText && Settings.quickClose && isQuickOpener(mChar)) {
+        else if (regText && Settings.quickClose && isQuickOpener(mChar)) {
             switch (state.getRepeatCount()) {
                 default:
                 case 0:
