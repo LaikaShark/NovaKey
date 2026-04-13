@@ -57,13 +57,16 @@ public class InputState {
 
     /**
      * Refreshes the field-type flags from a fresh {@link EditorInfo}.
-     * Branches on {@code inputType}'s class/variation masks to set one
-     * of the four {@link Type} values and toggle the password/email/URI
-     * booleans, then clears any leftover composing text from the
-     * previous session.
+     * Resets the password/email/URI booleans to {@code false} first so
+     * flags from a previous field don't leak, then branches on
+     * {@code inputType}'s class/variation masks to set one of the four
+     * {@link Type} values and re-flag whichever boolean matches.
      */
     public void updateEditorInfo(EditorInfo editorInfo) {
         mComposing.setLength(0);
+        mOnPassword = false;
+        mOnEmailAddress = false;
+        mOnURI = false;
 
         int inputType = editorInfo.inputType;
 
