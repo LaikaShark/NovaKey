@@ -98,18 +98,27 @@ public class Settings {
     private static SharedPreferences prefs;
     private static SharedPreferences.Editor edit;
 
+    // Strong reference so the WeakHashMap inside SharedPreferencesImpl
+    // cannot garbage-collect the listener and silently stop delivering
+    // preference-change callbacks.
+    private static SharedPreferences.OnSharedPreferenceChangeListener sListener;
+
 
     /**
      * Installs the {@code SharedPreferences} this class reads from and
      * registers a change listener so {@link #update()} fires automatically
      * whenever any pref value changes. Called once from the IME service
      * at startup — passing in the service's deliberately-preserved
-     * {@code MY_PREFERENCES} handle.
+     * {@code MY_PREFERENCES} handle.  The listener is held in a static
+     * field so it survives garbage collection.
      */
     public static void setPrefs(SharedPreferences pref) {
+        if (prefs != null && sListener != null)
+            prefs.unregisterOnSharedPreferenceChangeListener(sListener);
         prefs = pref;
         edit = prefs.edit();
-        prefs.registerOnSharedPreferenceChangeListener((sharedPreferences, s) -> update());
+        sListener = (sharedPreferences, s) -> update();
+        prefs.registerOnSharedPreferenceChangeListener(sListener);
     }
 
 

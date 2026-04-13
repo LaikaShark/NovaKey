@@ -179,6 +179,7 @@ public class MainModel implements Model {
     @Override
     public void onStart(EditorInfo editorInfo) {
         mInputState.updateEditorInfo(editorInfo);
+        Settings.update();
         syncWithPrefs();
 
         switch (mInputState.getType()) {
@@ -203,15 +204,18 @@ public class MainModel implements Model {
 
     /**
      * Maps an {@link EditorInfo}'s autocap flags to the starting
-     * {@link ShiftState} for a fresh session: TYPE_TEXT_FLAG_CAP_CHARACTERS
-     * → {@link ShiftState#CAPS_LOCKED}, TYPE_TEXT_FLAG_CAP_SENTENCES or
-     * TYPE_TEXT_FLAG_CAP_WORDS → {@link ShiftState#UPPERCASE} (a
-     * one-shot shift; the existing space-action path re-triggers it
-     * after each space for the WORDS variant), and otherwise
-     * {@link ShiftState#LOWERCASE}. Non-text fields force LOWERCASE
-     * since shift has no meaning on the punctuation/symbols keyboards.
+     * {@link ShiftState} for a fresh session. When
+     * {@link Settings#autoCapitalize} is enabled:
+     * TYPE_TEXT_FLAG_CAP_CHARACTERS → {@link ShiftState#CAPS_LOCKED},
+     * TYPE_TEXT_FLAG_CAP_SENTENCES or TYPE_TEXT_FLAG_CAP_WORDS →
+     * {@link ShiftState#UPPERCASE} (a one-shot shift; the existing
+     * space-action path re-triggers it after each space for the WORDS
+     * variant). When auto-capitalize is disabled, or on non-text fields,
+     * always returns {@link ShiftState#LOWERCASE}.
      */
     private ShiftState initialShiftState(EditorInfo editorInfo) {
+        if (!Settings.autoCapitalize)
+            return ShiftState.LOWERCASE;
         if (mInputState.getType() != InputState.Type.TEXT)
             return ShiftState.LOWERCASE;
         int it = editorInfo.inputType;
