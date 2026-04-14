@@ -27,7 +27,9 @@ import android.view.inputmethod.InputConnection;
 import hyperobject.keyboard.novakey.core.controller.Controller;
 import hyperobject.keyboard.novakey.core.actions.Action;
 import hyperobject.keyboard.novakey.core.NovaKeyService;
+import hyperobject.keyboard.novakey.core.model.InputState;
 import hyperobject.keyboard.novakey.core.model.Model;
+import hyperobject.keyboard.novakey.core.model.Settings;
 
 /**
  * Handles the Enter/Return gesture in a way that does the right thing
@@ -65,6 +67,15 @@ public class EnterAction implements Action<Void> {
         boolean multiLine = ei != null && (ei.inputType
                 & (InputType.TYPE_TEXT_FLAG_MULTI_LINE
                         | InputType.TYPE_TEXT_FLAG_IME_MULTI_LINE)) != 0;
+
+        // Commit any in-progress composing text before the enter action
+        // so the current word is not discarded by the newline or editor action.
+        InputState state = model.getInputState();
+        if (Settings.autoCorrect && state.shouldAutoCorrect()) {
+            ime.commitCorrection();
+        } else {
+            ime.commitComposingText();
+        }
 
         if (multiLine && ic != null) {
             ic.commitText("\n", 1);
