@@ -198,7 +198,6 @@ public class KeyAction implements Action<Void> {
                     break;
                 case 1:
                     ime.inputText(getQuickCloser(mChar) + "", 0);
-                    ime.moveSelection(-1, -1);
                     break;
                 case 2:
                     ic.deleteSurroundingText(0, 1);
