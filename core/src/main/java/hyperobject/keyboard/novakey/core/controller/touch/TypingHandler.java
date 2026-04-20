@@ -31,7 +31,9 @@ import hyperobject.keyboard.novakey.core.actions.Action;
 import hyperobject.keyboard.novakey.core.actions.RenameSelectionAction;
 import hyperobject.keyboard.novakey.core.actions.SetOverlayAction;
 import hyperobject.keyboard.novakey.core.actions.VibrateAction;
+import hyperobject.keyboard.novakey.core.actions.input.AutoCorrectAction;
 import hyperobject.keyboard.novakey.core.actions.input.DeleteAction;
+import hyperobject.keyboard.novakey.core.actions.input.ShiftAction;
 import hyperobject.keyboard.novakey.core.elements.keyboards.Key;
 import hyperobject.keyboard.novakey.core.elements.keyboards.Keyboard;
 import hyperobject.keyboard.novakey.core.elements.keyboards.overlays.CursorOverlay;
@@ -87,6 +89,7 @@ public class TypingHandler extends AreaCrossedHandler {
 
     private Key mRepeatingKey;
     public boolean mRepeating = false;
+    private boolean mLongPressHandled = false;
     private int mArea1, mArea2;
 
 
@@ -101,11 +104,17 @@ public class TypingHandler extends AreaCrossedHandler {
 
     /**
      * Arms the long-press timer. On finish, re-decodes the current
-     * area list into a key and, if it resolves to a {@link Key} with
-     * hidden alternates, swaps the overlay to the hidden-keys
-     * {@link InfiniteMenu}. Uses {@link Settings#longPressTime} as both
-     * interval and total duration so there's exactly one {@code onFinish}
-     * tick.
+     * area list and checks what the gesture resolves to:
+     * <ul>
+     *   <li>If it's a {@link ShiftAction} (shift-up gesture held),
+     *       fires {@link AutoCorrectAction} and sets
+     *       {@link #mLongPressHandled} so {@link #onUp} suppresses the
+     *       normal shift toggle.</li>
+     *   <li>If it's a {@link Key} with hidden alternates, swaps the
+     *       overlay to the hidden-keys {@link InfiniteMenu}.</li>
+     * </ul>
+     * Uses {@link Settings#longPressTime} as both interval and total
+     * duration so there's exactly one {@code onFinish} tick.
      */
     private void start(Controller controller) {
         mTimer = new CountDownTimer(Settings.longPressTime, Settings.longPressTime) {
@@ -117,7 +126,10 @@ public class TypingHandler extends AreaCrossedHandler {
             @Override
             public void onFinish() {
                 Action a = mKeyboard.getKey(mAreas);
-                if (a instanceof Key) {
+                if (a instanceof ShiftAction) {
+                    mLongPressHandled = true;
+                    controller.fire(new AutoCorrectAction());
+                } else if (a instanceof Key) {
                     InfiniteMenu newMenu = ((Key) a).getHiddenKeys(
                             controller.getModel().getShiftState());
                     if (newMenu != null)
@@ -139,15 +151,16 @@ public class TypingHandler extends AreaCrossedHandler {
     /**
      * Clears any state left over from the previous gesture: empties the
      * area list, drops repeat mode, resets the quick-close repeat
-     * counter, seeds the list with the starting area (unless the finger
-     * came down off-wheel, indicated by area -1), and arms the
-     * long-press timer.
+     * counter and the long-press-handled flag, seeds the list with the
+     * starting area (unless the finger came down off-wheel, indicated
+     * by area -1), and arms the long-press timer.
      */
     @Override
     protected boolean onDown(float x, float y, int area,
                              Controller controller) {
         mAreas.clear();
         mRepeating = false;
+        mLongPressHandled = false;
         controller.getModel().getInputState().resetRepeat();
         if (area != -1)
             mAreas.add(area);
@@ -259,19 +272,21 @@ public class TypingHandler extends AreaCrossedHandler {
     /**
      * Finalizes the gesture: cancels the long-press timer, and — unless
      * we were in repeat mode (where each crossing already fired the key
-     * and the user is just lifting) — hands the accumulated area list
-     * to {@link Keyboard#getKey(List)} and fires whatever it decodes
-     * (either a key press or a shortcut gesture). Clears state and
-     * releases the handler.
+     * and the user is just lifting) or the long-press timer already
+     * handled the gesture (e.g. autocorrect on shift+hold) — hands the
+     * accumulated area list to {@link Keyboard#getKey(List)} and fires
+     * whatever it decodes (either a key press or a shortcut gesture).
+     * Clears state and releases the handler.
      */
     @Override
     protected boolean onUp(Controller controller) {
         cancel();
-        if (!mRepeating) {
+        if (!mRepeating && !mLongPressHandled) {
             controller.fire(mKeyboard.getKey(mAreas));
         }
         mAreas.clear();
         mRepeating = false;
+        mLongPressHandled = false;
         return false;
     }
 

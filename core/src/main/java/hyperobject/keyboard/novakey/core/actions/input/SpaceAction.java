@@ -27,13 +27,12 @@ import hyperobject.keyboard.novakey.core.NovaKeyService;
 import hyperobject.keyboard.novakey.core.elements.keyboards.Keyboards;
 import hyperobject.keyboard.novakey.core.model.InputState;
 import hyperobject.keyboard.novakey.core.model.Model;
-import hyperobject.keyboard.novakey.core.model.Settings;
 
 /**
  * Inserts a single space character and runs the side effects that go
- * with it: commits any in-progress correction/composing text, auto-
- * switches back to the alphabet keyboard when the return-after-space
- * flag is set (triggered by {@link KeyAction} on characters like
+ * with it: commits any in-progress composing text as-is, auto-switches
+ * back to the alphabet keyboard when the return-after-space flag is set
+ * (triggered by {@link KeyAction} on characters like
  * {@code . , ; & ! ?}), and fires an {@link UpdateShiftAction} so
  * auto-capitalize can kick in at a new sentence.
  */
@@ -42,17 +41,9 @@ public class SpaceAction implements Action<Void> {
     /**
      * Runs the commit → insert-space → side-effects sequence.
      * <p>
-     * How: if auto-correct is on, the field allows it, and the caret
-     * sits at the end of the composing region (i.e. the user just
-     * finished typing a word rather than moving the cursor into the
-     * middle of an existing one), {@link NovaKeyService#commitCorrection()}
-     * locks in the corrected form. Otherwise the composing region is
-     * finalized as-is via {@link NovaKeyService#commitComposingText()}
-     * — this avoids {@code setComposingText}'s side effect of yanking
-     * the cursor to the end of the composing region, which would
-     * otherwise cause mid-word space presses to insert the space at
-     * the end of the word instead of at the caret. A literal " " is
-     * then inserted. If the input state had {@code returnAfterSpace}
+     * How: finalizes any in-progress composing text as-is via
+     * {@link NovaKeyService#commitComposingText()}, then inserts a
+     * literal " ". If the input state had {@code returnAfterSpace}
      * flagged, fires a {@link SetKeyboardAction} back to the default
      * alphabet and clears the flag so it doesn't fire on the next
      * space too. Finally queues an {@link UpdateShiftAction}.
@@ -61,18 +52,7 @@ public class SpaceAction implements Action<Void> {
     public Void trigger(NovaKeyService ime, Controller control, Model model) {
         InputState state = model.getInputState();
 
-        //AutoCorrect — only when caret is at the end of the composing
-        //region, otherwise the setComposingText call inside
-        //commitCorrection would relocate the caret to the word's end.
-        boolean caretAtComposingEnd =
-                state.getSelectionStart() == state.getSelectionEnd()
-                        && state.getCandidatesEnd() >= 0
-                        && state.getSelectionEnd() == state.getCandidatesEnd();
-        if (Settings.autoCorrect && state.shouldAutoCorrect() && caretAtComposingEnd) {
-            ime.commitCorrection();
-        } else {
-            ime.commitComposingText();
-        }
+        ime.commitComposingText();
         ime.inputText(" ", 1);
         if (state.returnAfterSpace())
             control.fire(new SetKeyboardAction(Keyboards.DEFAULT));
