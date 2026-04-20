@@ -138,15 +138,17 @@ public class TypingHandler extends AreaCrossedHandler {
 
     /**
      * Clears any state left over from the previous gesture: empties the
-     * area list, drops repeat mode, seeds the list with the starting
-     * area (unless the finger came down off-wheel, indicated by area
-     * -1), and arms the long-press timer.
+     * area list, drops repeat mode, resets the quick-close repeat
+     * counter, seeds the list with the starting area (unless the finger
+     * came down off-wheel, indicated by area -1), and arms the
+     * long-press timer.
      */
     @Override
     protected boolean onDown(float x, float y, int area,
                              Controller controller) {
         mAreas.clear();
         mRepeating = false;
+        controller.getModel().getInputState().resetRepeat();
         if (area != -1)
             mAreas.add(area);
         start(controller);
