@@ -51,6 +51,19 @@ public class SelectingHandler extends RotatingHandler {
 
 
     /**
+     * Resets the cursor mode to 0 at the start of each scroll gesture so
+     * a stale ±1 from a prior gesture doesn't silently turn this one
+     * into a selection-extend — a fresh scroll always begins in "move
+     * caret, preserve selection length" mode.
+     */
+    @Override
+    protected boolean onDown(float x, float y, int area, Controller controller) {
+        controller.getModel().setCursorMode(0);
+        return true;
+    }
+
+
+    /**
      * Fires {@link ToggleCursorModeAction} on entry into the inner
      * circle so the user flips between "move cursor" and "extend
      * selection" modes by swinging through the center. Ignores exits.
