@@ -1,5 +1,6 @@
 # this is a fork of NovaKey
-
+# Tutorial
+todo! :(
 # NovaKey
 The intent of NovaKey is to create an open platform for alternative input methods.
 You are free to (and encouraged!) to contribute to this project with new languages, layouts, themes or whatever!
